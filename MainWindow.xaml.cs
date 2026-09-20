@@ -24,5 +24,41 @@ namespace Ruta_App
         {
             InitializeComponent();
         }
+        // Botón heredado del XAML original (si aún lo tienes referenciado)
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            // placeholder — puedes eliminar este botón del XAML si ya no lo usas
+        }
+
+        // Botón principal del MVP
+        private void BtnBuscar_Click(object sender, RoutedEventArgs e)
+        {
+            string origen = TxtOrigen.Text.Trim();
+            string destino = TxtDestino.Text.Trim();
+
+            if (string.IsNullOrEmpty(origen) || string.IsNullOrEmpty(destino))
+            {
+                MessageBox.Show("Introduce origen y destino.", "R.U.T.A.",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Mostrar tarjetas y ocultar placeholder
+            PlaceholderCard.Visibility = Visibility.Collapsed;
+            Ruta1Card.Visibility = Visibility.Visible;
+            Ruta2Card.Visibility = Visibility.Visible;
+            Ruta3Card.Visibility = Visibility.Visible;
+
+            // Actualizar header
+            LblHeader.Text = $"{origen}  →  {destino}";
+            LblConteoRutas.Text = "3 rutas encontradas";
+
+            // Métricas de la ruta recomendada (Ruta 1 por defecto)
+            LblTiempo.Text = "28 min";
+            LblTransbordos.Text = "1";
+            LblCaminata.Text = "350 m";
+            LblBus.Text = "L-2 / L-7";
+        }
+
     }
 }

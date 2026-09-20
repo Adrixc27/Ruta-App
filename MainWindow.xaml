@@ -5,8 +5,548 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Ruta_App"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="R.U.T.A."
+        Height="680"
+        Width="1100"
+        WindowStartupLocation="CenterScreen"
+        Background="#0F172A">
+
+    <Window.Resources>
+
+        <!-- COLORES BASE -->
+        <!-- Fondo oscuro: #0F172A | Panel lateral: #1E293B | Acento: #38BDF8 | Texto principal: #F1F5F9 | Subtexto: #94A3B8 -->
+
+        <!-- ESTILO LABEL SUPERIOR (pasos) -->
+        <Style x:Key="StepLabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <!-- ESTILO INPUTS -->
+        <Style x:Key="InputStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#F1F5F9"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="CaretBrush" Value="#38BDF8"/>
+        </Style>
+
+        <!-- BOTÓN PREFERENCIA -->
+        <Style x:Key="PrefButtonStyle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Borde"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="10,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Borde" Property="Background" Value="#0C4A6E"/>
+                                <Setter TargetName="Borde" Property="BorderBrush" Value="#38BDF8"/>
+                                <Setter Property="Foreground" Value="#38BDF8"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Borde" Property="BorderBrush" Value="#38BDF8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- BOTÓN BUSCAR -->
+        <Style x:Key="BuscarButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Borde" CornerRadius="8">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#0284C7" Offset="0"/>
+                                    <GradientStop Color="#38BDF8" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Borde" Property="Opacity" Value="0.88"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Borde" Property="Opacity" Value="0.72"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- TARJETA DE RUTA -->
+        <Style x:Key="RouteCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <!-- BADGE DE LÍNEA DE BUS -->
+        <Style x:Key="LineBadgeStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+        </Style>
+
+    </Window.Resources>
+
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ============================= -->
+        <!--        PANEL LATERAL          -->
+        <!-- ============================= -->
+        <DockPanel Grid.Column="0" Background="#1E293B" LastChildFill="False">
+
+            <!-- HEADER -->
+            <StackPanel DockPanel.Dock="Top" Margin="20,24,20,20">
+
+                <TextBlock Text="R . U . T . A ."
+                           Foreground="#38BDF8"
+                           FontSize="22"
+                           FontWeight="Bold"/>
+
+                <TextBlock Text="Recomendación de transporte público"
+                           Foreground="#475569"
+                           FontSize="11"
+                           Margin="0,2,0,0"/>
+
+            </StackPanel>
+
+            <!-- SEPARADOR -->
+            <Border DockPanel.Dock="Top" Height="1" Background="#263347" Margin="20,0"/>
+
+            <!-- FORMULARIO DE BÚSQUEDA -->
+            <StackPanel DockPanel.Dock="Top" Margin="20,20,20,0">
+
+                <!-- ORIGEN -->
+                <TextBlock Text="Punto de origen"
+                           Style="{StaticResource StepLabelStyle}"/>
+                <Grid Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0"
+                            Width="28" Height="28"
+                            CornerRadius="14"
+                            Background="#0C4A6E"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="A" Foreground="#38BDF8" FontSize="12" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBox Grid.Column="1"
+                             x:Name="TxtOrigen"
+                             Style="{StaticResource InputStyle}"
+                             Text="Ej. Zócalo"/>
+                </Grid>
+
+                <!-- DESTINO -->
+                <TextBlock Text="Destino"
+                           Style="{StaticResource StepLabelStyle}"/>
+                <Grid Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0"
+                            Width="28" Height="28"
+                            CornerRadius="14"
+                            Background="#4C1D95"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="B" Foreground="#A78BFA" FontSize="12" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBox Grid.Column="1"
+                             x:Name="TxtDestino"
+                             Style="{StaticResource InputStyle}"
+                             Text="Ej. Chapultepec"/>
+                </Grid>
+
+                <!-- PREFERENCIA -->
+                <TextBlock Text="Prioridad de ruta"
+                           Style="{StaticResource StepLabelStyle}"/>
+
+                <Grid Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+
+                    <ToggleButton Grid.Column="0"
+                                  x:Name="PrefTiempo"
+                                  Style="{StaticResource PrefButtonStyle}"
+                                  Margin="0,0,4,0"
+                                  IsChecked="True">
+                        <StackPanel>
+                            <TextBlock Text="🚍" FontSize="16" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Rápido" FontSize="10" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </ToggleButton>
+
+                    <ToggleButton Grid.Column="1"
+                                  x:Name="PrefTransbordos"
+                                  Style="{StaticResource PrefButtonStyle}"
+                                  Margin="2,0">
+                        <StackPanel>
+                            <TextBlock Text="🔄" FontSize="16" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Directo" FontSize="10" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </ToggleButton>
+
+                    <ToggleButton Grid.Column="2"
+                                  x:Name="PrefCaminata"
+                                  Style="{StaticResource PrefButtonStyle}"
+                                  Margin="4,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="🚶" FontSize="16" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Fácil" FontSize="10" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </ToggleButton>
+                </Grid>
+
+                <!-- BOTÓN BUSCAR -->
+                <Button x:Name="BtnBuscar"
+                        Content="Buscar rutas"
+                        Style="{StaticResource BuscarButtonStyle}"
+                        Click="BtnBuscar_Click"/>
+
+            </StackPanel>
+
+            <!-- INFO DE RUTA SELECCIONADA (bottom) -->
+            <StackPanel DockPanel.Dock="Bottom" Margin="20,0,20,20">
+                <Border Height="1" Background="#263347" Margin="0,0,0,14"/>
+                <TextBlock Text="Ruta seleccionada"
+                           Foreground="#475569"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,10"/>
+
+                <!-- Detalles compactos -->
+                <Grid x:Name="PanelDetalles">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Tiempo -->
+                    <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,0,8">
+                        <TextBlock Text="Tiempo" Foreground="#475569" FontSize="10"/>
+                        <TextBlock x:Name="LblTiempo" Text="— min" Foreground="#F1F5F9" FontSize="15" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <!-- Transbordos -->
+                    <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,0,8">
+                        <TextBlock Text="Transbordos" Foreground="#475569" FontSize="10"/>
+                        <TextBlock x:Name="LblTransbordos" Text="—" Foreground="#F1F5F9" FontSize="15" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <!-- Caminata -->
+                    <StackPanel Grid.Column="0" Grid.Row="1">
+                        <TextBlock Text="Caminata" Foreground="#475569" FontSize="10"/>
+                        <TextBlock x:Name="LblCaminata" Text="— m" Foreground="#F1F5F9" FontSize="15" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <!-- Bus -->
+                    <StackPanel Grid.Column="1" Grid.Row="1">
+                        <TextBlock Text="Autobús" Foreground="#475569" FontSize="10"/>
+                        <TextBlock x:Name="LblBus" Text="—" Foreground="#F1F5F9" FontSize="15" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                </Grid>
+            </StackPanel>
+
+        </DockPanel>
+
+
+        <!-- ============================= -->
+        <!--       ÁREA PRINCIPAL          -->
+        <!-- ============================= -->
+        <Grid Grid.Column="1" Background="#0F172A">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- HEADER del contenido -->
+            <Border Grid.Row="0"
+                    Background="#131F35"
+                    Padding="24,16">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="LblHeader"
+                               Text="Selecciona origen y destino para comenzar"
+                               Foreground="#94A3B8"
+                               FontSize="14"
+                               VerticalAlignment="Center"/>
+                    <Rectangle Width="1" Fill="#263347" Margin="20,0"/>
+                    <TextBlock x:Name="LblConteoRutas"
+                               Text=""
+                               Foreground="#38BDF8"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- SPLIT: Tarjetas | Mapa -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="360"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- LISTA DE RUTAS ALTERNATIVAS -->
+                <ScrollViewer Grid.Column="0"
+                              VerticalScrollBarVisibility="Auto"
+                              Padding="16,16,8,16">
+                    <StackPanel x:Name="PanelRutas">
+
+                        <!-- TARJETA PLACEHOLDER (se reemplaza en code-behind) -->
+                        <Border Style="{StaticResource RouteCardStyle}"
+                                x:Name="PlaceholderCard">
+                            <StackPanel>
+                                <TextBlock Text="Aquí aparecerán las rutas recomendadas."
+                                           Foreground="#475569"
+                                           FontSize="13"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- TARJETA RUTA 1 (ejemplo hardcoded para el MVP) -->
+                        <Border Style="{StaticResource RouteCardStyle}"
+                                x:Name="Ruta1Card"
+                                Visibility="Collapsed">
+                            <StackPanel>
+
+                                <!-- Badge + etiqueta recomendada -->
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Border Style="{StaticResource LineBadgeStyle}" Background="#0C4A6E">
+                                        <TextBlock Text="L-2" Foreground="#38BDF8" FontSize="12" FontWeight="Bold"/>
+                                    </Border>
+                                    <Border Style="{StaticResource LineBadgeStyle}" Background="#4C1D95">
+                                        <TextBlock Text="L-7" Foreground="#A78BFA" FontSize="12" FontWeight="Bold"/>
+                                    </Border>
+                                    <Border CornerRadius="5" Padding="8,3"
+                                            Background="#14532D" Margin="6,0,0,0">
+                                        <TextBlock Text="⭐ Recomendada" Foreground="#4ADE80" FontSize="11"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Paradas -->
+                                <TextBlock Text="Sube en: Parada Central Norte"
+                                           Foreground="#CBD5E1" FontSize="13" Margin="0,0,0,2"/>
+                                <TextBlock Text="Baja en: Av. Insurgentes Sur"
+                                           Foreground="#CBD5E1" FontSize="13" Margin="0,0,0,8"/>
+
+                                <!-- Métricas -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="⏱ 28 min" Foreground="#38BDF8" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Tiempo" Foreground="#475569" FontSize="10"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="🔄 1" Foreground="#A78BFA" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Transbordo" Foreground="#475569" FontSize="10"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="🚶 350 m" Foreground="#4ADE80" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Caminata" Foreground="#475569" FontSize="10"/>
+                                    </StackPanel>
+
+                                </Grid>
+
+                            </StackPanel>
+                        </Border>
+
+                        <!-- TARJETA RUTA 2 -->
+                        <Border Style="{StaticResource RouteCardStyle}"
+                                x:Name="Ruta2Card"
+                                Visibility="Collapsed">
+                            <StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Border Style="{StaticResource LineBadgeStyle}" Background="#7C2D12">
+                                        <TextBlock Text="L-4" Foreground="#FB923C" FontSize="12" FontWeight="Bold"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <TextBlock Text="Sube en: Terminal Oriente"
+                                           Foreground="#CBD5E1" FontSize="13" Margin="0,0,0,2"/>
+                                <TextBlock Text="Baja en: Centro Histórico"
+                                           Foreground="#CBD5E1" FontSize="13" Margin="0,0,0,8"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="⏱ 41 min" Foreground="#38BDF8" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Tiempo" Foreground="#475569" FontSize="10"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="🔄 0" Foreground="#A78BFA" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Transbordo" Foreground="#475569" FontSize="10"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="🚶 120 m" Foreground="#4ADE80" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Caminata" Foreground="#475569" FontSize="10"/>
+                                    </StackPanel>
+
+                                </Grid>
+
+                            </StackPanel>
+                        </Border>
+
+                        <!-- TARJETA RUTA 3 -->
+                        <Border Style="{StaticResource RouteCardStyle}"
+                                x:Name="Ruta3Card"
+                                Visibility="Collapsed">
+                            <StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Border Style="{StaticResource LineBadgeStyle}" Background="#1C3A2D">
+                                        <TextBlock Text="L-9" Foreground="#4ADE80" FontSize="12" FontWeight="Bold"/>
+                                    </Border>
+                                    <Border Style="{StaticResource LineBadgeStyle}" Background="#0C4A6E">
+                                        <TextBlock Text="L-3" Foreground="#38BDF8" FontSize="12" FontWeight="Bold"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <TextBlock Text="Sube en: Glorieta de los Insurgentes"
+                                           Foreground="#CBD5E1" FontSize="13" Margin="0,0,0,2"/>
+                                <TextBlock Text="Baja en: Paseo de la Reforma"
+                                           Foreground="#CBD5E1" FontSize="13" Margin="0,0,0,8"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="⏱ 33 min" Foreground="#38BDF8" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Tiempo" Foreground="#475569" FontSize="10"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="🔄 1" Foreground="#A78BFA" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Transbordo" Foreground="#475569" FontSize="10"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="🚶 500 m" Foreground="#4ADE80" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Caminata" Foreground="#475569" FontSize="10"/>
+                                    </StackPanel>
+
+                                </Grid>
+
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- ÁREA DEL MAPA (placeholder hasta integrar Leaflet/WebView2) -->
+                <Border Grid.Column="1"
+                        Background="#0B1628"
+                        Margin="8,16,16,16"
+                        CornerRadius="12">
+                    <Grid>
+
+                        <!-- Grid de puntos tipo mapa -->
+                        <ItemsControl>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+
+                        <!-- Texto placeholder -->
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="🗺"
+                                       FontSize="48"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,12"/>
+                            <TextBlock Text="Mapa de ruta"
+                                       Foreground="#334155"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Se mostrará aquí con WebView2 + Leaflet"
+                                       Foreground="#263347"
+                                       FontSize="12"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+
+                        <!-- Coordenadas ficticias superpuestas (decorativo) -->
+                        <TextBlock Text="19.4326° N  99.1332° W"
+                                   Foreground="#1E3A5A"
+                                   FontSize="11"
+                                   Margin="16"
+                                   VerticalAlignment="Bottom"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                </Border>
+
+            </Grid>
+        </Grid>
+
     </Grid>
 </Window>
