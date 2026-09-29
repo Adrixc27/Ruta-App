@@ -1,0 +1,171 @@
+<UserControl x:Class="Ruta_App.CompararView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Ruta_App">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="400"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ═══════════════ PANEL DE COMPARACIÓN ═══════════════ -->
+        <Border Background="{StaticResource BgPanel}" BorderBrush="{StaticResource BorderDefault}" BorderThickness="0,0,1,0">
+            <Grid Margin="24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Volver -->
+                <Button Grid.Row="0" Style="{StaticResource BtnGhost}" HorizontalAlignment="Left"
+                        Padding="0,2" Click="BtnEditar_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <local:Icon Data="{StaticResource IcoArrowLeft}" Width="16" Height="16"/>
+                        <TextBlock Text="Editar búsqueda" Margin="6,0,0,0"/>
+                    </StackPanel>
+                </Button>
+
+                <local:StepperControl Grid.Row="1" Paso="2" Margin="0,24,0,0"/>
+
+                <!-- Resumen del viaje -->
+                <Border Grid.Row="2" Style="{StaticResource Card}" CornerRadius="14" Padding="15" Margin="0,24,0,0">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                                <Ellipse Width="10" Height="10" Fill="{StaticResource AccentOrigin}"/>
+                                <Border Width="2" Height="14" Background="{StaticResource BorderDefault}" Margin="0,3"/>
+                                <Ellipse Width="10" Height="10" Fill="{StaticResource BrandPrimary}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtOrigenResumen" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock x:Name="TxtDestinoResumen" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0"
+                                           Foreground="{StaticResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="2" Style="{StaticResource BtnIcon}" Background="{StaticResource BrandTint}"
+                                    Foreground="{StaticResource BrandPrimary}" VerticalAlignment="Center"
+                                    Click="BtnEditar_Click" ToolTip="Editar búsqueda">
+                                <local:Icon Data="{StaticResource IcoPencil}" Width="15" Height="15"/>
+                            </Button>
+                        </Grid>
+
+                        <Border Background="{StaticResource BrandTint}" CornerRadius="8" Padding="10,5"
+                                HorizontalAlignment="Left" Margin="0,12,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <local:Icon x:Name="IcoPrioridad" Data="{StaticResource IcoZap}" Width="13" Height="13"
+                                            Foreground="{StaticResource BrandPrimary}"/>
+                                <TextBlock x:Name="TxtPrioridad" FontSize="12" FontWeight="Bold" Margin="6,0,0,0"
+                                           Foreground="{StaticResource BrandPrimary}"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Encabezado -->
+                <StackPanel Grid.Row="3" Margin="0,24,0,16">
+                    <TextBlock Text="Rutas Disponibles" FontSize="20" FontWeight="Black" Foreground="{StaticResource TextPrimary}"/>
+                    <TextBlock x:Name="TxtConteo" FontSize="14" Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <!-- Tarjetas de rutas -->
+                <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl x:Name="ListaOpciones">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Cursor="Hand" CornerRadius="14" Margin="0,0,0,12" MouseLeftButtonUp="Opcion_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{StaticResource BgCard}"/>
+                                            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+                                            <Setter Property="BorderThickness" Value="1"/>
+                                            <Setter Property="Padding" Value="16"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Seleccionada}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource BrandPrimary}"/>
+                                                    <Setter Property="BorderThickness" Value="2"/>
+                                                    <Setter Property="Padding" Value="15"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel>
+                                        <!-- nombre + etiqueta -->
+                                        <Grid>
+                                            <TextBlock Text="{Binding Nombre}" FontSize="16" FontWeight="Black"
+                                                       Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
+                                            <Border HorizontalAlignment="Right" CornerRadius="6" Padding="8,3">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{StaticResource BgPanel}"/>
+                                                        <Setter Property="TextElement.Foreground" Value="{StaticResource TextSecondary}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Etiqueta}" Value="Recomendado">
+                                                                <Setter Property="Background" Value="{StaticResource BrandTint}"/>
+                                                                <Setter Property="TextElement.Foreground" Value="{StaticResource BrandPrimary}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding EtiquetaMayus}" FontSize="10" FontWeight="Bold"/>
+                                            </Border>
+                                        </Grid>
+
+                                        <!-- tiempo · precio · transbordos -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                            <local:Icon Data="{StaticResource IcoClock}" Width="14" Height="14"
+                                                        Foreground="{StaticResource TextPrimary}"/>
+                                            <TextBlock Text="{Binding MinutosTexto}" FontSize="13" FontWeight="Bold" Margin="5,0,0,0"
+                                                       Foreground="{StaticResource TextPrimary}"/>
+                                            <local:Icon Data="{StaticResource IcoWallet}" Width="14" Height="14" Margin="14,0,0,0"
+                                                        Foreground="{StaticResource TextSecondary}"/>
+                                            <TextBlock Text="{Binding TarifaTexto}" FontSize="13" Margin="5,0,0,0"
+                                                       Foreground="{StaticResource TextSecondary}"/>
+                                            <TextBlock Text="•" FontSize="13" Margin="12,0,0,0" Foreground="{StaticResource TextSecondary}"/>
+                                            <TextBlock Text="{Binding TransbordosTexto}" FontSize="12" Margin="12,0,0,0"
+                                                       Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <!-- línea + frecuencia -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                            <Border Background="{StaticResource BrandTint}" CornerRadius="6" Padding="10,4">
+                                                <TextBlock Text="{Binding Lineas}" FontSize="11" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimary}"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding FrecuenciaTexto}" FontSize="12" Margin="8,0,0,0"
+                                                       Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Comenzar viaje -->
+                <Button Grid.Row="5" Style="{StaticResource BtnPrimary}" Padding="16" FontSize="16" Margin="0,16,0,0"
+                        Click="BtnComenzar_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="TxtComenzar" Text="Comenzar viaje"/>
+                        <local:Icon Data="{StaticResource IcoArrowRight}" Width="18" Height="18" Margin="8,0,0,0"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ═══════════════ MAPA ═══════════════ -->
+        <local:MapaControl x:Name="Mapa" Grid.Column="1"/>
+    </Grid>
+</UserControl>

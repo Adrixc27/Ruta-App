@@ -1,0 +1,23 @@
+R.U.T.A. — migración del diseño de Figma a WPF (namespace Ruta_App)
+
+CÓMO INTEGRARLO
+1. Copia TODO el contenido de esta carpeta a tu proyecto (respeta las carpetas Controls y Views).
+2. Reemplaza tu App.xaml por el de aquí (solo agrega Estilos.xaml a los recursos). Deja tu App.xaml.cs como está.
+3. Sustituye tu MainWindow.xaml y MainWindow.xaml.cs por los de aquí (los anteriores ya no se usan).
+4. Mantén el paquete NuGet Microsoft.Web.WebView2 (ya lo tienes).
+5. Instala la fuente "Source Sans Pro" (Google Fonts: "Source Sans 3"). Sin ella se usa Segoe UI.
+6. Compila. Si hay errores, cópialos tal cual para corregirlos.
+
+ARCHIVOS
+Estilos.xaml ............ colores, iconos y estilos (tokens de Figma)
+Icon.cs ................. control Icon (iconos vectoriales)
+Modelos.cs .............. datos de ejemplo + Estado compartido entre pantallas
+MainWindow .............. sidebar que se contrae + navegación entre pantallas
+Controls/ ............... MapaControl (Leaflet), StepperControl, CampoTexto, CampoPassword
+Views/ .................. Auth (login/registro), Planificar, Comparar, Rutas, Comunidad, Perfil, Configuración
+
+DÓNDE CONECTAR TU LÓGICA REAL
+- Login/registro: Views/AuthView.xaml.cs (BtnLogin_Click, BtnRegistrar_Click)
+- Búsqueda de rutas: Views/CompararView.xaml.cs (AlNavegar)
+- Datos de ejemplo: Modelos.cs (clase DatosDemo). Las coordenadas son inventadas.
+- Tinte azul del mapa: Controls/MapaControl.xaml.cs, línea ".leaflet-tile-pane { filter: ... }"

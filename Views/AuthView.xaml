@@ -1,0 +1,273 @@
+<UserControl x:Class="Ruta_App.AuthView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Ruta_App">
+
+    <UserControl.Resources>
+        <Style x:Key="Etiqueta" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+        <Style x:Key="TituloForm" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontWeight" Value="Black"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        </Style>
+        <Style x:Key="SubtituloForm" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="Margin" Value="0,6,0,24"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style x:Key="ErrorTexto" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource Danger}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="640*"/>
+            <ColumnDefinition Width="800*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ═══════════════ PANEL DE MARCA (azul) ═══════════════ -->
+        <Grid Grid.Column="0" Background="{StaticResource BrandPrimary}" ClipToBounds="True">
+            <Ellipse Width="460" Height="460" Fill="White" Opacity="0.07"
+                     HorizontalAlignment="Left" VerticalAlignment="Top" Margin="380,-150,0,0"/>
+            <Ellipse Width="320" Height="320" Fill="White" Opacity="0.07"
+                     HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-110,0,0,-80"/>
+
+            <Grid Margin="56">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Marca -->
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="40" Height="40" CornerRadius="10" Background="White">
+                        <TextBlock Text="R" FontSize="20" FontWeight="Black" Foreground="{StaticResource BrandPrimary}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="RUTA" FontSize="22" FontWeight="Black" Foreground="White"/>
+                        <TextBlock Text="TRANSPORTE PÚBLICO" FontSize="11" FontWeight="SemiBold" Foreground="White" Opacity="0.85"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Ilustración de la ruta (528 x 400) -->
+                <Viewbox Grid.Row="1" MaxWidth="528" Stretch="Uniform" HorizontalAlignment="Left"
+                         VerticalAlignment="Center" Margin="0,24">
+                    <Canvas Width="528" Height="400">
+                        <!-- calles -->
+                        <Polygon Points="0,300 0,282 528,250 528,268" Fill="White" Opacity="0.14"/>
+                        <Polygon Points="0,150 0,138 528,110 528,122" Fill="White" Opacity="0.14"/>
+                        <Polygon Points="120,0 138,0 200,400 182,400" Fill="White" Opacity="0.14"/>
+                        <Polygon Points="362,0 380,0 348,400 330,400" Fill="White" Opacity="0.14"/>
+
+                        <!-- línea de la ruta -->
+                        <Path Data="M56,340 V240 Q56,219 77,219 H239 Q260,219 260,198 V101 Q260,80 281,80 H468"
+                              Stroke="White" StrokeThickness="7" StrokeLineJoin="Round"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+
+                        <!-- paradas -->
+                        <Ellipse Canvas.Left="45" Canvas.Top="329" Width="22" Height="22"
+                                 Fill="{StaticResource AccentOrigin}" Stroke="White" StrokeThickness="3"/>
+                        <Ellipse Canvas.Left="150" Canvas.Top="212" Width="16" Height="16" Fill="White"/>
+                        <Ellipse Canvas.Left="252" Canvas.Top="142" Width="16" Height="16" Fill="White"/>
+                        <Ellipse Canvas.Left="453" Canvas.Top="65" Width="30" Height="30" Fill="White"/>
+                        <Ellipse Canvas.Left="462" Canvas.Top="74" Width="12" Height="12" Fill="{StaticResource BrandPrimary}"/>
+
+                        <!-- pills -->
+                        <Border Canvas.Left="84" Canvas.Top="326" Height="25" CornerRadius="8" Background="White" Padding="10,0">
+                            <TextBlock Text="Tu ubicación" FontSize="11" FontWeight="Bold"
+                                       Foreground="{StaticResource BrandPrimary}" VerticalAlignment="Center"/>
+                        </Border>
+                        <Border Canvas.Left="400" Canvas.Top="110" Height="25" CornerRadius="8" Background="White" Padding="10,0">
+                            <TextBlock Text="Tu destino" FontSize="11" FontWeight="Bold"
+                                       Foreground="{StaticResource BrandPrimary}" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <!-- tarjeta "en vivo" -->
+                        <Border Canvas.Left="232" Canvas.Top="290" Width="239" Height="68" CornerRadius="14" Background="White">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="20" ShadowDepth="6" Direction="270" Opacity="0.2" Color="#1B365D"/>
+                            </Border.Effect>
+                            <Grid>
+                                <Border Width="40" Height="40" CornerRadius="10" Background="{StaticResource BrandTint}"
+                                        HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14">
+                                    <local:Icon Data="{StaticResource IcoBus}" Width="22" Height="22"
+                                                Foreground="{StaticResource BrandPrimary}"/>
+                                </Border>
+                                <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Margin="66,0,0,0">
+                                    <TextBlock Text="Ruta 6 - Villas" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+                                    <TextBlock Text="Llega en 4 min" FontSize="11" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Border HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0" Height="22"
+                                        CornerRadius="11" Background="{StaticResource SuccessTint}" Padding="8,0">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Ellipse Width="6" Height="6" Fill="{StaticResource Success}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="En vivo" FontSize="11" FontWeight="Bold" Margin="6,0,0,0"
+                                                   Foreground="{StaticResource Success}"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Canvas>
+                </Viewbox>
+
+                <!-- Texto de marca (cambia entre login y registro) -->
+                <StackPanel Grid.Row="2">
+                    <TextBlock x:Name="TxtTitular" FontSize="38" FontWeight="Black" Foreground="White"
+                               TextWrapping="Wrap" LineHeight="44" LineStackingStrategy="BlockLineHeight"/>
+                    <TextBlock x:Name="TxtSubtitular" FontSize="16" Foreground="White" Opacity="0.85"
+                               TextWrapping="Wrap" LineHeight="24" LineStackingStrategy="BlockLineHeight" Margin="0,12,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- ═══════════════ PANEL DE FORMULARIOS ═══════════════ -->
+        <Grid Grid.Column="1" Background="{StaticResource BgPanel}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <Grid Width="440" Margin="0,32" VerticalAlignment="Center">
+                    <!-- sombra suave detrás de la tarjeta -->
+                    <Border CornerRadius="24" Background="{StaticResource BgCard}">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="30" ShadowDepth="8" Direction="270" Opacity="0.12" Color="#1B365D"/>
+                        </Border.Effect>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}" CornerRadius="24" Padding="41">
+                        <Grid>
+
+                            <!-- ─────────── LOGIN ─────────── -->
+                            <StackPanel x:Name="FormLogin">
+                                <TextBlock Text="Bienvenido de nuevo" Style="{StaticResource TituloForm}"/>
+                                <TextBlock Text="Inicia sesión para planificar tus viajes" Style="{StaticResource SubtituloForm}"/>
+
+                                <TextBlock Text="Correo electrónico" Style="{StaticResource Etiqueta}"/>
+                                <local:CampoTexto x:Name="LoginCorreo" Icono="{StaticResource IcoMail}"
+                                                  Hint="tu@correo.com" Margin="0,0,0,16"/>
+
+                                <TextBlock Text="Contraseña" Style="{StaticResource Etiqueta}"/>
+                                <local:CampoPassword x:Name="LoginPass"/>
+
+                                <Grid Margin="0,18,0,18">
+                                    <CheckBox x:Name="ChkRecordarme" Content="Recordarme" FontSize="12"
+                                              Foreground="{StaticResource TextSecondary}" VerticalContentAlignment="Center"
+                                              HorizontalAlignment="Left"/>
+                                    <Button Content="¿Olvidaste tu contraseña?" Style="{StaticResource BtnGhost}"
+                                            FontSize="12" Padding="4,2" HorizontalAlignment="Right"
+                                            Click="BtnOlvide_Click"/>
+                                </Grid>
+
+                                <TextBlock x:Name="LoginError" Style="{StaticResource ErrorTexto}"/>
+                                <Button Content="Iniciar sesión" Style="{StaticResource BtnPrimary}" Padding="20,16"
+                                        Click="BtnLogin_Click"/>
+
+                                <Grid Margin="0,22,0,22">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Height="1" Background="{StaticResource BorderSoft}" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="o continúa con" FontSize="11" Margin="12,0"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <Border Grid.Column="2" Height="1" Background="{StaticResource BorderSoft}" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Button Style="{StaticResource BtnOutline}" Click="BtnGoogle_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="G" FontSize="16" FontWeight="Black" Foreground="{StaticResource BrandPrimary}" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Continuar con Google"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Content="Explorar el mapa sin cuenta" Style="{StaticResource BtnGhost}"
+                                        HorizontalAlignment="Center" Margin="0,18,0,0" Click="BtnInvitado_Click"/>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,14,0,0">
+                                    <TextBlock Text="¿No tienes cuenta?" FontSize="12" Foreground="{StaticResource TextSecondary}"
+                                               VerticalAlignment="Center"/>
+                                    <Button Content="Regístrate" Style="{StaticResource BtnGhost}" FontSize="12"
+                                            Padding="6,2" Click="BtnIrRegistro_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- ─────────── REGISTRO ─────────── -->
+                            <StackPanel x:Name="FormRegistro" Visibility="Collapsed">
+                                <TextBlock Text="Crea tu cuenta" Style="{StaticResource TituloForm}"/>
+                                <TextBlock Text="Regístrate para guardar tus rutas y viajar sin perderte" Style="{StaticResource SubtituloForm}"/>
+
+                                <TextBlock Text="Nombre completo" Style="{StaticResource Etiqueta}"/>
+                                <local:CampoTexto x:Name="RegNombre" Icono="{StaticResource IcoUser}"
+                                                  Hint="Tu nombre" Margin="0,0,0,16"/>
+
+                                <TextBlock Text="Correo electrónico" Style="{StaticResource Etiqueta}"/>
+                                <local:CampoTexto x:Name="RegCorreo" Icono="{StaticResource IcoMail}"
+                                                  Hint="tu@correo.com" Margin="0,0,0,16"/>
+
+                                <TextBlock Text="Contraseña" Style="{StaticResource Etiqueta}"/>
+                                <local:CampoPassword x:Name="RegPass"/>
+
+                                <!-- fuerza de la contraseña -->
+                                <UniformGrid Columns="4" Margin="0,10,0,0">
+                                    <Border x:Name="Barra1" Height="4" CornerRadius="2" Margin="0,0,6,0" Background="{StaticResource BorderSoft}"/>
+                                    <Border x:Name="Barra2" Height="4" CornerRadius="2" Margin="0,0,6,0" Background="{StaticResource BorderSoft}"/>
+                                    <Border x:Name="Barra3" Height="4" CornerRadius="2" Margin="0,0,6,0" Background="{StaticResource BorderSoft}"/>
+                                    <Border x:Name="Barra4" Height="4" CornerRadius="2" Background="{StaticResource BorderSoft}"/>
+                                </UniformGrid>
+                                <TextBlock x:Name="TxtFuerza" FontSize="11" Foreground="{StaticResource TextSecondary}"
+                                           Margin="0,6,0,0" TextWrapping="Wrap"/>
+
+                                <CheckBox x:Name="ChkTerminos" Margin="0,18,0,18" VerticalContentAlignment="Top">
+                                    <TextBlock Text="Acepto los Términos de servicio y la Política de privacidad de RUTA."
+                                               FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}"/>
+                                </CheckBox>
+
+                                <TextBlock x:Name="RegError" Style="{StaticResource ErrorTexto}"/>
+                                <Button Content="Crear cuenta" Style="{StaticResource BtnPrimary}" Padding="20,16"
+                                        Click="BtnRegistrar_Click"/>
+
+                                <Grid Margin="0,22,0,22">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Height="1" Background="{StaticResource BorderSoft}" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="o regístrate con" FontSize="11" Margin="12,0"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <Border Grid.Column="2" Height="1" Background="{StaticResource BorderSoft}" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Button Style="{StaticResource BtnOutline}" Click="BtnGoogle_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="G" FontSize="16" FontWeight="Black" Foreground="{StaticResource BrandPrimary}" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Continuar con Google"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,18,0,0">
+                                    <TextBlock Text="¿Ya tienes cuenta?" FontSize="12" Foreground="{StaticResource TextSecondary}"
+                                               VerticalAlignment="Center"/>
+                                    <Button Content="Inicia sesión" Style="{StaticResource BtnGhost}" FontSize="12"
+                                            Padding="6,2" Click="BtnIrLogin_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                        </Grid>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>
