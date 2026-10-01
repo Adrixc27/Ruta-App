@@ -75,6 +75,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="DB\BaseDatos.cs" />
+    <Compile Include="DB\CacheRepositorio.cs" />
+    <Compile Include="DB\RutaRepositorio.cs" />
+    <Compile Include="DB\TrayectoRepositorio.cs" />
     <Compile Include="Icon.cs" />
     <Compile Include="Modelos.cs" />
     <Compile Include="Views\AuthView.xaml.cs">
