@@ -315,7 +315,7 @@ namespace Ruta_App
         {
             return new ObservableCollection<Trayecto>
             {
-                new Trayecto { Alias = "Trabajo", Recorrido = "Kennedy > BOW", Detalle = "18 min, de lunes a viernes" },
+                new Trayecto { Alias = "Trabajo", Recorrido = "Kennedy > BOWI", Detalle = "18 min, de lunes a viernes" },
                 new Trayecto { Alias = "Gimnasio", Recorrido = "Plan de Ayala > Komatsu", Detalle = "14 min" },
                 new Trayecto { Alias = "Casa de mamá", Recorrido = "Circunvalacion II", Detalle = "25 min, domingos" }
             };
