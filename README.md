@@ -1,6 +1,6 @@
 # 🚌 R.U.T.A.
 
-### *Rutas Urbanas, Traslados y Alternativas*
+### *Recomendador Urbano de Transporte Accesible*
 
 > **R.U.T.A.** es una aplicación inteligente de navegación en transporte público diseñada para ayudar a las personas a encontrar rutas de autobús de una manera más clara, sencilla y personalizada.
 
