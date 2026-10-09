@@ -28,12 +28,12 @@ namespace Ruta_App
         public userLoginResponse user { get; set; }
         public string Error { get; set; }
     }
-
+    //El api en la web
     public class ApiService
     {
         private static readonly HttpClient client = new HttpClient()
         {
-            BaseAddress = new Uri("https://localhost:7284/")
+            BaseAddress = new Uri("http://ruta-api.runasp.net/")
         };
 
         // Devuelve el usuario si el login es correcto, o null si las credenciales fallan
