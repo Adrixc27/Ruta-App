@@ -11,6 +11,7 @@ namespace Ruta_App
     {
         /// <summary>Se dispara cuando el usuario entra (login, registro o invitado).</summary>
         public event Action Ingreso;
+        private readonly ApiService _api = new ApiService();
 
         public AuthView()
         {
@@ -56,7 +57,7 @@ namespace Ruta_App
 
         // ── Acciones ──────────────────────────────────────────────────────────
         // NOTA: no hay servidor. Cuando tengas API/base de datos, valida aquí las credenciales.
-        private void BtnLogin_Click(object sender, RoutedEventArgs e)
+        private async void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
             string correo = LoginCorreo.Text.Trim();
             if (!EsCorreo(correo))
@@ -70,14 +71,37 @@ namespace Ruta_App
                 return;
             }
 
-            LoginError.Visibility = Visibility.Collapsed;
-            Estado.Correo = correo;
-            Estado.Nombre = correo.ToLowerInvariant() == "laura.g@ruta.com" ? "Laura Guerrero" : NombreDesdeCorreo(correo);
-            Estado.Invitado = false;
-            Entrar();
+            var boton = (Button)sender;
+            boton.IsEnabled = false;   
+
+            try
+            {
+                var usuario = await _api.LoginAsync(correo, LoginPass.Password);
+
+                if (usuario == null)
+                {
+                    MostrarError(LoginError, "Correo o contraseña incorrectos.");
+                    return;
+                }
+
+                LoginError.Visibility = Visibility.Collapsed;
+                sesion.userLogin = usuario;
+                Estado.Correo = usuario.email;
+                Estado.Nombre = usuario.name;
+                Estado.Invitado = false;
+                Entrar();
+            }
+            catch (Exception)
+            {
+                MostrarError(LoginError, "No se pudo conectar con el servidor. Intenta de nuevo.");
+            }
+            finally
+            {
+                boton.IsEnabled = true;
+            }
         }
 
-        private void BtnRegistrar_Click(object sender, RoutedEventArgs e)
+        private async void BtnRegistrar_Click(object sender, RoutedEventArgs e)
         {
             string nombre = RegNombre.Text.Trim();
             string correo = RegCorreo.Text.Trim();
@@ -87,11 +111,34 @@ namespace Ruta_App
             if (RegPass.Password.Length < 6) { MostrarError(RegError, "La contraseña debe tener al menos 6 caracteres."); return; }
             if (ChkTerminos.IsChecked != true) { MostrarError(RegError, "Debes aceptar los términos para continuar."); return; }
 
-            RegError.Visibility = Visibility.Collapsed;
-            Estado.Nombre = nombre;
-            Estado.Correo = correo;
-            Estado.Invitado = false;
-            Entrar();
+            var boton = (Button)sender;
+            boton.IsEnabled = false;
+
+            try
+            {
+                var resultado = await _api.RegistrarAsync(nombre, correo, RegPass.Password);
+
+                if (resultado.user == null)
+                {
+                    MostrarError(RegError, resultado.Error);   
+                    return;
+                }
+
+                RegError.Visibility = Visibility.Collapsed;
+                sesion.userLogin = resultado.user;
+                Estado.Nombre = resultado.user.name;
+                Estado.Correo = resultado.user.email;
+                Estado.Invitado = false;
+                Entrar();   
+            }
+            catch (Exception)
+            {
+                MostrarError(RegError, "No se pudo conectar con el servidor. Intenta de nuevo.");
+            }
+            finally
+            {
+                boton.IsEnabled = true;
+            }
         }
 
         private void BtnInvitado_Click(object sender, RoutedEventArgs e)
