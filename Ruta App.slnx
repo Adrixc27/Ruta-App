@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="../MiApi/MiApi.csproj" Id="4a7b05bb-143f-4709-be38-d40eed906ca5" />
   <Project Path="Ruta App.csproj" Id="b7318c7f-d1b7-4748-8a31-77170238a4e1" />
 </Solution>
