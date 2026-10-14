@@ -1,0 +1,27 @@
+POST https://localhost:7284/registro
+Content-Type: application/json
+
+{
+  "name": "Juanperez5",
+  "email": "prueba1@correo.com",
+  "password": "clave123",
+  "phoneNumber": "6141234567",
+  "photoUser": ""
+}
+### Login correcto
+POST https://localhost:7123/login
+Content-Type: application/json
+
+{
+  "email": "prueba1@correo.com",
+  "password": "clave123"
+}
+
+### Login con contraseña incorrecta
+POST https://localhost:7123/login
+Content-Type: application/json
+
+{
+  "email": "prueba1@correo.com",
+  "password": "otraclave"
+}

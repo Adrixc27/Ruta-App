@@ -1,0 +1,121 @@
+using MySqlConnector;
+using Dapper;
+
+var builder = WebApplication.CreateBuilder(args);
+var cs = builder.Configuration.GetConnectionString("Default");
+
+var app = builder.Build();
+
+app.MapGet("/", () => "API funcionando");
+
+app.MapGet("/probar-bd", async () =>
+{
+    try
+    {
+        await using var conexion = new MySqlConnection(cs);
+        await conexion.OpenAsync();
+        return Results.Ok("Conexión a MySQL exitosa");
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem("No se pudo conectar: " + ex.Message);
+    }
+});
+
+// Registrar usuario
+app.MapPost("/registro", async (RegistroRequest request) =>
+{
+    // Validación de datos
+    if (string.IsNullOrWhiteSpace(request.Name) ||
+        string.IsNullOrWhiteSpace(request.Email) ||
+        request.Password.Length < 6)
+    {
+        return Results.BadRequest("Datos inválidos, mínimo 6 caracteres en la contraseña");
+    }
+
+    await using var conexion = new MySqlConnection(cs);
+
+    // Revisar si el correo ya existe (tabla `user`, con acentos graves)
+    var usuarioExiste = await conexion.ExecuteScalarAsync<int>(
+        "SELECT COUNT(*) FROM `user` WHERE email = @Email",
+        new { request.Email });
+
+    if (usuarioExiste > 0)
+    {
+        return Results.Conflict("El correo ya está registrado");
+    }
+
+    // Hash de la contraseña
+    var hashpassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+    // Guardar usuario y recuperar el id que le asignó MySQL
+    var iduser = await conexion.ExecuteScalarAsync<int>(
+        @"INSERT INTO `user` (name, email, password, phone_number, photo_user)
+          VALUES (@Name, @Email, @Password, @PhoneNumber, @PhotoUser);
+          SELECT LAST_INSERT_ID();",
+        new
+        {
+            request.Name,
+            request.Email,
+            Password = hashpassword,   
+            request.PhoneNumber,
+            request.PhotoUser
+        });
+
+    return Results.Created($"/usuario/{iduser}",
+        new { id = iduser, request.Name, request.Email, request.PhoneNumber, request.PhotoUser });
+});
+//Login usuario
+app.MapPost("/login", async (LoginRequest request) =>
+{
+    // Validación de datos
+    if (string.IsNullOrWhiteSpace(request.Email) ||
+        string.IsNullOrWhiteSpace(request.Password))
+    {
+        return Results.BadRequest("Ingresa email y password correctos");
+    }
+    await using var conexion = new MySqlConnection(cs);
+    var usuario = await conexion.QuerySingleOrDefaultAsync<UserDB>(
+        @"SELECT id_user AS IDUser, name AS Name,email AS Email, password AS Password, phone_number AS PhoneNumber, photo_user AS PhotoUser FROM `user` WHERE email = @Email",
+        new { request.Email });
+
+    if (usuario is null || !BCrypt.Net.BCrypt.Verify(request.Password, usuario.Password))
+    {
+        return Results.Json(new { message = "Correo o contraseña incorrectos" }, statusCode: 401);
+    }
+
+    return Results.Ok(new
+    {
+        id = usuario.IDUser,
+        name = usuario.Name,
+        email = usuario.Email,
+        phoneNumber = usuario.PhoneNumber,
+        photoUser = usuario.PhotoUser
+
+    });
+});
+
+app.Run();
+
+public class RegistroRequest
+{
+    public string Name { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string PhoneNumber { get; set; } = "";
+    public string PhotoUser { get; set; } = "";
+}
+public class LoginRequest
+{
+    public string Email { get; set; } = "";
+    public string Password { get; set; } = "";
+}
+public class UserDB
+{
+    public int IDUser { get; set; }
+    public string Name { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string PhoneNumber { get; set; } = "";
+    public string PhotoUser { get; set; } = "";
+}
