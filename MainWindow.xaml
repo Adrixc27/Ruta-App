@@ -166,6 +166,6 @@
         </Grid>
 
         <!-- ═══════════════ LOGIN / REGISTRO (encima de todo) ═══════════════ -->
-        <local:AuthView x:Name="Auth"/>
+        <local:AuthView x:Name="Auth" Loaded="Auth_Loaded"/>
     </Grid>
 </Window>

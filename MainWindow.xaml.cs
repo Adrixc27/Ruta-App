@@ -162,5 +162,10 @@ namespace Ruta_App
             TxtColapsar.Visibility = v;
             TxtLogout.Visibility = v;
         }
+
+        private void Auth_Loaded(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
