@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
+using System.Text.Json;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -28,6 +30,23 @@ namespace Ruta_App
         public userLoginResponse user { get; set; }
         public string Error { get; set; }
     }
+    // Camiones y rutas que manda la API (tablas bus y routes)
+    public class BusApi
+    {
+        public int id { get; set; }
+        public string name { get; set; } = "";
+    }
+
+    public class RutaApi
+    {
+        public int id { get; set; }
+        public int idBus { get; set; }
+        public string name { get; set; } = "";
+        public decimal price { get; set; }
+        public double travelMinutes { get; set; }
+        public string description { get; set; }
+    }
+
     //El api en la web
     public class ApiService
     {
@@ -46,6 +65,16 @@ namespace Ruta_App
 
             loginrequest.EnsureSuccessStatusCode();
             return await loginrequest.Content.ReadFromJsonAsync<userLoginResponse>();
+        }
+
+        public Task<List<BusApi>> ObtenerBusesAsync()
+        {
+            return client.GetFromJsonAsync<List<BusApi>>("buses");
+        }
+
+        public Task<List<RutaApi>> ObtenerRutasAsync()
+        {
+            return client.GetFromJsonAsync<List<RutaApi>>("routes");
         }
 
         public async Task<ResultadoRegistro> RegistrarAsync(string nombre, string correo, string password)

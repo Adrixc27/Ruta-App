@@ -26,8 +26,8 @@ namespace Ruta_App
             _listo = true;
             Refrescar();
 
-            // Como en el diseño de Figma, arranca mostrando la Ruta 6
-            var inicial = Estado.BuscarRuta(6);
+            // Arranca mostrando la primera ruta
+            var inicial = Estado.Rutas.FirstOrDefault();
             if (inicial != null) Seleccionar(inicial);
         }
 
@@ -158,6 +158,8 @@ namespace Ruta_App
             if (_seleccion == null) return;
             Estado.Origen = _seleccion.OrigenNombre;
             Estado.Destino = _seleccion.DestinoNombre;
+            Estado.Escalas = new System.Collections.Generic.List<Sugerencia>();
+            Estado.OrigenLat = double.NaN; Estado.DestinoLat = double.NaN;
             var nav = Estado.Navegar;
             if (nav != null) nav("planificar", null);
         }

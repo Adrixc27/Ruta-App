@@ -26,42 +26,62 @@
                     <StackPanel Margin="0,24,0,0">
                         <local:CampoTexto x:Name="TxtOrigen" Punto="{StaticResource AccentOrigin}"
                                           Fondo="{StaticResource BgCard}" Hint="¿Desde dónde sales?" Margin="0,0,0,12"/>
+                        <StackPanel x:Name="PanelEscalas"/>
                         <local:CampoTexto x:Name="TxtDestino" Punto="{StaticResource BrandPrimary}"
                                           Fondo="{StaticResource BgCard}" Hint="¿A dónde vas?"/>
-                    </StackPanel>
-
-                    <!-- Prioridad -->
-                    <StackPanel Margin="0,24,0,0">
-                        <TextBlock Text="PRIORIDAD DE RUTA" Style="{StaticResource LabelUpper}"/>
-                        <UniformGrid Columns="3" Margin="0,12,0,0">
-                            <RadioButton x:Name="PrioRapido" GroupName="prio" IsChecked="True" Style="{StaticResource PriorityRadio}"
-                                         Margin="0,0,4,0" Checked="Prioridad_Checked" Tag="Rápido">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <local:Icon Data="{StaticResource IcoZap}" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Rápido" Margin="0,4,0,0" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </RadioButton>
-                            <RadioButton x:Name="PrioEconomico" GroupName="prio" Style="{StaticResource PriorityRadio}"
-                                         Margin="4,0" Checked="Prioridad_Checked" Tag="Económico">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <local:Icon Data="{StaticResource IcoWallet}" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Económico" Margin="0,4,0,0" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </RadioButton>
-                            <RadioButton x:Name="PrioComodo" GroupName="prio" Style="{StaticResource PriorityRadio}"
-                                         Margin="4,0,0,0" Checked="Prioridad_Checked" Tag="Cómodo">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <local:Icon Data="{StaticResource IcoSofa}" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Cómodo" Margin="0,4,0,0" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </RadioButton>
-                        </UniformGrid>
+                        <Button x:Name="BtnAnadirParada" Style="{StaticResource BtnGhost}" HorizontalAlignment="Left"
+                                Padding="0,2" Margin="0,10,0,0" Click="BtnAnadirParada_Click"
+                                ToolTip="Agrega un lugar por el que quieres pasar antes de llegar al destino final">
+                            <TextBlock Text="+ Añadir parada intermedia"/>
+                        </Button>
+                        <Popup x:Name="PopSug" StaysOpen="True" AllowsTransparency="True" Placement="Bottom"
+                               VerticalOffset="4" PopupAnimation="Fade">
+                            <Border Background="{StaticResource BgCard}" BorderBrush="{StaticResource BorderDefault}"
+                                    BorderThickness="1" CornerRadius="10" MaxHeight="300" Margin="0,0,8,8">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity=".18" Color="#1B365D"/>
+                                </Border.Effect>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl x:Name="ListaSug">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border x:Name="Fila" Background="Transparent" Padding="12,8" Cursor="Hand"
+                                                        MouseLeftButtonUp="Sugerencia_Click">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource TextPrimary}"
+                                                                VerticalAlignment="Top" Margin="0,2,10,0">
+                                                            <TextBlock Text="{Binding Numero}" Foreground="White" FontSize="11" FontWeight="Bold"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1">
+                                                            <TextBlock Text="{Binding Nombre}" FontSize="14" FontWeight="SemiBold"
+                                                                       Foreground="{StaticResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text="{Binding Detalle}" FontSize="12" Foreground="{StaticResource TextSecondary}"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                                <DataTemplate.Triggers>
+                                                    <Trigger SourceName="Fila" Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Fila" Property="Background" Value="#DBEAFE"/>
+                                                    </Trigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
                     </StackPanel>
 
                     <!-- Botón buscar -->
                     <TextBlock x:Name="TxtError" Text="Escribe un destino para continuar." FontSize="12"
                                Foreground="{StaticResource Danger}" Margin="0,16,0,0" Visibility="Collapsed"/>
-                    <Button Style="{StaticResource BtnPrimary}" Padding="16" FontSize="16" Margin="0,24,0,0"
+                    <Button x:Name="BtnBuscar" Style="{StaticResource BtnPrimary}" Padding="16" FontSize="16" Margin="0,24,0,0"
                             Click="BtnBuscar_Click">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Buscar y comparar rutas"/>
@@ -70,7 +90,7 @@
                     </Button>
 
                     <!-- Rutas recientes -->
-                    <TextBlock Text="RUTAS RECIENTES" Style="{StaticResource LabelUpper}" Margin="0,28,0,12"/>
+                    <TextBlock Text="RUTAS DISPONIBLES" Style="{StaticResource LabelUpper}" Margin="0,28,0,12"/>
                     <ItemsControl x:Name="ListaRecientes">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>

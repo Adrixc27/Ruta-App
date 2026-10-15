@@ -64,22 +64,15 @@ namespace Ruta_App
             string ajuste = ((FrameworkElement)sender).DataContext as string;
             if (ajuste == null) return;
 
-            if (ajuste == "Sobre Nosotros")
-            {
-                MessageBox.Show("R.U.T.A. — Transporte público\nVersión 4.12.0 (escritorio)",
-                                "Sobre Nosotros", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            // Aquí conectarás cada ajuste real (idioma, unidades, etc.)
-            MessageBox.Show("«" + ajuste + "» estará disponible próximamente.",
-                            "R.U.T.A.", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Por ahora cada ajuste solo muestra su pantalla de diseño (sin funcionalidad)
+            var nav = Estado.Navegar;
+            if (nav != null) nav("ajuste", ajuste);
         }
 
         private void BtnLegal_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Los términos legales y licencias estarán disponibles próximamente.",
-                            "R.U.T.A.", MessageBoxButton.OK, MessageBoxImage.Information);
+            var nav = Estado.Navegar;
+            if (nav != null) nav("ajuste", "Términos de servicio");
         }
     }
 }

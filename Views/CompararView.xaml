@@ -51,6 +51,8 @@
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock x:Name="TxtOrigenResumen" FontSize="14" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock x:Name="TxtEscalasResumen" FontSize="12" Margin="0,6,0,0" Visibility="Collapsed"
+                                           Foreground="{StaticResource TextSecondary}" TextTrimming="CharacterEllipsis"/>
                                 <TextBlock x:Name="TxtDestinoResumen" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0"
                                            Foreground="{StaticResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
                             </StackPanel>
@@ -62,15 +64,6 @@
                             </Button>
                         </Grid>
 
-                        <Border Background="{StaticResource BrandTint}" CornerRadius="8" Padding="10,5"
-                                HorizontalAlignment="Left" Margin="0,12,0,0">
-                            <StackPanel Orientation="Horizontal">
-                                <local:Icon x:Name="IcoPrioridad" Data="{StaticResource IcoZap}" Width="13" Height="13"
-                                            Foreground="{StaticResource BrandPrimary}"/>
-                                <TextBlock x:Name="TxtPrioridad" FontSize="12" FontWeight="Bold" Margin="6,0,0,0"
-                                           Foreground="{StaticResource BrandPrimary}"/>
-                            </StackPanel>
-                        </Border>
                     </StackPanel>
                 </Border>
 
@@ -144,7 +137,7 @@
                                                 <TextBlock Text="{Binding Lineas}" FontSize="11" FontWeight="Bold"
                                                            Foreground="{StaticResource TextPrimary}"/>
                                             </Border>
-                                            <TextBlock Text="{Binding FrecuenciaTexto}" FontSize="12" Margin="8,0,0,0"
+                                            <TextBlock Text="{Binding FrecuenciaTexto}" FontSize="12" Margin="8,0,0,0" TextWrapping="Wrap" MaxWidth="300"
                                                        Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </StackPanel>

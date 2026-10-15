@@ -13,9 +13,13 @@ namespace Ruta_App
         public event Action Ingreso;
         private readonly ApiService _api = new ApiService();
 
+        private readonly SlideMarca Marca = new SlideMarca();
+
         public AuthView()
         {
             InitializeComponent();
+            Carrusel.AgregarSlide(Marca);
+            Carrusel.AgregarFotosDeCiudades();
             RegPass.PasswordChanged += ActualizarFuerza;
             MostrarLogin();
             ActualizarFuerza();
@@ -36,20 +40,20 @@ namespace Ruta_App
         }
 
         // ── Cambiar entre login y registro ────────────────────────────────────
-        private void MostrarLogin()
+        public void MostrarLogin()
         {
             FormLogin.Visibility = Visibility.Visible;
             FormRegistro.Visibility = Visibility.Collapsed;
-            TxtTitular.Text = "Muévete por tu ciudad sin perderte.";
-            TxtSubtitular.Text = "Planifica, compara y viaja en transporte público con rutas claras y en tiempo real.";
+            Marca.Titular = "Muévete por tu ciudad sin perderte.";
+            Marca.Subtitular = "Planifica, compara y viaja en transporte público con rutas claras y en tiempo real.";
         }
 
-        private void MostrarRegistro()
+        public void MostrarRegistro()
         {
             FormLogin.Visibility = Visibility.Collapsed;
             FormRegistro.Visibility = Visibility.Visible;
-            TxtTitular.Text = "Tus rutas favoritas, siempre a la mano.";
-            TxtSubtitular.Text = "Guarda tus trayectos frecuentes y consulta tiempos de llegada en tiempo real.";
+            Marca.Titular = "Tus rutas favoritas, siempre a la mano.";
+            Marca.Subtitular = "Guarda tus trayectos frecuentes y consulta tiempos de llegada en tiempo real.";
         }
 
         private void BtnIrRegistro_Click(object sender, RoutedEventArgs e) { MostrarRegistro(); }
@@ -139,6 +143,14 @@ namespace Ruta_App
             {
                 boton.IsEnabled = true;
             }
+        }
+
+        public void EntrarComoInvitado()
+        {
+            Estado.Nombre = "Invitado";
+            Estado.Correo = "Sin cuenta";
+            Estado.Invitado = true;
+            Entrar();
         }
 
         private void BtnInvitado_Click(object sender, RoutedEventArgs e)

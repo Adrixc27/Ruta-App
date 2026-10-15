@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,22 +23,110 @@ namespace Ruta_App
             Estado.GuardadasCambiaron += ActualizarBadge; // el número junto a "Rutas"
             Auth.Ingreso += Auth_Ingreso;
 
+            // Landing page y página pública "Sobre Nosotros"
+            Landing.IniciarSesion += () => MostrarAuth(false);
+            Landing.VerSobreNosotros += () => { Landing.Visibility = Visibility.Collapsed; Sobre.Visibility = Visibility.Visible; };
+            Landing.VerRutas += EntrarComoInvitadoARutas;
+            Landing.ReproducirIntro += () => Intro.Reproducir();   // clic en el logo de la landing
+            Sobre.Inicio += () => { Sobre.Visibility = Visibility.Collapsed; Landing.Visibility = Visibility.Visible; };
+            Sobre.VerRutas += EntrarComoInvitadoARutas;
+
             ActualizarBadge();
         }
 
         // ── Sesión ────────────────────────────────────────────────────────────
-        private void Auth_Ingreso()
+        private string _trasIngreso = "planificar";   // pantalla a la que se va al entrar
+
+        private void MostrarAuth(bool registro)
         {
-            Auth.Visibility = Visibility.Collapsed;
-            AppShell.Visibility = Visibility.Visible;
-            Navegar("planificar", null);
+            Landing.Visibility = Visibility.Collapsed;
+            Sobre.Visibility = Visibility.Collapsed;
+            Auth.Visibility = Visibility.Visible;
+            if (registro) Auth.MostrarRegistro(); else Auth.MostrarLogin();
         }
 
-        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        // "Rutas" de la landing: se explora la app como invitado, directo a las rutas
+        private void EntrarComoInvitadoARutas()
         {
+            _trasIngreso = "rutas";
+            Auth.EntrarComoInvitado();
+        }
+
+        private async void Auth_Ingreso()
+        {
+            await Estado.CargarRutasRealesAsync();   // rutas de la base de datos; si la API no responde se quedan las de ejemplo
+            var _ = Estado.PrepararTrazosAsync();   // recorridos por calles, en segundo plano
+            Landing.Visibility = Visibility.Collapsed;
+            Sobre.Visibility = Visibility.Collapsed;
+            Auth.Visibility = Visibility.Collapsed;
+            ActualizarBotonSesion();
+            AppShell.Visibility = Visibility.Visible;
+            string destino = _trasIngreso;
+            _trasIngreso = "planificar";
+            Navegar(destino, null);
+        }
+
+        // ── Mapas bajo un pop-up ──────────────────────────────────────────────
+        private static IEnumerable<MapaControl> BuscarMapas(DependencyObject raiz)
+        {
+            int n = System.Windows.Media.VisualTreeHelper.GetChildrenCount(raiz);
+            for (int i = 0; i < n; i++)
+            {
+                var hijo = System.Windows.Media.VisualTreeHelper.GetChild(raiz, i);
+                var mapa = hijo as MapaControl;
+                if (mapa != null) yield return mapa;
+                foreach (var m in BuscarMapas(hijo)) yield return m;
+            }
+        }
+
+        private async System.Threading.Tasks.Task CongelarMapasAsync()
+        {
+            foreach (var mapa in BuscarMapas(Contenido).ToList())
+                await mapa.CongelarAsync();
+        }
+
+        private void DescongelarMapas()
+        {
+            foreach (var mapa in BuscarMapas(Contenido).ToList())
+                mapa.Descongelar();
+        }
+
+        // Invitado: el botón dice "Iniciar sesión" y lleva al login. Con cuenta: "Cerrar sesión" (con confirmación).
+        private void ActualizarBotonSesion()
+        {
+            string texto = Estado.Invitado ? "Iniciar sesión" : "Cerrar sesión";
+            TxtLogout.Text = texto;
+            BtnLogout.ToolTip = texto;
+        }
+
+        private async void BtnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            if (Estado.Invitado)
+            {
+                // No hay sesión que cerrar: se va directo a la pantalla de inicio de sesión
+                Auth.Reiniciar();
+                AppShell.Visibility = Visibility.Collapsed;
+                Auth.Visibility = Visibility.Visible;
+                return;
+            }
+
+            await CongelarMapasAsync();   // el mapa (WebView2) taparía el pop-up
+            ModalCerrarSesion.Visibility = Visibility.Visible;
+        }
+
+        private void BtnCancelarCerrar_Click(object sender, RoutedEventArgs e)
+        {
+            ModalCerrarSesion.Visibility = Visibility.Collapsed;
+            DescongelarMapas();
+        }
+
+        private void BtnConfirmarCerrar_Click(object sender, RoutedEventArgs e)
+        {
+            ModalCerrarSesion.Visibility = Visibility.Collapsed;
+            DescongelarMapas();
             Auth.Reiniciar();
             AppShell.Visibility = Visibility.Collapsed;
-            Auth.Visibility = Visibility.Visible;
+            Landing.Visibility = Visibility.Visible;
         }
 
         // ── Navegación ────────────────────────────────────────────────────────
@@ -87,6 +176,7 @@ namespace Ruta_App
                 case "comunidad": return new ComunidadView();
                 case "perfil": return new PerfilView();
                 case "config": return new ConfiguracionView();
+                case "ajuste": return new AjusteDetalleView();
                 default: return null;
             }
         }
@@ -94,7 +184,7 @@ namespace Ruta_App
         /// <summary>Pinta de azul el botón del sidebar de la pantalla actual (Comparar cuenta como Planificar).</summary>
         private void MarcarActivo(string clave)
         {
-            string activo = clave == "comparar" ? "planificar" : clave;
+            string activo = clave == "comparar" ? "planificar" : (clave == "ajuste" ? "config" : clave);
             NavPlanificar.Tag = activo == "planificar" ? "Activo" : "Normal";
             NavRutas.Tag = activo == "rutas" ? "Activo" : "Normal";
             NavComunidad.Tag = activo == "comunidad" ? "Activo" : "Normal";

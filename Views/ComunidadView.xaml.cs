@@ -141,7 +141,7 @@ namespace Ruta_App
         private void BtnVerRuta_Click(object sender, RoutedEventArgs e)
         {
             var nav = Estado.Navegar;
-            if (nav != null) nav("rutas", Estado.BuscarRuta(4));
+            if (nav != null) nav("rutas", Estado.Rutas.FirstOrDefault());
         }
 
         // ── Modal "Nueva publicación" ─────────────────────────────────────────

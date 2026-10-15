@@ -114,6 +114,16 @@
     <Compile Include="DB\TrayectoRepositorio.cs" />
     <Compile Include="Icon.cs" />
     <Compile Include="Modelos.cs" />
+    <Compile Include="Controls\CarruselControl.cs" />
+    <Compile Include="Controls\SlideMarca.xaml.cs">
+      <DependentUpon>SlideMarca.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\AjusteDetalleView.cs" />
+    <Compile Include="Views\LandingView.xaml.cs">
+      <DependentUpon>LandingView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SobreNosotrosView.cs" />
+    <Compile Include="Views\IntroView.cs" />
     <Compile Include="Views\AuthView.xaml.cs">
       <DependentUpon>AuthView.xaml</DependentUpon>
     </Compile>
@@ -179,6 +189,14 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Controls\SlideMarca.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\LandingView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\AuthView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -231,6 +249,9 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <Resource Include="Resources\Carrusel\chihuahua.jpg" />
+    <Resource Include="Resources\Carrusel\cdjuarez.jpg" />
+    <Resource Include="Resources\Carrusel\delicias.jpg" />
     <Resource Include="Resources\Noto\NotoSans-Bold.ttf" />
     <Resource Include="Resources\Noto\NotoSans-BoldItalic.ttf" />
     <Resource Include="Resources\Noto\NotoSans-Italic.ttf" />
