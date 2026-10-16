@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 var cs = builder.Configuration.GetConnectionString("Default");
 
 var app = builder.Build();
+//Testear que si conecta a la base de datos 
 
 app.MapGet("/", () => "API funcionando");
 
@@ -21,7 +22,7 @@ app.MapGet("/probar-bd", async () =>
         return Results.Problem("No se pudo conectar: " + ex.Message);
     }
 });
-
+//Endpoints
 // Registrar usuario
 app.MapPost("/registro", async (RegistroRequest request) =>
 {
@@ -129,9 +130,60 @@ app.MapGet("/routes", async () =>
     {
         return Results.Problem("No se pudieron leer las rutas: " + ex.Message);
     }
+});}
+
+//Paradas (de camiones)
+app.MapGet("/stops", async () =>
+{
+    try
+    {
+        await using var conexion = new MySqlConnection(cs);
+        var filas = await conexion.QueryAsync(
+            @"SELECT id_stop AS Id, id_routes AS IdRoutes, name AS Name, latitude AS Latitude, longitude AS Longitude
+              FROM `stop`
+              ORDER BY name");
+        return Results.Ok(filas);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem("No se pudieron leer las paradas: " + ex.Message);
+
+    }
+
+});
+//Paradas por rutas
+app.MapGet("/routes/{id:int}", async (int id) =>
+{
+    try
+    {
+        await using var conexion = new MySqlConnection(cs);
+        var route = await conexion.QuerySingleOrDefaultAsync<RutaDto>(
+            @"SELECT id_routes AS Id, id_bus AS IdBus, name AS Name, price AS Price,
+                     TIME_TO_SEC(travel_time) / 60 AS TravelMinutes, description AS Description
+              FROM `routes`
+              WHERE id_routes = @Id AND active_inactive = 1",
+            new { Id });
+        if (route is null)
+            return Results.NotFound("Ruta no encontrada");
+        var stop = await conexion.QueryAsync<StopOrdenDta>(
+            @"SELECT s.id_stop AS Id, s.id_routes AS IdRoutes, s.name AS Name, s.stop_order AS StopOrder
+              FROM `route_stops` rs
+                JOIN `stops` s ON rs.id_stop = s.id_stop
+              WHERE rs.id_routes = @Id
+              ORDER BY rs.stop_order",
+            new { Id });
+        return Results.Ok(new { route, stops });
+
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem("No se pudieron leer las rutas y paradas: " + ex.Message);
+    }
+
 });
 
 app.Run();
+//clases para los endpoints
 
 public class BusDto
 {
@@ -168,4 +220,17 @@ public class UserDB
     public string Password { get; set; } = "";
     public string PhoneNumber { get; set; } = "";
     public string PhotoUser { get; set; } = "";
+}
+public class StopDto
+{
+    public int Id { get; set; }
+    public int IdRoutes { get; set; }
+    public string Name { get; set; } = "";
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }   
+}
+public class StopOrdenDta : StopDto
+{
+    public int StopOrder { get; set; }
+
 }
