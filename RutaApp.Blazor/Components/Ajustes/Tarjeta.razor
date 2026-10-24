@@ -1,0 +1,24 @@
+@* Tarjeta con título y subtítulo opcionales; el contenido va debajo. *@
+<section class="tarjeta @Clase" style="padding:@(Relleno)px">
+    @if (!string.IsNullOrEmpty(Titulo))
+    {
+        <h3 class="tarjeta-titulo">@Titulo</h3>
+        @if (!string.IsNullOrEmpty(Subtitulo))
+        {
+            <p class="tarjeta-sub">@Subtitulo</p>
+        }
+        <div class="tarjeta-cuerpo">@ChildContent</div>
+    }
+    else
+    {
+        @ChildContent
+    }
+</section>
+
+@code {
+    [Parameter] public string Titulo { get; set; }
+    [Parameter] public string Subtitulo { get; set; }
+    [Parameter] public int Relleno { get; set; } = 24;
+    [Parameter] public string Clase { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}

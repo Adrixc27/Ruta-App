@@ -1,0 +1,8 @@
+@* Etiqueta pequeña. Variante: primario (azul), tinte (azul claro), panel (gris azulado), sidebar. *@
+<span class="chip chip-@Variante" style="font-size:@(Tam)px">@Texto</span>
+
+@code {
+    [Parameter] public string Texto { get; set; }
+    [Parameter] public string Variante { get; set; } = "tinte";
+    [Parameter] public int Tam { get; set; } = 11;
+}

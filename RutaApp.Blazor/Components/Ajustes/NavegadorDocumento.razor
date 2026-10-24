@@ -1,0 +1,26 @@
+@* Índice de un documento legal: la primera sección aparece resaltada. *@
+<h3 class="tarjeta-titulo">@Titulo</h3>
+<p class="tarjeta-sub">@Subtitulo</p>
+<div class="indice-doc">
+    @for (int i = 0; i < Secciones.Length; i++)
+    {
+        <div class="indice-item @(i == 0 ? "activo" : "")">
+            <b>@Secciones[i]</b>
+            @if (i == 0)
+            {
+                <Icon Nombre="IcoChevronRight" Tam="15" />
+            }
+        </div>
+    }
+</div>
+@if (Boton != null)
+{
+    <div class="arriba-grande"><Boton Texto="@Boton" Icono="IcoShield" Relleno="false" /></div>
+}
+
+@code {
+    [Parameter] public string Titulo { get; set; }
+    [Parameter] public string Subtitulo { get; set; }
+    [Parameter] public string[] Secciones { get; set; } = Array.Empty<string>();
+    [Parameter] public string Boton { get; set; }
+}

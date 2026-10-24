@@ -1,0 +1,76 @@
+@page "/configuracion"
+@layout ShellLayout
+@inject EstadoApp Estado
+
+<PageTitle>Configuración · R.U.T.A.</PageTitle>
+
+<div class="pagina">
+    <div class="pagina-cabecera">
+        <div>
+            <h1>Configuración</h1>
+            <p>Personaliza tu experiencia de navegación y preferencias en RUTA</p>
+        </div>
+        <div class="busqueda-ancha">
+            <CampoTexto @bind-Text="_busqueda" Icono="IcoSearch" Hint="Buscar ajuste..." Fondo="var(--bg-card)" Redondeo="999" Alto="38" />
+        </div>
+    </div>
+
+    <div class="categorias">
+        @foreach (var categoria in Visibles)
+        {
+            <div class="card categoria">
+                <h3>@categoria.Titulo</h3>
+                @foreach (var ajuste in categoria.Ajustes)
+                {
+                    var a = ajuste;
+                    <button type="button" class="ajuste-item" @onclick='() => Estado.Navegar("ajuste", a)'>
+                        <span>@a</span>
+                        <Icon Nombre="IcoChevronRight" Tam="16" Color="var(--text-secondary)" />
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    @if (!Visibles.Any())
+    {
+        <p class="vacio">No se encontró ningún ajuste con ese texto.</p>
+    }
+
+    <div class="card pie-config">
+        <span>RUTA v4.12.0 - Compilación web estable</span>
+        <button type="button" class="btn-ghost subrayado" @onclick='() => Estado.Navegar("ajuste", "Términos de servicio")'>Términos legales y licencias</button>
+    </div>
+</div>
+
+@code {
+    private string _busqueda = "";
+
+    private readonly List<CategoriaAjustes> _categorias = new()
+    {
+        new CategoriaAjustes { Titulo = "GENERAL", Ajustes = { "Idioma de la aplicación", "Unidades de distancia (km / mi)", "Notificaciones push" } },
+        new CategoriaAjustes { Titulo = "PREFERENCIAS DE TRANSPORTE", Ajustes = { "Modo preferido (Metro, Autobús, Tren)", "Evitar transbordos complejos", "Priorizar rutas con accesibilidad" } },
+        new CategoriaAjustes { Titulo = "SOPORTE", Ajustes = { "Reportar un problema en la ruta", "Centro de ayuda", "Enviar comentarios" } },
+        new CategoriaAjustes { Titulo = "LEGAL", Ajustes = { "Términos de servicio", "Política de privacidad", "Sobre Nosotros" } }
+    };
+
+    /// <summary>Solo los ajustes que contienen el texto buscado (y sin categorías vacías).</summary>
+    private IEnumerable<CategoriaAjustes> Visibles
+    {
+        get
+        {
+            string q = _busqueda.Trim();
+            return _categorias
+                .Select(c => new CategoriaAjustes
+                {
+                    Titulo = c.Titulo,
+                    Ajustes = c.Ajustes
+                        .Where(a => q.Length == 0 ||
+                                    a.Contains(q, StringComparison.CurrentCultureIgnoreCase) ||
+                                    c.Titulo.Contains(q, StringComparison.CurrentCultureIgnoreCase))
+                        .ToList()
+                })
+                .Where(c => c.Ajustes.Count > 0);
+        }
+    }
+}

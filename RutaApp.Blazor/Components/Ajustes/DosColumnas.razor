@@ -1,0 +1,22 @@
+@* Contenido principal a la izquierda y panel lateral de ancho fijo a la derecha. *@
+<div class="dos-columnas" style="grid-template-columns:@(Izquierda ? Lateral + "px 1fr" : "1fr " + Lateral + "px")">
+    @if (Izquierda)
+    {
+        <div class="col-lateral">@Principal</div>
+        <div>@Secundario</div>
+    }
+    else
+    {
+        <div>@Principal</div>
+        <div class="col-lateral">@Secundario</div>
+    }
+</div>
+
+@code {
+    /// <summary>Ancho en píxeles de la columna fija.</summary>
+    [Parameter] public int Lateral { get; set; } = 316;
+    /// <summary>Si es true, la columna fija va a la izquierda (documentos legales).</summary>
+    [Parameter] public bool Izquierda { get; set; }
+    [Parameter] public RenderFragment Principal { get; set; }
+    [Parameter] public RenderFragment Secundario { get; set; }
+}

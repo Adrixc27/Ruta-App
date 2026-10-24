@@ -1,0 +1,72 @@
+@implements IDisposable
+
+@* Carrusel de pantallas completas con cambio automático (fundido), puntos para elegir y pausa al pasar el mouse. *@
+<div class="carrusel" @onmouseenter="Pausar" @onmouseleave="Reanudar">
+    @for (int i = 0; i < Total; i++)
+    {
+        int indice = i;
+        <div class="carrusel-slide @(indice == _actual ? "visible" : "")">
+            @if (ConMarca && indice == 0)
+            {
+                <SlideMarca Titular="@Titular" Subtitular="@Subtitular" />
+            }
+            else
+            {
+                var foto = Fotos[indice - (ConMarca ? 1 : 0)];
+                <div class="slide-foto" style="background-image:url('img/carrusel/@foto.Archivo')">
+                    <div class="slide-foto-velo"></div>
+                    <div class="slide-foto-titulo">Ciudades donde<br />está R.U.T.A.</div>
+                    <div class="slide-foto-ciudad">@foto.Ciudad</div>
+                </div>
+            }
+        </div>
+    }
+    <div class="carrusel-puntos">
+        @for (int i = 0; i < Total; i++)
+        {
+            int indice = i;
+            <span class="punto @(indice == _actual ? "activo" : "")" @onclick="() => Ir(indice)"></span>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>Si es true, la primera diapositiva es el panel azul de marca (con Titular y Subtitular).</summary>
+    [Parameter] public bool ConMarca { get; set; } = true;
+    [Parameter] public string Titular { get; set; } = "";
+    [Parameter] public string Subtitular { get; set; } = "";
+
+    // Fotos de las ciudades donde está R.U.T.A.
+    private static readonly (string Archivo, string Ciudad)[] Fotos =
+    {
+        ("chihuahua.jpg", "CHIHUAHUA"),
+        ("cdjuarez.jpg", "CD. JUAREZ"),
+        ("delicias.jpg", "DELICIAS")
+    };
+
+    private int Total => Fotos.Length + (ConMarca ? 1 : 0);
+    private int _actual;
+    private bool _pausado;
+    private Timer _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new Timer(_ => InvokeAsync(() =>
+        {
+            if (_pausado) return;
+            _actual = (_actual + 1) % Total;
+            StateHasChanged();
+        }), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+    }
+
+    private void Pausar() => _pausado = true;
+    private void Reanudar() => _pausado = false;
+
+    private void Ir(int indice)
+    {
+        _actual = indice;
+        _timer?.Change(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));   // reinicia la cuenta
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

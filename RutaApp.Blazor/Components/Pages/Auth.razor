@@ -1,0 +1,214 @@
+@page "/acceso"
+@page "/registro"
+@inject EstadoApp Estado
+@inject ServicioApi Api
+
+<PageTitle>@(_registro ? "Crear cuenta" : "Iniciar sesión") · R.U.T.A.</PageTitle>
+
+@* Inicio de sesión y registro: carrusel de marca a la izquierda, formularios a la derecha *@
+<div class="auth">
+    <div class="auth-carrusel">
+        <Carrusel ConMarca="true" Titular="@Titular" Subtitular="@Subtitular" />
+    </div>
+
+    <div class="auth-panel">
+        <div class="auth-tarjeta tarjeta-flotante">
+            @if (!_registro)
+            {
+                <h1 class="auth-titulo">Bienvenido de nuevo</h1>
+                <p class="auth-sub">Inicia sesión para planificar tus viajes</p>
+
+                <label class="etiqueta-form">Correo electrónico</label>
+                <CampoTexto @bind-Text="_loginCorreo" Icono="IcoMail" Hint="tu@correo.com" OnTecla="TeclaLogin" />
+                <label class="etiqueta-form arriba-form">Contraseña</label>
+                <CampoPassword @bind-Text="_loginPass" />
+
+                <div class="auth-fila">
+                    <label class="recordarme"><input type="checkbox" /> Recordarme</label>
+                    <button type="button" class="btn-ghost btn-mini" @onclick='() => Aviso("La recuperación de contraseña estará disponible próximamente.")'>¿Olvidaste tu contraseña?</button>
+                </div>
+
+                @if (_loginError != null) { <p class="error-texto">@_loginError</p> }
+                @if (_aviso != null) { <p class="aviso-texto">@_aviso</p> }
+                <button type="button" class="btn btn-primario btn-ancho" disabled="@_ocupado" @onclick="IniciarSesion">Iniciar sesión</button>
+
+                <div class="divisor"><span>o continúa con</span></div>
+                <button type="button" class="btn btn-contorno btn-ancho" @onclick='() => Aviso("El acceso con Google todavía no está disponible en esta versión.")'>
+                    <b class="google">G</b> Continuar con Google
+                </button>
+                <button type="button" class="btn-ghost centrado" @onclick="Invitado">Explorar el mapa sin cuenta</button>
+                <p class="auth-cambio">¿No tienes cuenta? <button type="button" class="btn-ghost btn-mini" @onclick="IrRegistro">Regístrate</button></p>
+            }
+            else
+            {
+                <h1 class="auth-titulo">Crea tu cuenta</h1>
+                <p class="auth-sub">Regístrate para guardar tus rutas y viajar sin perderte</p>
+
+                <label class="etiqueta-form">Nombre completo</label>
+                <CampoTexto @bind-Text="_regNombre" Icono="IcoUser" Hint="Tu nombre" />
+                <label class="etiqueta-form arriba-form">Correo electrónico</label>
+                <CampoTexto @bind-Text="_regCorreo" Icono="IcoMail" Hint="tu@correo.com" />
+                <label class="etiqueta-form arriba-form">Contraseña</label>
+                <CampoPassword @bind-Text="_regPass" />
+
+                <div class="fuerza">
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <span style="background:@(i < Puntos ? ColorFuerza : "var(--border-soft)")"></span>
+                    }
+                </div>
+                <p class="fuerza-texto">@TextoFuerza</p>
+
+                <label class="terminos"><input type="checkbox" @bind="_terminos" /> <span>Acepto los Términos de servicio y la Política de privacidad de RUTA.</span></label>
+
+                @if (_regError != null) { <p class="error-texto">@_regError</p> }
+                @if (_aviso != null) { <p class="aviso-texto">@_aviso</p> }
+                <button type="button" class="btn btn-primario btn-ancho" disabled="@_ocupado" @onclick="Registrar">Crear cuenta</button>
+
+                <div class="divisor"><span>o regístrate con</span></div>
+                <button type="button" class="btn btn-contorno btn-ancho" @onclick='() => Aviso("El acceso con Google todavía no está disponible en esta versión.")'>
+                    <b class="google">G</b> Continuar con Google
+                </button>
+                <p class="auth-cambio">¿Ya tienes cuenta? <button type="button" class="btn-ghost btn-mini" @onclick="IrLogin">Inicia sesión</button></p>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _registro;
+    private bool _ocupado;
+    private bool _terminos;
+    private string _loginCorreo = "", _loginPass = "";
+    private string _regNombre = "", _regCorreo = "", _regPass = "";
+    private string _loginError, _regError, _aviso;
+
+    private string Titular => _registro ? "Tus rutas favoritas, siempre a la mano." : "Muévete por tu ciudad sin perderte.";
+    private string Subtitular => _registro
+        ? "Guarda tus trayectos frecuentes y consulta tiempos de llegada en tiempo real."
+        : "Planifica, compara y viaja en transporte público con rutas claras y en tiempo real.";
+
+    protected override void OnInitialized()
+    {
+        _registro = new Uri(Nav.Uri).AbsolutePath.TrimEnd('/') == "/registro";
+    }
+
+    // Entre login y registro solo se cambia el formulario (la dirección /registro sirve para abrir directo el registro)
+    private void IrRegistro() { _registro = true; _loginError = _regError = _aviso = null; }
+    private void IrLogin() { _registro = false; _loginError = _regError = _aviso = null; }
+
+    private void Aviso(string texto) => _aviso = texto;
+
+    private async Task TeclaLogin(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await IniciarSesion();
+    }
+
+    // ── Acciones ──────────────────────────────────────────────────────────
+    private async Task IniciarSesion()
+    {
+        _aviso = null;
+        string correo = _loginCorreo.Trim();
+        if (!EsCorreo(correo)) { _loginError = "Escribe un correo válido, por ejemplo tu@correo.com."; return; }
+        if (_loginPass.Length == 0) { _loginError = "Escribe tu contraseña."; return; }
+
+        _ocupado = true;
+        try
+        {
+            var usuario = await Api.LoginAsync(correo, _loginPass);
+            if (usuario == null) { _loginError = "Correo o contraseña incorrectos."; return; }
+
+            _loginError = null;
+            Estado.IniciarSesion(usuario);
+            await Estado.CompletarIngresoAsync();
+        }
+        catch (Exception)
+        {
+            _loginError = "No se pudo conectar con el servidor. Intenta de nuevo.";
+        }
+        finally
+        {
+            _ocupado = false;
+        }
+    }
+
+    private async Task Registrar()
+    {
+        _aviso = null;
+        string nombre = _regNombre.Trim();
+        string correo = _regCorreo.Trim();
+        if (nombre.Length < 2) { _regError = "Escribe tu nombre completo."; return; }
+        if (!EsCorreo(correo)) { _regError = "Escribe un correo válido, por ejemplo tu@correo.com."; return; }
+        if (_regPass.Length < 6) { _regError = "La contraseña debe tener al menos 6 caracteres."; return; }
+        if (!_terminos) { _regError = "Debes aceptar los términos para continuar."; return; }
+
+        _ocupado = true;
+        try
+        {
+            var resultado = await Api.RegistrarAsync(nombre, correo, _regPass);
+            if (resultado.Usuario == null) { _regError = resultado.Error; return; }
+
+            _regError = null;
+            Estado.IniciarSesion(resultado.Usuario);
+            await Estado.CompletarIngresoAsync();
+        }
+        catch (Exception)
+        {
+            _regError = "No se pudo conectar con el servidor. Intenta de nuevo.";
+        }
+        finally
+        {
+            _ocupado = false;
+        }
+    }
+
+    private async Task Invitado()
+    {
+        Estado.EntrarComoInvitado();
+        await Estado.CompletarIngresoAsync();
+    }
+
+    // ── Validaciones ──────────────────────────────────────────────────────
+    private static bool EsCorreo(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s) || s.Contains(' ')) return false;
+        int arroba = s.IndexOf('@');
+        if (arroba < 1 || arroba != s.LastIndexOf('@')) return false;
+        int punto = s.LastIndexOf('.');
+        return punto > arroba + 1 && punto < s.Length - 1;
+    }
+
+    // ── Fuerza de la contraseña (4 barras) ────────────────────────────────
+    private int Puntos
+    {
+        get
+        {
+            string p = _regPass ?? "";
+            if (p.Length == 0) return 0;
+            int puntos = 0;
+            if (p.Length >= 8) puntos++;
+            if (p.Any(char.IsUpper) && p.Any(char.IsLower)) puntos++;
+            if (p.Any(char.IsDigit)) puntos++;
+            if (p.Any(c => !char.IsLetterOrDigit(c))) puntos++;
+            return puntos;
+        }
+    }
+
+    private string ColorFuerza => Puntos switch
+    {
+        1 => "#EF4444",
+        2 => "#F59E0B",
+        3 => "var(--brand-primary)",
+        4 => "var(--success)",
+        _ => "var(--border-soft)"
+    };
+
+    private string TextoFuerza => Puntos switch
+    {
+        1 => "Contraseña débil",
+        2 => "Contraseña media",
+        3 => "Contraseña buena",
+        4 => "Contraseña muy segura",
+        _ => "Usa 8+ caracteres con mayúsculas, números y símbolos"
+    };
+}

@@ -1,0 +1,266 @@
+@page "/comunidad"
+@layout ShellLayout
+@inject EstadoApp Estado
+
+<PageTitle>Comunidad · R.U.T.A.</PageTitle>
+
+<div class="pagina pagina-comunidad">
+    <div class="pagina-cabecera">
+        <div>
+            <h1>Comunidad</h1>
+            <p>Noticias, preguntas y mejoras para moverse por Chihuahua</p>
+        </div>
+        <button type="button" class="btn btn-primario" @onclick="Nueva">
+            <Icon Nombre="IcoPlus" Tam="18" /> Nueva publicación
+        </button>
+    </div>
+
+    @* Aviso fijo *@
+    <div class="aviso-fijo">
+        <span class="aviso-fijo-icono"><Icon Nombre="IcoAlert" Tam="18" Color="var(--warning)" /></span>
+        <div>
+            <small>AVISO ACTIVO · MOVILIDAD CHIHUAHUA</small>
+            <b>La Ruta 4 tiene un desvío temporal por obras en Zona Centro.</b>
+        </div>
+        <button type="button" class="btn btn-contorno btn-chico azul" @onclick="VerRutaAfectada">
+            <Icon Nombre="IcoPin" Tam="15" /> Ver ruta afectada
+        </button>
+    </div>
+
+    @* Filtros *@
+    <div class="filtros">
+        <div class="pills">
+            <button type="button" class="pill-radio @(_tipo == "" ? "activo" : "")" @onclick='() => _tipo = ""'>Todo <em>@Estado.Publicaciones.Count</em></button>
+            <button type="button" class="pill-radio @(_tipo == "aviso" ? "activo" : "")" @onclick='() => _tipo = "aviso"'>
+                <i class="pt" style="background:var(--warning)"></i>Avisos <em>@Contar("aviso")</em>
+            </button>
+            <button type="button" class="pill-radio @(_tipo == "pregunta" ? "activo" : "")" @onclick='() => _tipo = "pregunta"'>
+                <i class="pt" style="background:var(--brand-primary)"></i>Preguntas <em>@Contar("pregunta")</em>
+            </button>
+            <button type="button" class="pill-radio @(_tipo == "propuesta" ? "activo" : "")" @onclick='() => _tipo = "propuesta"'>
+                <i class="pt" style="background:var(--success)"></i>Propuestas <em>@Contar("propuesta")</em>
+            </button>
+        </div>
+        <div class="filtros-derecha">
+            <div class="busqueda-ancha">
+                <CampoTexto @bind-Text="_busqueda" Icono="IcoSearch" Hint="Buscar publicaciones..." Fondo="var(--bg-card)" Redondeo="999" Alto="38" />
+            </div>
+            <button type="button" class="btn btn-contorno btn-chico" @onclick="() => _porPopularidad = !_porPopularidad">
+                @(_porPopularidad ? "Más populares" : "Más recientes") <Icon Nombre="IcoChevronDown" Tam="14" />
+            </button>
+        </div>
+    </div>
+
+    @* Feed *@
+    <div class="feed">
+        @foreach (var publicacion in Visibles)
+        {
+            var p = publicacion;
+            <article class="card post">
+                <header>
+                    <span class="post-avatar @(p.Oficial ? "oficial" : "")">@p.Inicial</span>
+                    <div class="post-autor">
+                        <span><b>@p.Autor</b>@if (p.Oficial) { <Icon Nombre="IcoBadgeCheck" Tam="14" Color="#0D9488" /> }</span>
+                        <small>@p.Tiempo</small>
+                    </div>
+                    <span class="post-tipo @p.Tipo"><Icon Nombre="@p.IconoTipo" Tam="12" /> @p.TipoTexto</span>
+                </header>
+                <h3>@p.Titulo</h3>
+                <p>@p.Cuerpo</p>
+                <div class="post-etiquetas">
+                    @foreach (var e in p.Etiquetas)
+                    {
+                        <span class="etiqueta @(e.EsRuta ? "ruta" : "")"><Icon Nombre="@e.Icono" Tam="12" /> @e.Texto</span>
+                    }
+                </div>
+                <footer>
+                    <button type="button" class="btn-pie" @onclick="() => Like(p)">
+                        <Icon Nombre="IcoHeart" Tam="16" Color="@(p.MeGusta ? "#EF4444" : null)" Relleno="@(p.MeGusta ? "#EF4444" : null)" /> @p.Likes
+                    </button>
+                    <button type="button" class="btn-pie" @onclick='() => Mensaje("Los comentarios estarán disponibles próximamente.")'>
+                        <Icon Nombre="IcoMessage" Tam="16" /> @p.Comentarios
+                    </button>
+                    <button type="button" class="btn-pie derecha azul" @onclick="() => Cta(p)">@p.Cta <Icon Nombre="IcoArrowRight" Tam="14" /></button>
+                </footer>
+            </article>
+        }
+    </div>
+
+    @if (!Visibles.Any())
+    {
+        <p class="vacio">No hay publicaciones que coincidan.</p>
+    }
+
+    @if (Estado.PublicacionesExtra.Count > 0)
+    {
+        <div class="centrado-fila">
+            <button type="button" class="btn btn-contorno azul" @onclick="CargarMas">Cargar más publicaciones</button>
+        </div>
+    }
+</div>
+
+@* ═══════════════ MODAL: NUEVA PUBLICACIÓN ═══════════════ *@
+@if (_modal)
+{
+    <div class="modal-fondo">
+        <div class="modal modal-publicacion">
+            <div class="modal-cabecera">
+                <div>
+                    <h2>Nueva publicación</h2>
+                    <p>Comparte con la comunidad de Chihuahua</p>
+                </div>
+                <button type="button" class="btn-icono suave" @onclick="() => _modal = false"><Icon Nombre="IcoX" Tam="16" /></button>
+            </div>
+
+            <div class="etiqueta-form">¿Qué quieres compartir?</div>
+            <div class="tipos">
+                <label class="tipo-opcion @(_nuevoTipo == "aviso" ? "sel" : "")" @onclick='() => _nuevoTipo = "aviso"'>
+                    <span class="tipo-icono" style="background:var(--warning-tint)"><Icon Nombre="IcoAlert" Tam="18" Color="var(--warning)" /></span>
+                    <b>Aviso</b><small>Algo que afecta una ruta</small>
+                </label>
+                <label class="tipo-opcion @(_nuevoTipo == "pregunta" ? "sel" : "")" @onclick='() => _nuevoTipo = "pregunta"'>
+                    <span class="tipo-icono" style="background:var(--brand-tint)"><Icon Nombre="IcoHelp" Tam="18" Color="var(--brand-primary)" /></span>
+                    <b>Pregunta</b><small>Pide ayuda o un consejo</small>
+                </label>
+                <label class="tipo-opcion @(_nuevoTipo == "propuesta" ? "sel" : "")" @onclick='() => _nuevoTipo = "propuesta"'>
+                    <span class="tipo-icono" style="background:var(--success-tint)"><Icon Nombre="IcoBulb" Tam="18" Color="var(--success)" /></span>
+                    <b>Propuesta</b><small>Una mejora al servicio</small>
+                </label>
+            </div>
+
+            <div class="etiqueta-form">Ruta relacionada <small>(opcional · la verán quienes sigan esa ruta)</small></div>
+            <div class="select-ruta">
+                <Icon Nombre="IcoBus" Tam="18" Color="var(--brand-primary)" />
+                <select @bind="_rutaModal">
+                    <option value="0">Sin ruta específica</option>
+                    @foreach (var r in Estado.Rutas)
+                    {
+                        <option value="@r.Numero">@r.Nombre</option>
+                    }
+                </select>
+            </div>
+
+            <div class="etiqueta-form dos"><span>Título</span><small>@_titulo.Length/60</small></div>
+            <CampoTexto @bind-Text="_titulo" Hint="Ej. ¿Qué parada necesita mejor señalización?" MaxLength="60" Alto="46" />
+
+            <div class="etiqueta-form">Mensaje</div>
+            <textarea class="textarea" rows="4" placeholder="Cuéntanos qué está pasando o qué te gustaría mejorar..." @bind="_mensaje" @bind:event="oninput"></textarea>
+
+            <p class="nota-modal"><Icon Nombre="IcoInfo" Tam="14" /> Tu publicación será visible para toda la comunidad. Mantén un trato respetuoso.</p>
+            @if (_errorModal != null) { <p class="error-texto">@_errorModal</p> }
+
+            <div class="modal-acciones">
+                <button type="button" class="btn btn-contorno" @onclick="() => _modal = false">Cancelar</button>
+                <button type="button" class="btn btn-primario" @onclick="Publicar"><Icon Nombre="IcoSend" Tam="16" /> Publicar</button>
+            </div>
+        </div>
+    </div>
+}
+
+<Dialogo @bind-Visible="_dialogo" Mensaje="@_textoDialogo" />
+
+@code {
+    private string _tipo = "";            // "" = todo | aviso | pregunta | propuesta
+    private string _busqueda = "";
+    private bool _porPopularidad;
+
+    private bool _modal;
+    private string _nuevoTipo = "pregunta";
+    private int _rutaModal;               // número de la ruta relacionada elegida (0 = ninguna)
+    private string _titulo = "", _mensaje = "", _errorModal;
+
+    private bool _dialogo;
+    private string _textoDialogo = "";
+
+    // ── Filtro, orden y conteos ───────────────────────────────────────────
+    private IEnumerable<Publicacion> Visibles
+    {
+        get
+        {
+            string q = _busqueda.Trim();
+            var lista = Estado.Publicaciones.Where(p =>
+                (_tipo.Length == 0 || p.Tipo == _tipo) &&
+                (q.Length == 0 || Contiene(p.Titulo, q) || Contiene(p.Cuerpo, q) || Contiene(p.Autor, q) || p.Etiquetas.Any(t => Contiene(t.Texto, q))));
+            return _porPopularidad ? lista.OrderByDescending(p => p.Likes) : lista.OrderByDescending(p => p.Orden);
+        }
+    }
+
+    private static bool Contiene(string texto, string q) =>
+        texto != null && texto.Contains(q, StringComparison.CurrentCultureIgnoreCase);
+
+    private int Contar(string tipo) => Estado.Publicaciones.Count(p => p.Tipo == tipo);
+
+    private void CargarMas()
+    {
+        Estado.Publicaciones.AddRange(Estado.PublicacionesExtra);
+        Estado.PublicacionesExtra.Clear();
+    }
+
+    // ── Acciones de cada publicación ──────────────────────────────────────
+    private void Mensaje(string texto)
+    {
+        _textoDialogo = texto;
+        _dialogo = true;
+    }
+
+    private static void Like(Publicacion p)
+    {
+        p.MeGusta = !p.MeGusta;
+        p.Likes += p.MeGusta ? 1 : -1;
+    }
+
+    private void Cta(Publicacion p)
+    {
+        if (p.Tipo == "pregunta") { Mensaje("Las respuestas estarán disponibles próximamente."); return; }
+        Ruta ruta = p.RutaNumero > 0 ? Estado.BuscarRuta(p.RutaNumero) : null;
+        Estado.Navegar("rutas", ruta);
+    }
+
+    private void VerRutaAfectada() => Estado.Navegar("rutas", Estado.Rutas.FirstOrDefault());
+
+    // ── Modal "Nueva publicación" ─────────────────────────────────────────
+    private void Nueva()
+    {
+        if (Estado.Invitado)
+        {
+            Mensaje("Inicia sesión o crea una cuenta para publicar en la comunidad.");
+            return;
+        }
+        _titulo = "";
+        _mensaje = "";
+        _errorModal = null;
+        _rutaModal = 0;
+        _nuevoTipo = "pregunta";
+        _modal = true;
+    }
+
+    private void Publicar()
+    {
+        string titulo = _titulo.Trim();
+        string mensaje = _mensaje.Trim();
+        if (titulo.Length == 0 || mensaje.Length == 0)
+        {
+            _errorModal = "Escribe un título y un mensaje para publicar.";
+            return;
+        }
+
+        var ruta = _rutaModal > 0 ? Estado.BuscarRuta(_rutaModal) : null;
+        var nueva = new Publicacion
+        {
+            Tipo = _nuevoTipo,
+            Autor = Estado.Nombre,
+            Tiempo = "ahora",
+            Titulo = titulo,
+            Cuerpo = mensaje,
+            Orden = Estado.Publicaciones.Count > 0 ? Estado.Publicaciones.Max(p => p.Orden) + 1 : 1,
+            RutaNumero = ruta?.Numero ?? 0
+        };
+        if (ruta != null)
+            nueva.Etiquetas.Add(new Etiqueta { Texto = "Ruta " + ruta.Numero, EsRuta = true });
+
+        Estado.Publicaciones.Add(nueva);
+        _modal = false;
+        _tipo = "";
+        _busqueda = "";
+    }
+}

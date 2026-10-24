@@ -1,0 +1,76 @@
+@* Ajustes → Legal: política de privacidad, términos de servicio y Sobre Nosotros. *@
+@switch (Clave)
+{
+    case "privacidad":
+        <MarcoDetalle Categoria="Legal" Titulo="Política de privacidad" Subtitulo="Explicamos con claridad qué datos usamos, por qué los necesitamos y cómo los protegemos.">
+            <ChildContent>
+                <DosColumnas Izquierda="true" Lateral="270">
+                    <Principal>
+                        <Tarjeta Relleno="24">
+                            <NavegadorDocumento Titulo="En esta política" Subtitulo="Vigente desde el 18 de septiembre de 2026" Boton="Gestionar mis datos"
+                                                Secciones="@(new[] { "Resumen", "Datos que recopilamos", "Uso de la información", "Ubicación y permisos", "Conservación", "Tus derechos", "Contacto" })" />
+                        </Tarjeta>
+                    </Principal>
+                    <Secundario>
+                        <Tarjeta Relleno="24">
+                            <small class="etiqueta-doc">PRIVACIDAD POR DISEÑO</small>
+                            <h2 class="doc-titulo">Resumen de privacidad</h2>
+                            <p class="doc-p">RUTA utiliza la información mínima necesaria para planificar trayectos, personalizar alertas y mantener segura tu cuenta. No vendemos tus datos personales.</p>
+                            <div class="tres-columnas pequenas">
+                                <div class="mosaico"><Icon Nombre="IcoPin" Tam="20" /><b>Ubicación</b><small>Solo mientras buscas o navegas.</small></div>
+                                <div class="mosaico"><Icon Nombre="IcoRoute" Tam="20" /><b>Viajes</b><small>Rutas guardadas e historial opcional.</small></div>
+                                <div class="mosaico"><Icon Nombre="IcoBell" Tam="20" /><b>Preferencias</b><small>Alertas, accesibilidad e idioma.</small></div>
+                            </div>
+                            <h3 class="doc-h">Datos que recopilamos</h3>
+                            <p class="doc-p">Recopilamos datos de cuenta, preferencias, consultas de ruta e información técnica del dispositivo. El historial de ubicación precisa solo se guarda si activas “Historial de viajes”.</p>
+                            <div class="arriba-grande"><Aviso Icono="IcoLocate" Titulo="Ubicación y permisos">Puedes revocar el acceso a ubicación, notificaciones y cámara desde Configuración. RUTA seguirá funcionando con opciones limitadas.</Aviso></div>
+                            <h3 class="doc-h">Tus derechos</h3>
+                            <p class="doc-p">Puedes acceder, corregir, descargar o eliminar tus datos. Las solicitudes se atienden en un máximo de 30 días y pueden requerir verificación de identidad.</p>
+                        </Tarjeta>
+                    </Secundario>
+                </DosColumnas>
+            </ChildContent>
+        </MarcoDetalle>
+        break;
+
+    case "terminos":
+        <MarcoDetalle Categoria="Legal" Titulo="Términos de servicio" Subtitulo="Condiciones que regulan el uso de RUTA y sus servicios de planificación.">
+            <ChildContent>
+                <DosColumnas Izquierda="true" Lateral="270">
+                    <Principal>
+                        <Tarjeta Relleno="24">
+                            <NavegadorDocumento Titulo="Contenido" Subtitulo="Última actualización: 18 de septiembre de 2026"
+                                                Secciones="@(new[] { "1. Aceptación", "2. Uso del servicio", "3. Información de rutas", "4. Cuenta y seguridad", "5. Propiedad intelectual", "6. Limitación de responsabilidad", "7. Contacto" })" />
+                        </Tarjeta>
+                    </Principal>
+                    <Secundario>
+                        <Tarjeta Relleno="24">
+                            <small class="etiqueta-doc">DOCUMENTO VIGENTE</small>
+                            <h2 class="doc-titulo">1. Aceptación de los términos</h2>
+                            <p class="doc-p">Al acceder o utilizar RUTA aceptas estos Términos de servicio. Si no estás de acuerdo con alguna condición, no utilices la aplicación.</p>
+                            <h3 class="doc-h">2. Uso del servicio</h3>
+                            <p class="doc-p">RUTA ofrece información para planificar viajes en transporte público. Debes usar el servicio de forma lícita, mantener actualizada la información de tu cuenta y evitar actividades que interfieran con su funcionamiento.</p>
+                            <h3 class="doc-h">3. Información de rutas y horarios</h3>
+                            <p class="doc-p">Los horarios, tiempos estimados y avisos proceden de operadores y fuentes colaboradoras. Trabajamos para ofrecer información precisa, pero puede cambiar por tráfico, clima, obras o decisiones operativas.</p>
+                            <div class="arriba-grande"><Aviso Icono="IcoAlert" Tipo="alerta">Verifica los avisos oficiales antes de realizar viajes críticos o conexiones con horario limitado.</Aviso></div>
+                            <h3 class="doc-h">4. Cuenta y seguridad</h3>
+                            <p class="doc-p">Eres responsable de proteger tus credenciales y de notificarnos cualquier acceso no autorizado. Podemos suspender cuentas que incumplan estos términos o comprometan la seguridad del servicio.</p>
+                        </Tarjeta>
+                    </Secundario>
+                </DosColumnas>
+            </ChildContent>
+        </MarcoDetalle>
+        break;
+
+    case "sobre":
+        <MarcoDetalle Categoria="Legal" Titulo="Sobre Nosotros" Subtitulo="Conoce la misión, el equipo y la versión actual de RUTA.">
+            <ChildContent>
+                <ContenidoSobreNosotros Ubicacion="Chihuahua, CHIH" Lateral="376" />
+            </ChildContent>
+        </MarcoDetalle>
+        break;
+}
+
+@code {
+    [Parameter] public string Clave { get; set; }
+}

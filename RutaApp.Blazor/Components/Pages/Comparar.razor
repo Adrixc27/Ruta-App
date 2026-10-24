@@ -1,0 +1,209 @@
+@page "/comparar"
+@layout ShellLayout
+@implements IDisposable
+@inject EstadoApp Estado
+
+<PageTitle>Comparar rutas · R.U.T.A.</PageTitle>
+
+<div class="split split-400">
+    <div class="panel-lateral panel-comparar">
+        <button type="button" class="btn-ghost volver" @onclick='() => Estado.Navegar("planificar")'>
+            <Icon Nombre="IcoArrowLeft" Tam="16" /> Editar búsqueda
+        </button>
+
+        <div class="bloque"><Stepper Paso="2" /></div>
+
+        @* Resumen del viaje *@
+        <div class="card resumen-viaje">
+            <div class="resumen-puntos">
+                <i style="background:var(--accent-origin)"></i><span></span><i style="background:var(--brand-primary)"></i>
+            </div>
+            <div class="resumen-textos">
+                <b>@Estado.Origen</b>
+                @if (Estado.Escalas.Count > 0)
+                {
+                    <small>Pasando por: @string.Join(" → ", Estado.Escalas.Select(s => s.Nombre))</small>
+                }
+                <b class="destino">@Estado.Destino</b>
+            </div>
+            <button type="button" class="btn-icono suave" title="Editar búsqueda" @onclick='() => Estado.Navegar("planificar")'>
+                <Icon Nombre="IcoPencil" Tam="15" />
+            </button>
+        </div>
+
+        <div class="bloque">
+            <h1 class="titulo-panel">Rutas Disponibles</h1>
+            <p class="sub-panel">@_conteo</p>
+        </div>
+
+        <div class="lista-opciones">
+            @foreach (var opcion in _opciones)
+            {
+                var r = opcion;
+                <div class="opcion-ruta @(r.Seleccionada ? "sel" : "")" @onclick="() => Seleccionar(r)">
+                    <div class="opcion-cabecera">
+                        <b class="opcion-nombre">@r.Nombre</b>
+                        @if (!string.IsNullOrEmpty(r.Etiqueta))
+                        {
+                            <span class="etiqueta-opcion @(r.Etiqueta == "Recomendado" ? "recomendado" : "")">@r.EtiquetaMayus</span>
+                        }
+                        <button type="button" class="btn-icono" title="@(r.Guardada ? "Quitar de favoritas" : "Añadir a favoritas")"
+                                @onclick="() => Estado.AlternarFavoritoViaje(r)" @onclick:stopPropagation="true">
+                            <Icon Nombre="IcoStar" Tam="18" Color="var(--star)" Relleno="@(r.Guardada ? "var(--star)" : null)" />
+                        </button>
+                    </div>
+                    <div class="opcion-datos">
+                        <Icon Nombre="IcoClock" Tam="14" Color="var(--text-primary)" /><b>@r.MinutosTexto</b>
+                        <Icon Nombre="IcoWallet" Tam="14" Color="var(--text-secondary)" /><span>@r.TarifaTexto</span>
+                        <span>•</span><small>@r.TransbordosTexto</small>
+                    </div>
+                    <div class="opcion-linea">
+                        <span class="chip-linea">@r.Lineas</span>
+                        <small>@r.FrecuenciaTexto</small>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <button type="button" class="btn btn-primario btn-ancho btn-buscar" @onclick="Comenzar">
+            @_textoComenzar <Icon Nombre="IcoArrowRight" Tam="18" />
+        </button>
+    </div>
+
+    <Mapa @ref="_mapa" />
+</div>
+
+<Dialogo @bind-Visible="_buenViaje" Mensaje="@_mensajeViaje" OnAceptar="EmpezarViaje" />
+
+@code {
+    private Mapa _mapa;
+    private List<Ruta> _opciones = new();
+    private Ruta _seleccion;
+    private int _version;   // para descartar cálculos viejos si el usuario cambia la búsqueda
+    private string _conteo = "Calculando las mejores rutas…";
+    private string _textoComenzar = "Comenzar viaje";
+    private bool _buenViaje;
+    private string _mensajeViaje = "";
+
+    protected override void OnInitialized() => Estado.Cambio += Refrescar;
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    /// <summary>Cada vez que llegas desde Planificar se recalcula la comparación.</summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        int version = ++_version;
+
+        await Estado.PrepararTrazosAsync();   // recorridos de las rutas (por calles)
+
+        List<Ruta> opciones = Estado.HayCoordenadas ? await CalcularViajeAsync() : new List<Ruta>(Estado.Rutas);
+        if (version != _version) return;   // llegó otra búsqueda mientras se calculaba
+        _opciones = opciones;
+
+        _conteo = _opciones.Count == 0
+            ? "No hay rutas de camión a menos de 1 km de tus puntos, o la distancia es demasiado grande"
+            : _opciones.Count + (_opciones.Count == 1 ? " opción encontrada" : " opciones encontradas") + " · elige una para continuar";
+
+        if (_opciones.Count > 0) await Seleccionar(_opciones[0]);
+        else
+        {
+            _seleccion = null;
+            await _mapa.LimpiarRuta();
+            _mapa.OcultarBanner();
+        }
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Calcula cómo ir de A a B, de B a C, etc. (origen → paradas intermedias → destino final).
+    /// La opción N del viaje junta la opción N de cada tramo.
+    /// </summary>
+    private async Task<List<Ruta>> CalcularViajeAsync()
+    {
+        var puntos = new List<double[]> { new[] { Estado.OrigenLat, Estado.OrigenLng } };
+        foreach (var e in Estado.Escalas) puntos.Add(new[] { e.Lat, e.Lng });
+        puntos.Add(new[] { Estado.DestinoLat, Estado.DestinoLng });
+
+        var tareas = new List<Task<List<Ruta>>>();
+        for (int i = 0; i + 1 < puntos.Count; i++)
+            tareas.Add(Planificador.GenerarAsync(Estado.Rutas, puntos[i][0], puntos[i][1], puntos[i + 1][0], puntos[i + 1][1], Estado.TrazoOsrmAsync));
+        var tramos = await Task.WhenAll(tareas);
+
+        if (tramos.Any(t => t.Count == 0)) return new List<Ruta>();
+        if (tramos.Length == 1) return tramos[0];
+
+        var resultado = new List<Ruta>();
+        int cuantas = tramos.Max(t => t.Count);
+        for (int n = 0; n < cuantas; n++)
+        {
+            var partes = tramos.Select(t => t[n < t.Count ? n : 0]).ToList();
+            resultado.Add(Unir(partes));
+        }
+        Planificador.Etiquetar(resultado);
+        return resultado;
+    }
+
+    private Ruta Unir(List<Ruta> partes)
+    {
+        var tramos = new List<Tramo>();
+        foreach (var p in partes) tramos.AddRange(p.Tramos);
+
+        return new Ruta
+        {
+            Numero = partes[0].Numero,
+            Nombre = "Viaje en " + partes.Count + " tramos",
+            ModoTexto = "Autobús",
+            Lineas = string.Join(" | ", partes.Select(p => p.Lineas)),
+            Tarifa = partes.Sum(p => p.Tarifa),
+            Minutos = partes.Sum(p => p.Minutos),
+            Transbordos = partes.Sum(p => p.Transbordos),
+            CaminataMetros = partes.Sum(p => p.CaminataMetros),
+            Guardada = false,
+            EsViaje = true,
+            Resumen = string.Join("  |  ", partes.Select((p, i) => "Tramo " + (i + 1) + ": " + p.Minutos + " min")),
+            Tramos = tramos,
+            Escalas = Estado.Escalas,
+            LatO = tramos[0].Puntos[0][0], LngO = tramos[0].Puntos[0][1]
+        };
+    }
+
+    private async Task Seleccionar(Ruta r)
+    {
+        foreach (var x in _opciones) x.Seleccionada = (x == r);
+        foreach (var x in Estado.Rutas) x.Seleccionada = false;
+        _seleccion = r;
+
+        _textoComenzar = r.EsViaje ? "Comenzar viaje" : "Comenzar viaje (Ruta " + r.Numero + ")";
+        if (r.EsViaje && r.Escalas == null) r.Escalas = Estado.Escalas;
+        await _mapa.DibujarRuta(r);
+        _mapa.BannerViaje(r.Nombre, r.EsViaje ? r.MinutosTexto + " · " + r.TarifaTexto : "Vista previa en el mapa · " + r.MinutosTexto);
+        if (!r.EsViaje) _ = _mapa.CargarParadasAsync(r.LatO, r.LngO, r.LatD, r.LngD);
+    }
+
+    private void Comenzar()
+    {
+        if (_seleccion == null) return;
+        _mensajeViaje = "¡Buen viaje!\n\nSeguirás: " + _seleccion.Nombre + " (" + _seleccion.MinutosTexto + ", " + _seleccion.TarifaTexto + ").";
+        _buenViaje = true;
+    }
+
+    private async Task EmpezarViaje()
+    {
+        if (_seleccion == null) return;
+        Estado.RegistrarViaje(_seleccion);   // queda en el historial (antes de olvidar la búsqueda)
+
+        // El viaje ya empezó: se olvida la búsqueda (destino, paradas y marcadores) y se vacía el mapa
+        Estado.NuevaBusqueda();
+        _version++;
+        _opciones = new List<Ruta>();
+        _seleccion = null;
+        await _mapa.LimpiarRuta();
+        _mapa.OcultarBanner();
+        _mapa.OcultarTarjeta();
+
+        Estado.Navegar("planificar");
+    }
+
+    public void Dispose() => Estado.Cambio -= Refrescar;
+}

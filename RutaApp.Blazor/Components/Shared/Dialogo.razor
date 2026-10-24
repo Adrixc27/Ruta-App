@@ -1,0 +1,39 @@
+@* Cuadro de mensaje (lo que en WPF era MessageBox): solo "Aceptar", o "Sí / No" si se pasa TextoCancelar. *@
+@if (Visible)
+{
+    <div class="modal-fondo" @onclick="Cancelar">
+        <div class="modal modal-dialogo" @onclick:stopPropagation="true">
+            <h2>R.U.T.A.</h2>
+            <p>@Mensaje</p>
+            <div class="modal-acciones">
+                @if (TextoCancelar != null)
+                {
+                    <button type="button" class="btn btn-contorno" @onclick="Cancelar">@TextoCancelar</button>
+                }
+                <button type="button" class="btn btn-primario" @onclick="Aceptar">@TextoAceptar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public string Mensaje { get; set; }
+    [Parameter] public string TextoAceptar { get; set; } = "Aceptar";
+    [Parameter] public string TextoCancelar { get; set; }
+    [Parameter] public EventCallback OnAceptar { get; set; }
+
+    private async Task Aceptar()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+        await OnAceptar.InvokeAsync();
+    }
+
+    private async Task Cancelar()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+}

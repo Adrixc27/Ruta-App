@@ -1,0 +1,143 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject EstadoApp Estado
+
+@* Diseño de la app: sidebar que se contrae + zona de pantallas. Solo se entra con sesión (o como invitado). *@
+@if (Estado.HaIngresado)
+{
+    <div class="app-shell">
+        <aside class="sidebar @(_colapsado ? "colapsado" : "")">
+            <div class="sidebar-marca marca">
+                <div class="marca-logo">R</div>
+                @if (!_colapsado)
+                {
+                    <div class="marca-texto"><b>RUTA</b><small>TRANSPORTE PÚBLICO</small></div>
+                }
+            </div>
+
+            <nav class="sidebar-menu">
+                @if (!_colapsado)
+                {
+                    <div class="sidebar-etiqueta">MENÚ</div>
+                }
+                <a href="planificar" class="nav-btn @Activo("planificar")" title="Planificar viaje">
+                    <Icon Nombre="IcoMap" />
+                    @if (!_colapsado) { <span>Planificar viaje</span> }
+                </a>
+                <a href="rutas" class="nav-btn @Activo("rutas")" title="Rutas">
+                    <Icon Nombre="IcoRoute" />
+                    @if (!_colapsado) { <span>Rutas</span> }
+                    @if (Estado.TotalGuardadas > 0)
+                    {
+                        <em class="nav-badge">@Estado.TotalGuardadas</em>
+                    }
+                </a>
+                <a href="comunidad" class="nav-btn @Activo("comunidad")" title="Comunidad">
+                    <Icon Nombre="IcoUsers" />
+                    @if (!_colapsado) { <span>Comunidad</span> }
+                </a>
+                <a href="perfil" class="nav-btn @Activo("perfil")" title="Mi perfil">
+                    <Icon Nombre="IcoUser" />
+                    @if (!_colapsado) { <span>Mi perfil</span> }
+                </a>
+                <a href="configuracion" class="nav-btn @Activo("configuracion")" title="Configuración">
+                    <Icon Nombre="IcoSettings" />
+                    @if (!_colapsado) { <span>Configuración</span> }
+                </a>
+            </nav>
+
+            <div class="sidebar-pie">
+                <button type="button" class="nav-btn" title="@(_colapsado ? "Expandir menú" : "Contraer menú")" @onclick="AlternarBarra">
+                    <Icon Nombre="@(_colapsado ? "IcoChevronRight" : "IcoChevronLeft")" />
+                    @if (!_colapsado) { <span>Contraer menú</span> }
+                </button>
+                <div class="sidebar-sesion">
+                    <button type="button" class="nav-btn" title="@TextoSesion" @onclick="BotonSesion">
+                        <Icon Nombre="IcoLogout" />
+                        @if (!_colapsado) { <span>@TextoSesion</span> }
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="contenido">@Body</main>
+    </div>
+
+    @if (_confirmarCierre)
+    {
+        <div class="modal-fondo">
+            <div class="modal modal-sesion">
+                <h2>¿Confirmas que quieres cerrar sesión?</h2>
+                <button type="button" class="btn btn-primario btn-grande" @onclick="ConfirmarCierre">Cerrar sesión</button>
+                <button type="button" class="btn btn-contorno btn-grande" @onclick="() => _confirmarCierre = false">Cancelar</button>
+            </div>
+        </div>
+    }
+}
+
+<div id="blazor-error-ui" data-nosnippet>
+    Ocurrió un error inesperado.
+    <a href="." class="reload">Recargar</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private bool _colapsado;
+    private bool _confirmarCierre;
+
+    // Invitado: el botón dice "Iniciar sesión" y lleva al login. Con cuenta: "Cerrar sesión" (con confirmación).
+    private string TextoSesion => Estado.Invitado ? "Iniciar sesión" : "Cerrar sesión";
+
+    protected override void OnInitialized()
+    {
+        if (!Estado.HaIngresado)
+        {
+            Nav.NavigateTo("/", replace: true);
+            return;
+        }
+        Estado.Cambio += Refrescar;
+        Nav.LocationChanged += AlCambiarUbicacion;
+    }
+
+    // Marca el botón de la pantalla actual (Comparar cuenta como Planificar; los detalles de ajustes, como Configuración)
+    private string Activo(string clave)
+    {
+        string ruta = new Uri(Nav.Uri).AbsolutePath.Trim('/');
+        if (clave == "planificar") return ruta is "planificar" or "comparar" ? "activo" : "";
+        return ruta == clave || ruta.StartsWith(clave + "/") ? "activo" : "";
+    }
+
+    private void AlternarBarra()
+    {
+        _colapsado = !_colapsado;
+        Estado.NotificarBarraLateral();
+    }
+
+    private void BotonSesion()
+    {
+        if (Estado.Invitado)
+        {
+            // No hay sesión que cerrar: se va directo a la pantalla de inicio de sesión
+            Nav.NavigateTo("/acceso");
+            return;
+        }
+        _confirmarCierre = true;
+    }
+
+    private void ConfirmarCierre()
+    {
+        _confirmarCierre = false;
+        Estado.CerrarSesion();
+        Nav.NavigateTo("/");
+    }
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    private void AlCambiarUbicacion(object sender, LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Estado.Cambio -= Refrescar;
+        Nav.LocationChanged -= AlCambiarUbicacion;
+    }
+}

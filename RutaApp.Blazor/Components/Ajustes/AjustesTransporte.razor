@@ -1,0 +1,113 @@
+@* Ajustes → Preferencias de transporte: modo preferido, transbordos y accesibilidad (pantallas de diseño). *@
+@switch (Clave)
+{
+    case "modo":
+        <MarcoDetalle Categoria="Preferencias de Transporte" Titulo="Modo preferido" Subtitulo="Indica qué transporte debe priorizar RUTA al comparar opciones similares.">
+            <ChildContent>
+                <Tarjeta Titulo="Elige tu modo principal" Subtitulo="La selección influye en el orden de los resultados, pero siempre mostraremos alternativas viables.">
+                    <div class="tres-columnas">
+                        @foreach (var m in Modos)
+                        {
+                            bool sel = _modo == m.Clave;
+                            <div class="modo-tarjeta @(sel ? "sel" : "")" @onclick="@(() => _modo = m.Clave)">
+                                <div class="modo-cabecera">
+                                    <CajaIcono Icono="@m.Icono" Lado="48" Relleno="sel" />
+                                    <span class="radio"><i></i></span>
+                                </div>
+                                <h4>@m.Nombre</h4>
+                                <p>@m.Descripcion</p>
+                                <Chip Texto="@(sel ? "Preferido" : "Alternativa")" Variante="@(sel ? "primario" : "sidebar")" />
+                            </div>
+                        }
+                    </div>
+                    <div class="separado"></div>
+                    <Aviso Icono="IcoWand" Titulo="Preferencia inteligente">Si tu modo preferido tiene demoras significativas, RUTA destacará una alternativa más rápida.</Aviso>
+                </Tarjeta>
+            </ChildContent>
+            <Barra><BarraInferior Info="@(NombreModo + " será priorizado cuando dos rutas tengan tiempos similares.")" TextoBoton="Guardar modo" /></Barra>
+        </MarcoDetalle>
+        break;
+
+    case "transbordos":
+        <MarcoDetalle Categoria="Preferencias de Transporte" Titulo="Evitar transbordos complejos" Subtitulo="Reduce conexiones apresuradas, recorridos confusos y cambios entre estaciones distantes.">
+            <ChildContent>
+                <DosColumnas Lateral="356">
+                    <Principal>
+                        <Tarjeta Titulo="Preferencia de transbordos" Subtitulo="RUTA priorizará trayectos más sencillos, incluso si requieren algunos minutos extra.">
+                            <FilaAjuste Icono="IcoShuffle" Titulo="Evitar transbordos complejos" Descripcion="Limita cambios con poco margen, pasillos largos o salidas a nivel de calle."><Interruptor Activo="true" /></FilaAjuste>
+                            <div class="deslizador-cabeza"><b>Tiempo extra aceptable</b><b class="azul">Hasta @(_minutos / 5) min</b></div>
+                            <Deslizador @bind-Valor="_minutos" />
+                            <div class="deslizador-extremos"><span>Ruta más rápida</span><span>Ruta más simple</span></div>
+                            <div class="separado"></div>
+                            <Aviso Icono="IcoInfo" Titulo="Cómo funciona">Nunca descartaremos la única ruta disponible. Esta preferencia reorganiza las opciones cuando existen alternativas.</Aviso>
+                        </Tarjeta>
+                    </Principal>
+                    <Secundario>
+                        <Tarjeta Titulo="Comparación de ejemplo" Subtitulo="Centro → Parque Industrial">
+                            <div class="opcion-ejemplo sel">
+                                <small class="azul">RECOMENDADA</small>
+                                <h4>Metro L2 + Autobús 14</h4>
+                                <p>42 min · 1 transbordo sencillo</p>
+                                <Icon Nombre="IcoCheckCircle" Tam="20" Clase="opcion-ejemplo-check" />
+                            </div>
+                            <div class="opcion-ejemplo">
+                                <small>MÁS RÁPIDA</small>
+                                <h4>Metro L1 + L3 + Autobús 8</h4>
+                                <p>36 min · 3 transbordos</p>
+                            </div>
+                        </Tarjeta>
+                    </Secundario>
+                </DosColumnas>
+            </ChildContent>
+            <Barra><BarraInferior Info="Los cambios se aplicarán a tus próximas rutas." TextoBoton="Guardar preferencia" /></Barra>
+        </MarcoDetalle>
+        break;
+
+    case "accesibilidad":
+        <MarcoDetalle Categoria="Preferencias de Transporte" Titulo="Priorizar rutas con accesibilidad" Subtitulo="Personaliza los criterios de movilidad que RUTA debe considerar al planificar.">
+            <ChildContent>
+                <DosColumnas Lateral="316">
+                    <Principal>
+                        <Tarjeta Titulo="Necesidades de accesibilidad" Subtitulo="Activamos opciones seguras y verificadas siempre que estén disponibles.">
+                            <FilaAjuste Icono="IcoUpDown" Titulo="Ascensores disponibles" Descripcion="Prioriza estaciones con ascensores operativos en ambos sentidos."><Interruptor Activo="true" /></FilaAjuste>
+                            <FilaAjuste Icono="IcoAccess" Titulo="Rampas de acceso" Descripcion="Busca paradas, estaciones y vehículos con acceso mediante rampa."><Interruptor Activo="true" /></FilaAjuste>
+                            <FilaAjuste Icono="IcoXCircle" Titulo="Trayectos sin escaleras" Descripcion="Evita rutas que requieran subir o bajar escaleras."><Interruptor Activo="true" /></FilaAjuste>
+                            <FilaAjuste Icono="IcoBuilding" Titulo="Estaciones accesibles" Descripcion="Muestra solo estaciones con infraestructura accesible verificada."><Interruptor Activo="true" /></FilaAjuste>
+                        </Tarjeta>
+                    </Principal>
+                    <Secundario>
+                        <Tarjeta Titulo="Perfil activo" Subtitulo="Tus preferencias se aplican a nuevas búsquedas.">
+                            <div class="perfil-activo">
+                                <CajaIcono Icono="IcoAccess" Lado="44" Relleno="true" />
+                                <div class="fila-ajuste-texto"><b>Movilidad asistida</b><small>4 criterios seleccionados</small></div>
+                            </div>
+                            <Aviso Icono="IcoAlert" Titulo="Datos en tiempo real" Tipo="alerta">Te avisaremos si un ascensor reportado como necesario deja de estar disponible.</Aviso>
+                        </Tarjeta>
+                        <Tarjeta Titulo="Información de accesibilidad" Subtitulo="Los datos se actualizan con reportes de operadores y de la comunidad." Clase="separada">
+                            <span class="enlace-flecha">Conoce nuestros criterios de verificación <Icon Nombre="IcoArrowRight" Tam="14" /></span>
+                        </Tarjeta>
+                    </Secundario>
+                </DosColumnas>
+            </ChildContent>
+            <Barra><BarraInferior Info="Las rutas accesibles pueden requerir más tiempo de viaje." TextoBoton="Guardar accesibilidad" /></Barra>
+        </MarcoDetalle>
+        break;
+}
+
+@code {
+    [Parameter] public string Clave { get; set; }
+
+    private record ModoInfo(string Clave, string Icono, string Nombre, string Descripcion);
+
+    private static readonly ModoInfo[] Modos =
+    {
+        new("metro", "IcoTrain", "Metro", "Rápido y frecuente"),
+        new("autobus", "IcoBus", "Autobús", "Mayor cobertura urbana"),
+        new("tren", "IcoTrain", "Tren", "Ideal para trayectos largos")
+    };
+
+    private string _modo = "metro";
+    private int _minutos = 50;
+
+    private string NombreModo => Modos.First(m => m.Clave == _modo).Nombre;
+}

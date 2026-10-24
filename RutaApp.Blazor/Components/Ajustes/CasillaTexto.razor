@@ -1,0 +1,10 @@
+<label class="casilla-texto">
+    <input type="checkbox" @bind="Marcada" />
+    <span class="casilla"><Icon Nombre="IcoCheck" Tam="14" /></span>
+    <b>@Texto</b>
+</label>
+
+@code {
+    [Parameter] public string Texto { get; set; }
+    [Parameter] public bool Marcada { get; set; }
+}

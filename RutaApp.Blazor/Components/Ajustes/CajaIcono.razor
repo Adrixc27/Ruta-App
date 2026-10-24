@@ -1,0 +1,9 @@
+<span class="caja-icono @(Relleno ? "llena" : "")" style="width:@(Lado)px;height:@(Lado)px">
+    <Icon Nombre="@Icono" Tam="(int)(Lado * 0.5)" />
+</span>
+
+@code {
+    [Parameter] public string Icono { get; set; }
+    [Parameter] public int Lado { get; set; } = 38;
+    [Parameter] public bool Relleno { get; set; }
+}

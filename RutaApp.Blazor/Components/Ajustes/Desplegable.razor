@@ -1,0 +1,10 @@
+<div class="desplegable">
+    <Icon Nombre="@Icono" Tam="17" Color="var(--text-secondary)" />
+    <span>@Texto</span>
+    <Icon Nombre="IcoChevronDown" Tam="16" />
+</div>
+
+@code {
+    [Parameter] public string Icono { get; set; }
+    [Parameter] public string Texto { get; set; }
+}

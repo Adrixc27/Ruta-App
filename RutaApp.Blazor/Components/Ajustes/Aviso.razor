@@ -1,0 +1,18 @@
+@* Recuadro de aviso: Tipo "info" (azul), "ok" (verde) o "alerta" (ámbar). *@
+<div class="aviso aviso-@Tipo">
+    <Icon Nombre="@Icono" Tam="20" />
+    <div>
+        @if (!string.IsNullOrEmpty(Titulo))
+        {
+            <b>@Titulo</b>
+        }
+        <p>@ChildContent</p>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Icono { get; set; } = "IcoInfo";
+    [Parameter] public string Titulo { get; set; }
+    [Parameter] public string Tipo { get; set; } = "info";
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}

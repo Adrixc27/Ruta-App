@@ -1,0 +1,157 @@
+@page "/perfil"
+@layout ShellLayout
+@implements IDisposable
+@inject EstadoApp Estado
+
+<PageTitle>Mi perfil · R.U.T.A.</PageTitle>
+
+<div class="pagina">
+    <div class="pagina-cabecera">
+        <div>
+            <h1>Mi Perfil</h1>
+            <p>Administra tu información personal y visualiza tus trayectos guardados</p>
+        </div>
+    </div>
+
+    <div class="perfil-grid">
+        <div>
+            <div class="card perfil-datos">
+                <div class="avatar" style="@(_foto != null ? $"background-image:url({_foto})" : "")">
+                    @if (_foto == null) { @EstadoApp.Iniciales(Estado.Nombre) }
+                </div>
+                <h2>@Estado.Nombre</h2>
+                <p class="miembro">Miembro de RUTA desde 2024</p>
+                <hr />
+                <div class="dato"><span>Correo:</span><b>@Estado.Correo</b></div>
+                <div class="dato"><span>Dispositivo:</span><b>Navegador web</b></div>
+            </div>
+
+            <div class="card perfil-acciones">
+                <button type="button" class="btn btn-primario btn-ancho" @onclick="EditarNombre">Editar Nombre de Usuario</button>
+                <label class="btn btn-suave btn-ancho" title="Elegir una imagen">
+                    Cambiar Foto de Perfil
+                    <InputFile OnChange="CambiarFoto" accept="image/png,image/jpeg,image/bmp,image/webp" hidden />
+                </label>
+                @if (_errorFoto != null) { <p class="error-texto">@_errorFoto</p> }
+            </div>
+        </div>
+
+        <div class="card perfil-trayectos">
+            <div class="trayectos-cabecera">
+                <h3>Rutas Guardadas</h3>
+                <button type="button" class="btn-ghost" @onclick='() => Estado.Navegar("planificar")'><Icon Nombre="IcoPlus" Tam="16" /> Agregar nueva</button>
+            </div>
+
+            <div class="trayectos-lista">
+                @foreach (var trayecto in Estado.Trayectos)
+                {
+                    var t = trayecto;
+                    <div class="trayecto">
+                        <span class="trayecto-icono"><Icon Nombre="IcoPin" Tam="20" Color="var(--brand-primary)" /></span>
+                        <div class="trayecto-texto">
+                            <b>@t.Alias</b>
+                            <span class="azul">@t.Recorrido</span>
+                            <small>@t.Detalle</small>
+                        </div>
+                        <button type="button" class="btn-icono" title="Marcar como favorito" @onclick="() => t.Favorito = !t.Favorito">
+                            <Icon Nombre="IcoStar" Tam="18" Color="var(--star)" Relleno="@(t.Favorito ? "var(--star)" : null)" />
+                        </button>
+                        <button type="button" class="btn-icono" title="Eliminar" @onclick="() => PedirEliminar(t)"><Icon Nombre="IcoTrash" Tam="18" /></button>
+                    </div>
+                }
+                @if (Estado.Trayectos.Count == 0)
+                {
+                    <p class="vacio">Aún no tienes trayectos guardados.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ═══════════════ MODAL: EDITAR NOMBRE ═══════════════ *@
+@if (_modalNombre)
+{
+    <div class="modal-fondo">
+        <div class="modal modal-nombre">
+            <h2>Editar nombre de usuario</h2>
+            <p>Así te verá la comunidad en tus publicaciones.</p>
+            <CampoTexto @bind-Text="_nuevoNombre" Hint="Tu nombre" MaxLength="40" OnTecla="TeclaNombre" />
+            @if (_errorNombre) { <p class="error-texto">Escribe un nombre de al menos 2 letras.</p> }
+            <div class="modal-acciones">
+                <button type="button" class="btn btn-contorno" @onclick="() => _modalNombre = false">Cancelar</button>
+                <button type="button" class="btn btn-primario" @onclick="GuardarNombre">Guardar</button>
+            </div>
+        </div>
+    </div>
+}
+
+<Dialogo @bind-Visible="_confirmar" Mensaje="@($"¿Quitar \"{_porEliminar?.Alias}\" de tus rutas guardadas?")"
+         TextoAceptar="Sí" TextoCancelar="No" OnAceptar="Eliminar" />
+
+@code {
+    private string _foto;                 // imagen elegida (data URL); null = se muestran las iniciales
+    private string _errorFoto;
+    private bool _modalNombre, _errorNombre;
+    private string _nuevoNombre = "";
+    private bool _confirmar;
+    private Trayecto _porEliminar;
+
+    protected override void OnInitialized() => Estado.Cambio += Refrescar;
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    // ── Editar nombre ─────────────────────────────────────────────────────
+    private void EditarNombre()
+    {
+        _nuevoNombre = Estado.Nombre;
+        _errorNombre = false;
+        _modalNombre = true;
+    }
+
+    private void GuardarNombre()
+    {
+        string nombre = _nuevoNombre.Trim();
+        if (nombre.Length < 2) { _errorNombre = true; return; }
+        Estado.Nombre = nombre;
+        _modalNombre = false;
+        Estado.Notificar();
+    }
+
+    private void TeclaNombre(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") GuardarNombre();
+        else if (e.Key == "Escape") _modalNombre = false;
+    }
+
+    // ── Cambiar foto ──────────────────────────────────────────────────────
+    private async Task CambiarFoto(InputFileChangeEventArgs e)
+    {
+        _errorFoto = null;
+        try
+        {
+            var archivo = e.File;
+            using var ms = new MemoryStream();
+            await archivo.OpenReadStream(maxAllowedSize: 3 * 1024 * 1024).CopyToAsync(ms);
+            _foto = $"data:{archivo.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+        }
+        catch (Exception)
+        {
+            _errorFoto = "No se pudo cargar esa imagen (máximo 3 MB). Prueba con otro archivo.";
+        }
+    }
+
+    // ── Trayectos guardados ───────────────────────────────────────────────
+    private void PedirEliminar(Trayecto t)
+    {
+        _porEliminar = t;
+        _confirmar = true;
+    }
+
+    private void Eliminar()
+    {
+        if (_porEliminar != null) Estado.QuitarTrayecto(_porEliminar);
+        _porEliminar = null;
+    }
+
+    public void Dispose() => Estado.Cambio -= Refrescar;
+}

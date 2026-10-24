@@ -1,0 +1,9 @@
+<div class="area-texto">
+    <textarea maxlength="@Maximo" @bind="Texto" @bind:event="oninput"></textarea>
+    <small>@(Texto?.Length ?? 0) / @Maximo</small>
+</div>
+
+@code {
+    [Parameter] public string Texto { get; set; }
+    [Parameter] public int Maximo { get; set; } = 500;
+}
