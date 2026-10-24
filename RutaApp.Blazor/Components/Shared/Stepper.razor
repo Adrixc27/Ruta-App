@@ -1,0 +1,31 @@
+@* Indicador de progreso del viaje: Planificar → Comparar → Viajar *@
+<div class="stepper">
+    @for (int n = 1; n <= 3; n++)
+    {
+        bool activo = n == Paso;
+        bool hecho = n < Paso;
+        <div class="paso @(activo ? "activo" : "") @(hecho ? "hecho" : "")">
+            <span class="circulo">
+                @if (hecho)
+                {
+                    <Icon Nombre="IcoCheck" Tam="12" />
+                }
+                else
+                {
+                    @n
+                }
+            </span>
+            <span class="etiqueta">@Etiquetas[n - 1]</span>
+        </div>
+        @if (n < 3)
+        {
+            <span class="conector @(hecho ? "hecho" : "")"></span>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public int Paso { get; set; } = 1;
+
+    private static readonly string[] Etiquetas = { "Planificar", "Comparar", "Viajar" };
+}

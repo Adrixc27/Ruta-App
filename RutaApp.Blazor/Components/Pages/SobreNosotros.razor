@@ -1,0 +1,37 @@
+@page "/sobre-nosotros"
+@inject EstadoApp Estado
+
+<PageTitle>Sobre Nosotros · R.U.T.A.</PageTitle>
+
+@* Página pública "Sobre Nosotros" (Figma: sobre nosotros). Se abre desde la landing page, sin iniciar sesión. *@
+<div class="sobre">
+    <header class="sobre-cabecera">
+        <div class="marca">
+            <div class="marca-logo marca-logo-blanco">R</div>
+            <div class="marca-texto marca-azul"><b>RUTA</b><small>TRANSPORTE PÚBLICO</small></div>
+        </div>
+        <nav class="landing-nav">
+            <button type="button" class="btn btn-ghost-oscuro" @onclick="Explorar">Rutas</button>
+            <a href="" class="btn btn-primario btn-chico">Inicio</a>
+        </nav>
+    </header>
+
+    <div class="sobre-cuerpo">
+        <h1>Sobre Nosotros</h1>
+        <p class="sobre-sub">Conoce la misión, el equipo y los valores detrás de RUTA.</p>
+        <ContenidoSobreNosotros Ubicacion="Chihuahua, CHIH" Lateral="512" />
+        <div class="sobre-pie">
+            <span>RUTA v4.12.0 · Escritorio estable</span>
+            <span class="azul">Ayuda y soporte</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    private async Task Explorar()
+    {
+        Estado.DestinoTrasIngreso = "rutas";
+        Estado.EntrarComoInvitado();
+        await Estado.CompletarIngresoAsync();
+    }
+}

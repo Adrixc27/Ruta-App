@@ -1,0 +1,12 @@
+<button type="button" class="interruptor @(Activo ? "activo" : "")" role="switch" aria-checked="@Activo" @onclick="Alternar"><span></span></button>
+
+@code {
+    [Parameter] public bool Activo { get; set; }
+    [Parameter] public EventCallback<bool> ActivoChanged { get; set; }
+
+    private async Task Alternar()
+    {
+        Activo = !Activo;
+        await ActivoChanged.InvokeAsync(Activo);
+    }
+}

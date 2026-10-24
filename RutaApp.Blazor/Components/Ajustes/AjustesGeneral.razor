@@ -1,0 +1,100 @@
+@* Ajustes → General: Notificaciones push, Unidades de distancia e Idioma (pantallas de diseño, sin funcionalidad todavía). *@
+@switch (Clave)
+{
+    case "notificaciones":
+        <MarcoDetalle Categoria="General" Titulo="Notificaciones push" Subtitulo="Controla qué alertas recibe tu cuenta y cuándo quieres recibirlas.">
+            <ChildContent>
+                <DosColumnas Lateral="316">
+                    <Principal>
+                        <Tarjeta Titulo="Alertas y avisos" Subtitulo="Personaliza tus notificaciones. Las alertas críticas de seguridad siempre permanecerán activas.">
+                            <div class="fila-maestra">
+                                <div class="fila-ajuste-texto"><b>Permitir notificaciones push</b><small>Activadas en este equipo</small></div>
+                                <Interruptor Activo="true" />
+                            </div>
+                            <FilaAjuste Icono="IcoSend" Titulo="Alertas de ruta" Descripcion="Cambios, retrasos y cancelaciones en rutas guardadas."><Interruptor Activo="true" /></FilaAjuste>
+                            <FilaAjuste Icono="IcoAlert" Titulo="Incidencias cercanas" Descripcion="Interrupciones y cierres relevantes en tu zona."><Interruptor Activo="true" /></FilaAjuste>
+                            <FilaAjuste Icono="IcoClock" Titulo="Recordatorios de viaje" Descripcion="Avisos 10 minutos antes de la hora de salida."><Interruptor Activo="true" /></FilaAjuste>
+                            <FilaAjuste Icono="IcoSparkles" Titulo="Novedades de RUTA" Descripcion="Funciones nuevas, consejos y comunicaciones del producto."><Interruptor Activo="false" /></FilaAjuste>
+                        </Tarjeta>
+                    </Principal>
+                    <Secundario>
+                        <Tarjeta Titulo="Resumen" Subtitulo="Frecuencia estimada según tu actividad.">
+                            <ParValor Etiqueta="Alertas activas" Valor="3 de 4" Recuadro="true" />
+                            <ParValor Etiqueta="Promedio semanal" Valor="5 avisos" Recuadro="true" />
+                            <ParValor Etiqueta="Horario silencioso" Valor="23:00–07:00" Recuadro="true" />
+                            <Aviso Icono="IcoCheckCircle" Titulo="Permisos del sistema" Tipo="ok">RUTA tiene permiso para mostrar avisos en este equipo.</Aviso>
+                        </Tarjeta>
+                    </Secundario>
+                </DosColumnas>
+            </ChildContent>
+            <Barra><BarraInferior Info="Puedes cambiar estos ajustes en cualquier momento." TextoBoton="Guardar preferencias" /></Barra>
+        </MarcoDetalle>
+        break;
+
+    case "unidades":
+        <MarcoDetalle Categoria="General" Titulo="Unidades de distancia" Subtitulo="Define cómo se muestran las distancias durante la planificación y navegación.">
+            <ChildContent>
+                <DosColumnas Lateral="356">
+                    <Principal>
+                        <Tarjeta Titulo="Sistema de medida" Subtitulo="Esta preferencia afecta los resultados, mapas y avisos de caminata.">
+                            <OpcionRadio Titulo="Kilómetros" Descripcion="Metros para tramos cortos y kilómetros para trayectos largos." Insignia="Recomendado"
+                                         Seleccionada="@(_unidad == "km")" OnClick="@(() => _unidad = "km")" />
+                            <OpcionRadio Titulo="Millas" Descripcion="Pies para tramos cortos y millas para trayectos largos."
+                                         Seleccionada="@(_unidad == "mi")" OnClick="@(() => _unidad = "mi")" />
+                            <Aviso Icono="IcoRefresh" Titulo="Conversión automática">Las distancias históricas se convertirán sin modificar tus rutas guardadas.</Aviso>
+                        </Tarjeta>
+                    </Principal>
+                    <Secundario>
+                        <Tarjeta Titulo="Ejemplo de ruta" Subtitulo="@("Vista previa con " + (_unidad == "km" ? "kilómetros" : "millas") + " seleccionadas.")">
+                            <ParValor Etiqueta="Caminar hasta Estación Norte" Valor="@(_unidad == "km" ? "450 m · 6 min" : "1,476 ft · 6 min")" Recuadro="true" />
+                            <ParValor Etiqueta="Viajar en Metro L2" Valor="@(_unidad == "km" ? "7,4 km · 18 min" : "4,6 mi · 18 min")" Recuadro="true" />
+                            <ParValor Etiqueta="Caminar al destino" Valor="@(_unidad == "km" ? "280 m · 4 min" : "919 ft · 4 min")" Recuadro="true" />
+                            <div class="separador"></div>
+                            <div class="total-distancia"><b>Distancia total</b><h4>@(_unidad == "km" ? "8,1 km" : "5,0 mi")</h4></div>
+                        </Tarjeta>
+                    </Secundario>
+                </DosColumnas>
+            </ChildContent>
+            <Barra><BarraInferior Info="Los cambios se aplicarán a tus próximas rutas." TextoBoton="Guardar unidad" /></Barra>
+        </MarcoDetalle>
+        break;
+
+    case "idioma":
+        <MarcoDetalle Categoria="General" Titulo="Idioma de la aplicación" Subtitulo="Elige el idioma para menús, indicaciones y mensajes de RUTA.">
+            <ChildContent>
+                <DosColumnas Lateral="356">
+                    <Principal>
+                        <Tarjeta Titulo="Idioma de interfaz" Subtitulo="Tu idioma actual es Español. El cambio se aplicará en todos tus dispositivos.">
+                            <OpcionRadio Titulo="Español" Descripcion="Español (Latinoamérica)" Insignia="Actual"
+                                         Seleccionada="@(_idioma == "es")" OnClick="@(() => _idioma = "es")" />
+                            <OpcionRadio Titulo="English" Descripcion="English (United States)"
+                                         Seleccionada="@(_idioma == "en")" OnClick="@(() => _idioma = "en")" />
+                            <OpcionRadio Titulo="Português" Descripcion="Português (Brasil)"
+                                         Seleccionada="@(_idioma == "pt")" OnClick="@(() => _idioma = "pt")" />
+                            <Aviso Icono="IcoInfo" Titulo="Contenido regional">Los nombres de estaciones y calles se conservarán en su idioma oficial.</Aviso>
+                        </Tarjeta>
+                    </Principal>
+                    <Secundario>
+                        <Tarjeta Titulo="Vista previa" Subtitulo="Así verás los elementos principales de la aplicación.">
+                            <div class="proxima-ruta">
+                                <small>PRÓXIMA RUTA</small>
+                                <h4>Centro → Universidad</h4>
+                                <span>Sale en 8 min · 3 transbordos</span>
+                            </div>
+                            <p class="nota">Formato de fecha: 1 de octubre de 2026</p>
+                            <p class="nota">Hora: 18:45 · Distancia: kilómetros</p>
+                        </Tarjeta>
+                    </Secundario>
+                </DosColumnas>
+            </ChildContent>
+            <Barra><BarraInferior Info="La app se recargará al guardar el nuevo idioma." TextoBoton="Guardar idioma" /></Barra>
+        </MarcoDetalle>
+        break;
+}
+
+@code {
+    [Parameter] public string Clave { get; set; }
+
+    private string _unidad = "km";
+    private string _idioma = "es";
+}

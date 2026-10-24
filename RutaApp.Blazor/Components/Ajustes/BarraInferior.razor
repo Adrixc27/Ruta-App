@@ -1,0 +1,25 @@
+<Tarjeta Relleno="14" Clase="barra-inferior">
+    <Icon Nombre="IcoInfo" Tam="18" Color="var(--text-secondary)" />
+    <span>@Info</span>
+    <Boton Texto="@TextoBoton" Icono="IcoCheck" OnClick="Guardar" />
+</Tarjeta>
+@if (_guardado)
+{
+    <div class="toast-ajuste">Cambios guardados</div>
+}
+
+@code {
+    [Parameter] public string Info { get; set; }
+    [Parameter] public string TextoBoton { get; set; }
+
+    private bool _guardado;
+
+    private async Task Guardar()
+    {
+        _guardado = true;
+        StateHasChanged();
+        await Task.Delay(1800);
+        _guardado = false;
+        StateHasChanged();
+    }
+}

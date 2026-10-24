@@ -1,0 +1,40 @@
+@inject EstadoApp Estado
+
+@* Marco común de las pantallas de detalle de Configuración: migas, título, cuerpo, barra inferior y pie. *@
+<div class="marco-detalle">
+    <div class="migas">
+        <button type="button" class="btn-ghost" @onclick="@(() => Estado.Navegar("config"))">
+            <Icon Nombre="IcoArrowLeft" Tam="15" /> <b>Volver a Configuración</b>
+        </button>
+        <span>/</span>
+        <span>@Categoria</span>
+    </div>
+
+    <div class="marco-titulo">
+        <div>
+            <h1>@Titulo</h1>
+            <p>@Subtitulo</p>
+        </div>
+        <span class="sync"><i></i><b>Cambios sincronizados</b></span>
+    </div>
+
+    <div class="marco-cuerpo">@ChildContent</div>
+
+    @if (Barra != null)
+    {
+        <div class="marco-barra">@Barra</div>
+    }
+
+    <div class="marco-pie">
+        <span>RUTA v4.12.0 · Escritorio estable</span>
+        <button type="button" class="btn-ghost" @onclick="@(() => Estado.Navegar("ajuste", "Centro de ayuda"))">Ayuda y soporte</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Categoria { get; set; }
+    [Parameter] public string Titulo { get; set; }
+    [Parameter] public string Subtitulo { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public RenderFragment Barra { get; set; }
+}

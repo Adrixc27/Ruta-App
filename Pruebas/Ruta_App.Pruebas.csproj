@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Pruebas del motor de rutas. Compila los mismos archivos que usa la app WPF (net48), sin tocar la interfaz. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Mismo lenguaje que el proyecto WPF (net48 usa C# 7.3) para detectar de inmediato código que allí no compilaría -->
+    <LangVersion>7.3</LangVersion>
+    <RootNamespace>Ruta_App.Pruebas</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Models\*.cs" Link="Motor\Models\%(Filename)%(Extension)" />
+    <Compile Include="..\Graph\*.cs" Link="Motor\Graph\%(Filename)%(Extension)" />
+    <Compile Include="..\Algorithms\*.cs" Link="Motor\Algorithms\%(Filename)%(Extension)" />
+    <Compile Include="..\Services\*.cs" Link="Motor\Services\%(Filename)%(Extension)" />
+    <Compile Include="..\Data\*.cs" Link="Motor\Data\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+</Project>

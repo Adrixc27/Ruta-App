@@ -1,0 +1,182 @@
+@page "/rutas"
+@layout ShellLayout
+@implements IDisposable
+@inject EstadoApp Estado
+
+<PageTitle>Rutas · R.U.T.A.</PageTitle>
+
+<div class="split split-400">
+    <div class="panel-lateral panel-rutas">
+        <div>
+            <h1 class="titulo-panel grande">Rutas de la zona</h1>
+            <p class="sub-panel">@(_soloGuardadas ? "Tus rutas favoritas, siempre a un toque" : "Toca una ruta para verla en el mapa")</p>
+        </div>
+
+        @* Pestañas Todas | Guardadas *@
+        <div class="card pestanas">
+            <button type="button" class="seg @(!_soloGuardadas ? "activo" : "")" @onclick="() => CambiarPestana(false)">
+                Todas <em class="contador">@Estado.Rutas.Count</em>
+            </button>
+            <button type="button" class="seg @(_soloGuardadas ? "activo" : "")" @onclick="() => CambiarPestana(true)">
+                <Icon Nombre="IcoBookmark" Tam="15" /> Guardadas <em class="contador">@Estado.TotalGuardadas</em>
+            </button>
+        </div>
+
+        <div class="busqueda-panel">
+            <CampoTexto Text="@_busqueda" TextChanged="AlBuscar" Icono="IcoSearch" Hint="Buscar ruta o colonia..." Fondo="var(--bg-card)" Alto="42" />
+        </div>
+
+        @if (!_soloGuardadas)
+        {
+            <div class="chips">
+                @foreach (var modo in new[] { "Todas", "Autobús", "Exprés", "Metro" })
+                {
+                    var m = modo;
+                    <button type="button" class="chip-radio @(_modo == m ? "activo" : "")" @onclick="() => _modo = m">@m</button>
+                }
+            </div>
+        }
+
+        <div class="lista-rutas">
+            @foreach (var ruta in Visibles)
+            {
+                var r = ruta;
+                <div class="ruta-item @(r.Seleccionada ? "sel" : "")" @onclick="() => Seleccionar(r)">
+                    <span class="ruta-numero">@r.NumeroTexto</span>
+                    <div class="ruta-texto">
+                        <div class="ruta-nombre">
+                            <b>@r.Nombre</b>
+                            @if (r.Desvio) { <span class="etiqueta-desvio">Desvío</span> }
+                            @if (r.TieneVariantes) { <span class="etiqueta-variantes">@r.Variantes.Count variantes</span> }
+                        </div>
+                        <small>@r.Meta</small>
+                        @if (r.Seleccionada)
+                        {
+                            <span class="en-mapa"><Icon Nombre="IcoPin" Tam="11" /> Mostrándose en el mapa</span>
+                        }
+                    </div>
+                    <button type="button" class="btn-icono" title="Guardar ruta" @onclick="() => Estado.AlternarGuardada(r)" @onclick:stopPropagation="true">
+                        <Icon Nombre="IcoBookmark" Tam="18" Color="@(r.Guardada ? "var(--brand-primary)" : null)" Relleno="@(r.Guardada ? "var(--brand-primary)" : null)" />
+                    </button>
+                </div>
+            }
+
+            @if (!Visibles.Any())
+            {
+                <p class="vacio">@(_soloGuardadas ? "Aún no tienes rutas guardadas." : "No se encontraron rutas.")</p>
+            }
+
+            @if (_soloGuardadas)
+            {
+                <div class="card invitacion">
+                    <Icon Nombre="IcoBookmark" Color="var(--brand-primary)" />
+                    <b>Guarda más rutas</b>
+                    <small>Toca el marcador en cualquier ruta para agregarla aquí.</small>
+                    <button type="button" class="btn-ghost" @onclick="() => CambiarPestana(false)">Explorar todas las rutas <Icon Nombre="IcoArrowRight" Tam="14" /></button>
+                </div>
+            }
+        </div>
+
+        <p class="nota-pie">@(_soloGuardadas ? "" : "Mostrando " + Visibles.Count() + " de " + Estado.Rutas.Count + " rutas")</p>
+    </div>
+
+    <Mapa @ref="_mapa" OnQuitar="QuitarSeleccion" OnPlanificar="PlanificarConRuta" OnGuardar="GuardarSeleccion" />
+</div>
+
+@code {
+    private Mapa _mapa;
+    private bool _soloGuardadas;
+    private string _modo = "Todas";
+    private string _busqueda = "";
+    private Ruta _seleccion;
+    private Ruta _pedida;   // ruta que otra pantalla quiere ver en el mapa
+
+    private IEnumerable<Ruta> Visibles
+    {
+        get
+        {
+            IEnumerable<Ruta> lista = _soloGuardadas ? Estado.Rutas.Where(r => r.Guardada) : Estado.Rutas;
+            if (!_soloGuardadas && _modo != "Todas") lista = lista.Where(r => r.Modo == _modo);
+            string q = _busqueda.Trim();
+            if (q.Length > 0)
+            {
+                lista = lista.Where(r =>
+                    r.Nombre.Contains(q, StringComparison.CurrentCultureIgnoreCase) ||
+                    r.OrigenNombre.Contains(q, StringComparison.CurrentCultureIgnoreCase) ||
+                    r.DestinoNombre.Contains(q, StringComparison.CurrentCultureIgnoreCase));
+            }
+            return lista;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Llegamos desde otra pantalla pidiendo ver una ruta concreta (por ejemplo Comunidad → "Ver en el mapa")
+        _pedida = Estado.TomarParametro<Ruta>();
+        _seleccion = _pedida ?? Estado.RutaSeleccionada ?? Estado.Rutas.FirstOrDefault();   // arranca mostrando la primera ruta
+        Estado.Cambio += Refrescar;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _seleccion == null) return;
+        await Seleccionar(_seleccion);
+        StateHasChanged();   // para que la lista marque la ruta seleccionada
+    }
+
+    // Si la ruta que se ve en el mapa cambió de "guardada", se actualiza su tarjeta
+    private void Refrescar()
+    {
+        InvokeAsync(() =>
+        {
+            if (_seleccion != null) _mapa?.MostrarTarjeta(_seleccion);
+            StateHasChanged();
+        });
+    }
+
+    private void CambiarPestana(bool soloGuardadas) => _soloGuardadas = soloGuardadas;
+
+    private void AlBuscar(string texto) => _busqueda = texto;
+
+    // ── Selección y mapa ──────────────────────────────────────────────────
+    private async Task Seleccionar(Ruta r)
+    {
+        foreach (var x in Estado.Rutas) x.Seleccionada = (x == r);
+        _seleccion = r;
+        Estado.RutaSeleccionada = r;
+        _mapa.BannerRuta("Mostrando " + r.Nombre, true);
+        _mapa.MostrarTarjeta(r);
+        await _mapa.DibujarRuta(r);
+    }
+
+    // Botón "Quitar" del banner del mapa
+    private async Task QuitarSeleccion()
+    {
+        foreach (var x in Estado.Rutas) x.Seleccionada = false;
+        _seleccion = null;
+        Estado.RutaSeleccionada = null;
+        await _mapa.LimpiarRuta();
+        _mapa.OcultarBanner();
+        _mapa.OcultarTarjeta();
+    }
+
+    // Botón "Planificar viaje con esta ruta" de la tarjeta del mapa
+    private void PlanificarConRuta()
+    {
+        if (_seleccion == null) return;
+        Estado.Origen = _seleccion.OrigenNombre;
+        Estado.Destino = _seleccion.DestinoNombre;
+        Estado.Escalas = new List<Sugerencia>();
+        Estado.OrigenLat = double.NaN;
+        Estado.DestinoLat = double.NaN;
+        Estado.Navegar("planificar");
+    }
+
+    // Botón "Guardada" de la tarjeta del mapa
+    private void GuardarSeleccion()
+    {
+        if (_seleccion != null) Estado.AlternarGuardada(_seleccion);
+    }
+
+    public void Dispose() => Estado.Cambio -= Refrescar;
+}

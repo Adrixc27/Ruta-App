@@ -1,0 +1,56 @@
+@* Panel azul de marca (ilustración de la ruta + titular). Es la primera diapositiva del carrusel. *@
+<div class="slide-marca">
+    <span class="burbuja burbuja-1"></span>
+    <span class="burbuja burbuja-2"></span>
+    <div class="slide-marca-contenido">
+        <div class="marca marca-clara">
+            <div class="marca-logo">R</div>
+            <div class="marca-texto"><b>RUTA</b><small>TRANSPORTE PÚBLICO</small></div>
+        </div>
+
+        <div class="slide-ilustracion">
+            <svg viewBox="0 0 528 400" xmlns="http://www.w3.org/2000/svg">
+                <!-- calles -->
+                <polygon points="0,300 0,282 528,250 528,268" fill="white" opacity="0.14" />
+                <polygon points="0,150 0,138 528,110 528,122" fill="white" opacity="0.14" />
+                <polygon points="120,0 138,0 200,400 182,400" fill="white" opacity="0.14" />
+                <polygon points="362,0 380,0 348,400 330,400" fill="white" opacity="0.14" />
+                <!-- línea de la ruta -->
+                <path d="M56,340 V240 Q56,219 77,219 H239 Q260,219 260,198 V101 Q260,80 281,80 H468"
+                      fill="none" stroke="white" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" />
+                <!-- paradas -->
+                <circle cx="56" cy="340" r="11" fill="#F9A8A8" stroke="white" stroke-width="3" />
+                <circle cx="158" cy="220" r="8" fill="white" />
+                <circle cx="260" cy="150" r="8" fill="white" />
+                <circle cx="468" cy="80" r="15" fill="white" />
+                <circle cx="468" cy="80" r="6" fill="#2563EB" />
+                <!-- pills -->
+                <rect x="84" y="326" width="92" height="25" rx="8" fill="white" />
+                <text x="130" y="343" text-anchor="middle" font-size="11" font-weight="700" fill="#2563EB">Tu ubicación</text>
+                <rect x="400" y="110" width="78" height="25" rx="8" fill="white" />
+                <text x="439" y="127" text-anchor="middle" font-size="11" font-weight="700" fill="#2563EB">Tu destino</text>
+                <!-- tarjeta "en vivo" -->
+                <rect x="232" y="290" width="239" height="68" rx="14" fill="white" />
+                <rect x="246" y="304" width="40" height="40" rx="10" fill="#DBEAFE" />
+                <g transform="translate(255 313) scale(0.92)" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="@Iconos.Rutas["IcoBus"]" />
+                </g>
+                <text x="298" y="322" font-size="13" font-weight="700" fill="#1B365D">Ruta 6 - Villas</text>
+                <text x="298" y="340" font-size="11" fill="#4A6FA5">Llega en 4 min</text>
+                <rect x="400" y="316" width="58" height="22" rx="11" fill="#DCFCE7" />
+                <circle cx="412" cy="327" r="3" fill="#16A34A" />
+                <text x="420" y="331" font-size="11" font-weight="700" fill="#16A34A">En vivo</text>
+            </svg>
+        </div>
+
+        <div>
+            <div class="slide-titular">@Titular</div>
+            <div class="slide-subtitular">@Subtitular</div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Titular { get; set; } = "";
+    [Parameter] public string Subtitular { get; set; } = "";
+}

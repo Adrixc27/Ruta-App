@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>R.U.T.A.</title>
+    <base href="/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;900&display=swap" />
+    <link rel="stylesheet" href="lib/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="_content/RutaApp.Blazor/app.css" />
+    <link rel="icon" href="data:," />
+</head>
+
+<body>
+
+    <div id="app">Cargando...</div>
+
+    <div id="blazor-error-ui" data-nosnippet>
+        Ocurrió un error inesperado.
+        <a href="." class="reload">Recargar</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <!-- Leaflet: la única librería de JavaScript que dibuja el mapa (se controla desde C#) -->
+    <script src="lib/leaflet/leaflet.js"></script>
+    <script src="_framework/blazor.webview.js"></script>
+
+</body>
+
+</html>

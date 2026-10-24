@@ -1,0 +1,103 @@
+@implements IDisposable
+
+@* Animación de entrada de la landing page. Se repite en ciclo hasta que el usuario hace clic:
+   1) un camión cruza la pantalla y va mostrando las letras de "RUTA"; 2) las letras se quedan unos segundos;
+   3) se desvanecen y el camión vuelve a pasar. Mientras el camión avanza los clics se ignoran. *@
+@if (_visible)
+{
+    <div class="intro @(_saliendo ? "saliendo" : "")" @onclick="Clic">
+        <div class="intro-marca @(_fase == Fase.Desvaneciendo ? "desvanece" : "")">
+            @if (_fase != Fase.Oculta)
+            {
+                <div class="intro-letras @(_fase == Fase.Pasando ? "revelando" : "revelado")" @key="_ciclo">
+                    <div class="intro-nombre">RUTA</div>
+                    <div class="intro-lema"><b>R</b>ecomendador <b>U</b>rbano de <b>T</b>ransporte <b>A</b>ccesible</div>
+                </div>
+            }
+        </div>
+        @if (_fase == Fase.Pasando)
+        {
+            <div class="intro-escena" @key="_ciclo">
+                <div class="intro-carretera"></div>
+                <div class="intro-camion"><Icon Nombre="IcoBus" Tam="130" Relleno="white" /></div>
+            </div>
+        }
+        <div class="intro-pista @(_fase == Fase.Mostrando ? "latido" : "")">Haz clic para continuar</div>
+    </div>
+}
+
+@code {
+    private enum Fase { Oculta, Pasando, Mostrando, Desvaneciendo }
+
+    private const double SegundosPasada = 3.6;      // lo que tarda el camión en cruzar
+    private const double SegundosLetras = 2.8;      // las letras se quedan visibles
+    private const double SegundosDesvanecer = 0.7;
+
+    private bool _visible = true;
+    private bool _saliendo;
+    private bool _terminada;
+    private Fase _fase = Fase.Oculta;
+    private int _ciclo;
+    private int _version;
+    private CancellationTokenSource _cts;
+
+    [Parameter] public EventCallback OnTerminada { get; set; }
+
+    protected override void OnInitialized() => Reproducir();
+
+    /// <summary>Muestra la animación desde el principio y la repite en ciclo hasta que el usuario haga clic.</summary>
+    public void Reproducir()
+    {
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        _version++;
+        _terminada = false;
+        _saliendo = false;
+        _visible = true;
+        StateHasChanged();
+        _ = CicloAsync(_version, _cts.Token);
+    }
+
+    private async Task CicloAsync(int version, CancellationToken token)
+    {
+        try
+        {
+            while (version == _version && !_terminada)
+            {
+                _ciclo++;
+                _fase = Fase.Pasando;
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(TimeSpan.FromSeconds(SegundosPasada), token);
+
+                _fase = Fase.Mostrando;
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(TimeSpan.FromSeconds(SegundosLetras), token);
+
+                _fase = Fase.Desvaneciendo;
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(TimeSpan.FromSeconds(SegundosDesvanecer + 0.3), token);
+            }
+        }
+        catch (TaskCanceledException) { }
+        catch (ObjectDisposedException) { }
+    }
+
+    private async Task Clic()
+    {
+        if (_terminada || _fase == Fase.Pasando) return;   // no se puede saltar mientras pasa el camión
+        _terminada = true;
+        _cts?.Cancel();
+        _saliendo = true;
+        StateHasChanged();
+        await Task.Delay(500);
+        if (!_terminada) return;   // se volvió a reproducir mientras se desvanecía
+        _visible = false;
+        await OnTerminada.InvokeAsync();
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}

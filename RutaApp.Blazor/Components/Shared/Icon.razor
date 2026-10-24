@@ -1,0 +1,16 @@
+@* Icono vectorial. Nombre = clave de Iconos (por ejemplo "IcoBus"). El color es el del texto (currentColor) salvo que se indique Color. *@
+<svg class="icono @Clase" viewBox="0 0 24 24" width="@Tam" height="@Tam" fill="@(Relleno ?? "none")"
+     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+     style="@(Color != null ? "color:" + Color + ";" : "")" aria-hidden="true">
+    <path d="@Datos" />
+</svg>
+
+@code {
+    [Parameter] public string Nombre { get; set; }
+    [Parameter] public int Tam { get; set; } = 20;
+    [Parameter] public string Color { get; set; }
+    [Parameter] public string Relleno { get; set; }
+    [Parameter] public string Clase { get; set; }
+
+    private string Datos => Nombre != null && Iconos.Rutas.TryGetValue(Nombre, out var d) ? d : "";
+}

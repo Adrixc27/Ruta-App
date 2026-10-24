@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <!-- Biblioteca de componentes Blazor de R.U.T.A. (pantallas, servicios y mapa). Es la versión web/híbrida de la interfaz;
+       la app de escritorio actual es la de WPF (Ruta App.csproj). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- El motor de rutas está escrito sin anotaciones de nulabilidad -->
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>RutaApp.Blazor</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="RutaApp.Blazor.Models" />
+    <Using Include="RutaApp.Blazor.Services" />
+    <Using Include="RutaApp.Blazor.Data" />
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
+  </ItemGroup>
+
+  <!-- Motor de rutas compartido con la app WPF y el proyecto de pruebas (carpetas de la raíz del repositorio) -->
+  <ItemGroup>
+    <Compile Include="..\Models\*.cs" Link="Motor\Models\%(Filename)%(Extension)" />
+    <Compile Include="..\Graph\*.cs" Link="Motor\Graph\%(Filename)%(Extension)" />
+    <Compile Include="..\Algorithms\*.cs" Link="Motor\Algorithms\%(Filename)%(Extension)" />
+    <Compile Include="..\Services\*.cs" Link="Motor\Services\%(Filename)%(Extension)" />
+    <Compile Include="..\Data\*.cs" Link="Motor\Data\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

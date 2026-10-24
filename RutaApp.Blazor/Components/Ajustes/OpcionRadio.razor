@@ -1,0 +1,19 @@
+<div class="opcion-radio @(Seleccionada ? "sel" : "")" @onclick="() => OnClick.InvokeAsync()">
+    <span class="radio"><i></i></span>
+    <div class="fila-ajuste-texto">
+        <b>@Titulo</b>
+        <small>@Descripcion</small>
+    </div>
+    @if (Insignia != null)
+    {
+        <Chip Texto="@Insignia" Variante="primario" />
+    }
+</div>
+
+@code {
+    [Parameter] public string Titulo { get; set; }
+    [Parameter] public string Descripcion { get; set; }
+    [Parameter] public bool Seleccionada { get; set; }
+    [Parameter] public string Insignia { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+}

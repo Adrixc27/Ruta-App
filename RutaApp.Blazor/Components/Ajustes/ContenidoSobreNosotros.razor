@@ -1,0 +1,40 @@
+@* "Sobre Nosotros": se usa en Configuración y en la página pública. *@
+<DosColumnas Lateral="@Lateral">
+    <Principal>
+        <div class="mision">
+            <div class="mision-logo">R</div>
+            <small>NUESTRA MISIÓN</small>
+            <h2>Moverte por la ciudad debe ser claro, accesible y confiable.</h2>
+            <p>RUTA reúne información de operadores, datos abiertos y reportes de la comunidad para ayudarte a tomar mejores decisiones de viaje.</p>
+        </div>
+        <Tarjeta Titulo="Nuestro compromiso" Subtitulo="Diseñamos una herramienta pública y útil para cada forma de moverse." Clase="separada">
+            <div class="tres-columnas pequenas">
+                <div class="mosaico"><Icon Nombre="IcoAccess" Tam="20" /><b>Accesible</b><small>Preferencias de movilidad incluidas desde el inicio.</small></div>
+                <div class="mosaico"><Icon Nombre="IcoShield" Tam="20" /><b>Responsable</b><small>Privacidad y transparencia en cada decisión.</small></div>
+                <div class="mosaico"><Icon Nombre="IcoUsers" Tam="20" /><b>Colaborativa</b><small>Información mejorada por toda la comunidad.</small></div>
+            </div>
+        </Tarjeta>
+    </Principal>
+    <Secundario>
+        <Tarjeta Titulo="RUTA para escritorio" Subtitulo="Información técnica de esta instalación.">
+            <ParValor Etiqueta="Versión" Valor="4.12.0" />
+            <ParValor Etiqueta="Compilación" Valor="2026.10.01 · estable" />
+            <ParValor Etiqueta="Datos de transporte" Valor="Actualizados hace 4 min" />
+            <ParValor Etiqueta="Licencia" Valor="RUTA Community License" />
+            <div class="version-ok"><Icon Nombre="IcoCheckCircle" Tam="18" Color="var(--success)" /> Tienes la versión más reciente</div>
+        </Tarjeta>
+        <Tarjeta Titulo="Contacto" Subtitulo="¿Tienes una propuesta, alianza o consulta institucional?" Clase="separada">
+            <div class="contacto-linea"><Icon Nombre="IcoMail" Tam="18" /><b>hola@ruta.com</b></div>
+            <div class="contacto-linea"><Icon Nombre="IcoPin" Tam="18" /><span>@Ubicacion</span></div>
+            <div class="botones-fila">
+                <Boton Texto="Escribirnos" Icono="IcoSend" />
+                <Boton Texto="Sitio web" Icono="IcoExternal" Relleno="false" />
+            </div>
+        </Tarjeta>
+    </Secundario>
+</DosColumnas>
+
+@code {
+    [Parameter] public string Ubicacion { get; set; } = "Chihuahua, CHIH";
+    [Parameter] public int Lateral { get; set; } = 376;
+}

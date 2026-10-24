@@ -1,0 +1,60 @@
+@* Caja de texto con icono (o punto de color), placeholder y borde azul al enfocar. *@
+<div class="campo @(_enfocado ? "enfocado" : "")" style="@Estilo">
+    @if (Icono != null)
+    {
+        <Icon Nombre="@Icono" Tam="18" Color="var(--text-secondary)" Clase="campo-icono" />
+    }
+    else if (Punto != null)
+    {
+        <span class="campo-punto" style="background:@Punto"></span>
+    }
+    <input @ref="_input" type="@Tipo" placeholder="@Hint" value="@Text" maxlength="@(MaxLength > 0 ? MaxLength : null)"
+           autocomplete="off" spellcheck="false"
+           @oninput="AlEscribir" @onfocus="AlEnfocar" @onblur="AlPerderFoco" @onkeydown="AlTecla" />
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Text { get; set; } = "";
+    [Parameter] public EventCallback<string> TextChanged { get; set; }
+    [Parameter] public string Hint { get; set; }
+    /// <summary>Clave del icono a la izquierda (por ejemplo "IcoMail").</summary>
+    [Parameter] public string Icono { get; set; }
+    /// <summary>Si se define, en vez de icono se muestra un punto de este color CSS (origen / destino).</summary>
+    [Parameter] public string Punto { get; set; }
+    [Parameter] public string Fondo { get; set; }
+    [Parameter] public int Alto { get; set; } = 46;
+    [Parameter] public int Redondeo { get; set; } = 12;
+    [Parameter] public string Tipo { get; set; } = "text";
+    [Parameter] public int MaxLength { get; set; }
+    [Parameter] public EventCallback OnFocoPerdido { get; set; }
+    [Parameter] public EventCallback<KeyboardEventArgs> OnTecla { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+
+    private ElementReference _input;
+    private bool _enfocado;
+
+    private string Estilo =>
+        $"min-height:{Alto}px;border-radius:{Redondeo}px;" + (Fondo != null ? $"background:{Fondo};" : "");
+
+    private async Task AlEscribir(ChangeEventArgs e)
+    {
+        Text = e.Value?.ToString() ?? "";
+        await TextChanged.InvokeAsync(Text);
+    }
+
+    private void AlEnfocar() => _enfocado = true;
+
+    private async Task AlPerderFoco()
+    {
+        _enfocado = false;
+        await OnFocoPerdido.InvokeAsync();
+    }
+
+    private Task AlTecla(KeyboardEventArgs e) => OnTecla.InvokeAsync(e);
+
+    public async Task Enfocar()
+    {
+        try { await _input.FocusAsync(); } catch (InvalidOperationException) { }
+    }
+}

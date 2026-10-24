@@ -1,0 +1,69 @@
+@page "/"
+@inject EstadoApp Estado
+
+<PageTitle>R.U.T.A. · Transporte público</PageTitle>
+
+@if (_mostrarIntro)
+{
+    <IntroAnimacion @key="_claveIntro" OnTerminada="IntroTerminada" />
+}
+
+<div class="landing">
+    <header class="landing-cabecera">
+        <div class="marca marca-clickable" title="Ver la animación de RUTA" @onclick="ReproducirIntro">
+            <div class="marca-logo">R</div>
+            <div class="marca-texto marca-azul"><b>RUTA</b><small>TRANSPORTE PÚBLICO</small></div>
+        </div>
+        <nav class="landing-nav">
+            <button type="button" class="btn btn-ghost-oscuro" @onclick="Explorar">Rutas</button>
+            <a href="sobre-nosotros" class="btn btn-primario btn-chico">Sobre Nosotros</a>
+        </nav>
+    </header>
+
+    <section class="landing-contenido">
+        <div class="landing-texto">
+            <h1>Transporte Publico en la palma de tu mano</h1>
+            <p>Llegando a tu destino, rapido y directo.</p>
+            <div class="landing-botones">
+                <a href="acceso" class="btn btn-primario btn-grande">Iniciar Sesion</a>
+                <button type="button" class="btn btn-sinborde btn-grande" @onclick="Explorar">Explorar rutas</button>
+            </div>
+        </div>
+
+        <div class="landing-tarjeta">
+            <Carrusel ConMarca="true" Titular="Muévete por tu ciudad sin perderte."
+                      Subtitular="Planifica, compara y viaja en transporte público con rutas claras y en tiempo real." />
+        </div>
+    </section>
+</div>
+
+@code {
+    private bool _mostrarIntro;
+    private int _claveIntro;
+
+    protected override void OnInitialized()
+    {
+        // La animación se ve al abrir la app; el logo de la landing la vuelve a reproducir
+        _mostrarIntro = !Estado.IntroVista;
+    }
+
+    private void IntroTerminada()
+    {
+        Estado.IntroVista = true;
+        _mostrarIntro = false;
+    }
+
+    private void ReproducirIntro()
+    {
+        _claveIntro++;
+        _mostrarIntro = true;
+    }
+
+    // "Rutas" / "Explorar rutas": se explora la app como invitado, directo a las rutas
+    private async Task Explorar()
+    {
+        Estado.DestinoTrasIngreso = "rutas";
+        Estado.EntrarComoInvitado();
+        await Estado.CompletarIngresoAsync();
+    }
+}

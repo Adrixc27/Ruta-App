@@ -1,0 +1,20 @@
+@* Fila con icono, título, descripción y un control a la derecha (interruptor, chevron...). *@
+<div class="fila-ajuste @(Linea ? "con-linea" : "")">
+    @if (Icono != null)
+    {
+        <CajaIcono Icono="@Icono" />
+    }
+    <div class="fila-ajuste-texto">
+        <b>@Titulo</b>
+        <small>@Descripcion</small>
+    </div>
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Icono { get; set; }
+    [Parameter] public string Titulo { get; set; }
+    [Parameter] public string Descripcion { get; set; }
+    [Parameter] public bool Linea { get; set; } = true;
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}
