@@ -58,7 +58,7 @@ public class RutaRepositorio
 
         // Si la ruta tiene plano oficial (Rutas.pdf, BOWI.pdf o DALE UP) se usa su recorrido real.
         // Algunas tienen variantes (Komatsu Inverso / Directo, Panamericana San Felipe / Mirador): arranca en la primera.
-        var variantes = TrazosOficiales.BuscarVariantes(nombre) ?? TrazosOficiales.BuscarVariantes(bus?.Name);
+        var variantes = TrazosPlanos.BuscarVariantes(nombre) ?? TrazosPlanos.BuscarVariantes(bus?.Name);
         if (variantes != null)
         {
             r.Variantes = variantes;

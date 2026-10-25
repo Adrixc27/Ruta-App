@@ -1,11 +1,110 @@
 namespace RutaApp.Blazor.Data;
 
-// Archivo generado a partir de los planos oficiales en PDF (Rutas.pdf y BOWI.pdf).
-// Los PDF son GeoPDF (UTM 13N): el recorrido se tomó de la capa de la línea y se pasó a [lat, lng]
-// con la georreferencia del propio plano (error de ajuste menor a 1 m), simplificado a 2.5 m.
-// Los recorridos van codificados como "polyline" (precisión 6) para no ocupar miles de líneas; se leen con Decodificar().
-public static partial class TrazosOficiales
+/// <summary>
+/// Recorridos oficiales de las rutas de camión de la Zona Metropolitana de Chihuahua, tomados de los planos oficiales:
+/// DALE UP (plano de mayo de 2021), Rutas.pdf (10 planos) y BOWI.pdf.
+/// Los PDF son GeoPDF (UTM 13N): el recorrido se tomó de la capa de la línea y se pasó a [lat, lng]
+/// con la georreferencia del propio plano, simplificado a 2.5 m.
+/// Los recorridos van codificados como "polyline" (precisión 6) para no ocupar miles de líneas; se leen con Decodificar().
+/// </summary>
+public static class TrazosPlanos
 {
+    private static string Clave(string nombre) =>
+        new string((nombre ?? "").Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
+
+    /// <summary>
+    /// Variantes (ramales) de la ruta con ese nombre ("DALE-UP", "Komatsu", "PANAMERICANA"...), o null si no hay plano.
+    /// La primera es la versión base; si hay más, la app deja cambiar entre ellas.
+    /// </summary>
+    public static List<RutaOficial> BuscarVariantes(string nombre)
+    {
+        switch (Clave(nombre))
+        {
+            case "DALEUP": return new List<RutaOficial> { DaleUp };
+            case "KOMATSU": return new List<RutaOficial> { KomatsuInverso, KomatsuDirecto };
+            case "PANAMERICANA": return new List<RutaOficial> { PanamericanaSanFelipe, PanamericanaMirador };
+            case "RAMIROVALLESCONCORDIA": return new List<RutaOficial> { RamiroVallesConcordia };
+            case "KENNEDY": return new List<RutaOficial> { Kennedy };
+            case "PLANDEAYALA": return new List<RutaOficial> { PlanDeAyala };
+            case "MARMOL": return new List<RutaOficial> { Marmol };
+            case "BOWI": return new List<RutaOficial> { Bowi };
+            case "CAMPESINA": return new List<RutaOficial> { CampesinaSantaRosa };
+            case "JARDINESDEORIENTE": return new List<RutaOficial> { JardinesDeOriente };
+            default: return null;
+        }
+    }
+
+    /// <summary>Datos oficiales (versión base) de la ruta con ese nombre, o null si no hay plano.</summary>
+    public static RutaOficial Buscar(string nombre) => BuscarVariantes(nombre)?[0];
+
+    /// <summary>Lee un recorrido codificado como "polyline" con precisión de 6 decimales.</summary>
+    private static double[][] Decodificar(string texto)
+    {
+        var puntos = new List<double[]>();
+        int i = 0, lat = 0, lng = 0;
+        while (i < texto.Length)
+        {
+            lat += SiguienteValor(texto, ref i);
+            lng += SiguienteValor(texto, ref i);
+            puntos.Add(new[] { lat / 1e6, lng / 1e6 });
+        }
+        return puntos.ToArray();
+    }
+
+    private static int SiguienteValor(string texto, ref int i)
+    {
+        int resultado = 0, corrimiento = 0, b;
+        do
+        {
+            b = texto[i++] - 63;
+            resultado |= (b & 0x1f) << corrimiento;
+            corrimiento += 5;
+        } while (b >= 0x20);
+        return (resultado & 1) != 0 ? ~(resultado >> 1) : resultado >> 1;
+    }
+
+    /// <summary>
+    /// DALE UP (línea 16, ramal único, diametral, cuenca Sur). Plano oficial de mayo de 2021: ciclo cerrado de 38.174 km,
+    /// 16 min de frecuencia, servicio de 05:41 a 21:58. El recorrido empieza y termina en el punto de control A.
+    /// El trazo se obtuvo del plano en PDF georreferenciado con su cuadrícula de coordenadas (error de ajuste menor a 2 m)
+    /// y simplificado a 2.5 m.
+    /// </summary>
+    public static readonly RutaOficial DaleUp = new RutaOficial
+    {
+        Nombre = "DALE UP",
+        Variante = "Único",
+        Frecuencia = 16,
+        Horario = "5:41 - 21:58",
+        LongitudKm = 38.174,
+        PuntosControl = new List<PuntoControl>
+        {
+            new PuntoControl("A", "C. 44a y C. Melchor Guaspe", 28.610050, -106.065452),
+            new PuntoControl("B", "C. 1o. de Mayo y C. 38a", 28.604783, -106.054835),
+            new PuntoControl("C", "C. 12a y C. Samaniego", 28.623602, -106.064482),
+            new PuntoControl("D", "Av. Juárez y C. 45a", 28.650203, -106.063576),
+            new PuntoControl("E", "Carretera Aldama y Av. Fuerza Aérea", 28.688693, -106.014084),
+            new PuntoControl("F", "Av. Romanzza y C. Libia", 28.684129, -106.031545),
+            new PuntoControl("G", "Entrada Cto. Cobach 21 y Utch Sur", 28.662008, -106.034897),
+            new PuntoControl("H", "C. Julián Carrillo y C. 4a", 28.638394, -106.080641)
+        },
+        Trazo = Decodificar(
+            "c_fqu@vavhiEf[wl@fPhEvDeArpB{_C~s@o`Arj@}l@_CmRmxBcfCxzFweHzqAzvA}u@h~@abCypCkk@ut@qH@apIvcKaa@rj@uh@`o@oFlPa_" +
+            "AdpB}@@@rGzBhC~W`PmlDxoH{@pE}`@rw@{{BsxAux@{k@yB?yoDmcCeRsIgR}MqHB_p@fxAenA`fCws@x~A{@?wb@xfA}@?@tG|@bAdmCneBi" +
+            "[zn@{@@}Oxa@uDpEg[fs@oWjh@uDjCq_@_C{UvEeLrRanAjwCmYrj@{QbYav@fo@iLhAsHgCii@ug@kNoG?eA{W}@yBfAyeColCwuAq_Byt@}k" +
+            "@q}DsnDyv@uv@wz@{eA{dBqgAme@c_@euC_uCq_EshEuFcA?dAyB@qh@pu@clIsoI}@iCyv@st@y]ia@sHmEcVwXyDwIsJuV}i@qsB{Fa[_C}X" +
+            "x@_L`Lcf@fw@ejC|@AviAsoEz\\m|Av\\igBbD_mAIch@mGwdBeK_|Akv@owFsNkl@cZ_j@gRoTeR}MAeAw[aP_dAy^{rJmfDceC_v@_}Hu{BwwB" +
+            "ix@uv@ca@sqAe_Ac`LudJkPePktEgwDgP{K_}Agt@sFBiLvG@zI|@bA`{Aft@dk@`_@r{J~hIpi@vaAra@b_@zBrGy@tGo{AznCq}BlxDij@`i" +
+            "AmHvTaL~c@mStfAwDdAoFfN@tG|@AxDhPew@jcKaLlj@gYf`AcRmG}BcNyzBigEqHqGkLBoH|I@tG~@nEz@A@jCnJjErFA~rB~uD@rGwBzI{@@" +
+            "?nEvFpGt]`P?bAtFbA?bArFgAhf@{`B|@?~Ksl@pDg[rq@}qJzp@rZ`m@z\\jhHzoD|@nEvDbA?dAhNExBeArDaLl[cWlvF{fJb_@sj@tFfChc@" +
+            "|BlLpGdTlTvF|KtJ`[z@AvFbNvFpGfPzKnJdCbiC|oAzBnE@nErHtIpHbA@bAdPEAcArFgAxBkCAiCxBgA`m@jV?dAbR~@zlF|bCxDvI?nE|Br" +
+            "G@tGsDdNwhAfaBsDzIwBdNaBd|AzB|KlN~Mhg@vZpH`A?dAdPoCpFwGlHmPlJA~n@ba@pHbA@bAfNCnHsEfLgNrFClNzK`R~@lJsEpfAo_CdNe" +
+            "LlJgAxYz@lLtI`VlT`Zzg@tJzXtNjy@hG`oAjCphAiDjw@kFva@gWdmAoiBrsHsq@xxByOxn@sBd[DhP|BhPd\\hhAnPna@rLtc@vHpTnLjRz[z" +
+            "ZjPlThi@zi@jNzKbq@|x@dm@`l@zBlEtaHl`HtHzKxv@pt@loChwCnJ~@pwA|vAh_BvcBzt@bn@rFfC~zCr}CqFvGgHfh@uf@zy@qWp]zLr}@v" +
+            "FfP~t@paAjuCphDrFgAjl@yw@zw@e|@bNyTxz@rpA`u@vcAnJjE?dAtFCvBiCt`@izAb_@_o@tDeAtFfCbo@xi@?bAt]nIbPoC?cAbPaJnYgYx" +
+            "UqP~O_Wzq@s|Apu@ykBhL}IfNEzWfE|UkAfNuEtDqEtWkNnw@uiB`_@is@z@oEz@??kC{BmEoJkEymAyz@`cEmnIdLi[|fHxxEzY`P?eAvDeAp" +
+            "hBcxDbm@da@nz@ng@xBA?cAxBAb]qw@t_@hTnHgAzbAc{B|p@hc@pHCpFaL")
+    };
+
     /// <summary>Campesina - Santa Rosa (línea diametral, cuenca Poniente): 36.421 km, 9 unidades, cada 14 min, ciclo de 126 min.</summary>
     public static readonly RutaOficial CampesinaSantaRosa = new RutaOficial
     {
@@ -411,5 +510,21 @@ public static partial class TrazosOficiales
             "uIfGu{@~Wcx@~[gf@tOq[pOeuEt~AmxCtiAuqFfoBybAf`@o[nOkTpSi{@tdAem@fp@q[nKgTt[aMp[af@bl@oBbGcm@l|@gt@jt@k_A~Smx@u" +
             "Rw_AwZ}P{BoTyBaq@vOspFfmFkt@fl@k{BfzB_fK~xJit@hp@c_@rOob@|c@sb@vWmThCeX{FkM}F_\\ic@iFgW")
     };
+}
 
+/// <summary>Datos de una ruta tomados de su plano oficial.</summary>
+public class RutaOficial
+{
+    /// <summary>Nombre completo del ramal en el plano: "Komatsu - Directo".</summary>
+    public string Nombre { get; set; } = "";
+    /// <summary>Texto corto para el selector de variantes: "Directo".</summary>
+    public string Variante { get; set; } = "";
+    public int Frecuencia { get; set; }
+    public int Flota { get; set; }        // unidades
+    public int CicloMin { get; set; }     // minutos de una vuelta completa
+    public string Horario { get; set; } = "";
+    public double LongitudKm { get; set; }
+    public List<PuntoControl> PuntosControl { get; set; } = new List<PuntoControl>();
+    /// <summary>Recorrido completo [lat, lng] en orden.</summary>
+    public double[][] Trazo { get; set; } = new double[0][];
 }
