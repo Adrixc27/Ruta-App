@@ -306,10 +306,10 @@ Para mantener el proyecto enfocado, la primera versión no contempla:
 [✓] Arquitectura del sistema
        │
        ▼
-[ ] Desarrollo del algoritmo
+[✓] Desarrollo del algoritmo
        │
        ▼
-[ ] Integración del mapa
+[✓] Integración del mapa
        │
        ▼
 [ ] Desarrollo del MVP
