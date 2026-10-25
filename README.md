@@ -142,7 +142,7 @@ El proyecto utiliza diferentes tecnologías para desarrollar tanto la lógica de
 | ----------------- | ----------------------------------- |
 | **C#**            | Algoritmos y lógica principal       |
 | **WPF**           | Interfaz de escritorio              |
-| **XAML**          | Diseño de la interfaz               |
+| **Blazor**        | Diseño de la interfaz               |
 | **WebView2**      | Integración del mapa                |
 | **Leaflet**       | Visualización del mapa              |
 | **OpenStreetMap** | Datos cartográficos                 |
