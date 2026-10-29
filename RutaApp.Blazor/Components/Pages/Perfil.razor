@@ -2,6 +2,7 @@
 @layout ShellLayout
 @implements IDisposable
 @inject EstadoApp Estado
+@inject UsuarioService Usuarios 
 
 <PageTitle>Mi perfil · R.U.T.A.</PageTitle>
 
@@ -76,10 +77,10 @@
             <h2>Editar nombre de usuario</h2>
             <p>Así te verá la comunidad en tus publicaciones.</p>
             <CampoTexto @bind-Text="_nuevoNombre" Hint="Tu nombre" MaxLength="40" OnTecla="TeclaNombre" />
-            @if (_errorNombre) { <p class="error-texto">Escribe un nombre de al menos 2 letras.</p> }
+            @if (_errorNombre) { <p class="error-texto">@(_mensajeNombre)</p> }
             <div class="modal-acciones">
                 <button type="button" class="btn btn-contorno" @onclick="() => _modalNombre = false">Cancelar</button>
-                <button type="button" class="btn btn-primario" @onclick="GuardarNombre">Guardar</button>
+                <button type="button" class="btn btn-primario" disabled="@_guardando" @onclick="GuardarNombre">Guardar</button>
             </div>
         </div>
     </div>
@@ -89,14 +90,38 @@
          TextoAceptar="Sí" TextoCancelar="No" OnAceptar="Eliminar" />
 
 @code {
-    private string _foto;                 // imagen elegida (data URL); null = se muestran las iniciales
+    private string _foto;                 
     private string _errorFoto;
     private bool _modalNombre, _errorNombre;
+    private string _mensajeNombre = "Escribe un nombre de al menos 2 letras.";
+    private bool _guardando;
     private string _nuevoNombre = "";
     private bool _confirmar;
     private Trayecto _porEliminar;
 
-    protected override void OnInitialized() => Estado.Cambio += Refrescar;
+    protected override async Task OnInitializedAsync()
+    {
+        Estado.Cambio += Refrescar;
+
+        // CAMBIO: cargar la foto guardada en la base de datos
+        try
+        {
+            var id = Sesion.Actual?.Id ?? 0;
+            if (id > 0)
+            {
+                var usuario = await Usuarios.ObtenerAsync(id);
+                if (usuario != null && !string.IsNullOrEmpty(usuario.Foto))
+                {
+                    _foto = usuario.Foto;
+                    Sesion.Actual!.Foto = usuario.Foto;
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // sin conexión: se muestran las iniciales
+        }
+    }
 
     private void Refrescar() => InvokeAsync(StateHasChanged);
 
@@ -108,22 +133,57 @@
         _modalNombre = true;
     }
 
-    private void GuardarNombre()
+    // CAMBIO: ahora guarda en MySQL antes de actualizar la pantalla
+    private async Task GuardarNombre()
     {
         string nombre = _nuevoNombre.Trim();
-        if (nombre.Length < 2) { _errorNombre = true; return; }
-        Estado.Nombre = nombre;
-        _modalNombre = false;
-        Estado.Notificar();
+        if (nombre.Length < 2)
+        {
+            _mensajeNombre = "Escribe un nombre de al menos 2 letras.";
+            _errorNombre = true;
+            return;
+        }
+
+        _guardando = true;
+        try
+        {
+            var id = Sesion.Actual?.Id ?? 0;
+            if (id > 0)   // invitado (id 0): solo cambia en pantalla
+            {
+                bool ok = await Usuarios.ActualizarNombreAsync(id, nombre);
+                if (!ok)
+                {
+                    _mensajeNombre = "No se pudo guardar el nombre. Intenta de nuevo.";
+                    _errorNombre = true;
+                    return;
+                }
+                Sesion.Actual!.Nombre = nombre;
+            }
+
+            Estado.Nombre = nombre;
+            _errorNombre = false;
+            _modalNombre = false;
+            Estado.Notificar();
+        }
+        catch (Exception ex)
+        {
+            _mensajeNombre = "Error: " + ex.Message;
+            _errorNombre = true;
+        }
+        finally
+        {
+            _guardando = false;
+        }
     }
 
-    private void TeclaNombre(KeyboardEventArgs e)
+    private async Task TeclaNombre(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter") GuardarNombre();
+        if (e.Key == "Enter") await GuardarNombre();
         else if (e.Key == "Escape") _modalNombre = false;
     }
 
     // ── Cambiar foto ──────────────────────────────────────────────────────
+    
     private async Task CambiarFoto(InputFileChangeEventArgs e)
     {
         _errorFoto = null;
@@ -131,12 +191,26 @@
         {
             var archivo = e.File;
             using var ms = new MemoryStream();
-            await archivo.OpenReadStream(maxAllowedSize: 3 * 1024 * 1024).CopyToAsync(ms);
-            _foto = $"data:{archivo.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+            await archivo.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024).CopyToAsync(ms);
+            string nueva = $"data:{archivo.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+
+            var id = Sesion.Actual?.Id ?? 0;
+            if (id > 0)   // invitado: solo se muestra, no hay cuenta donde guardar
+            {
+                bool ok = await Usuarios.ActualizarFotoAsync(id, nueva);
+                if (!ok)
+                {
+                    _errorFoto = "No se pudo guardar la foto. Intenta de nuevo.";
+                    return;
+                }
+                Sesion.Actual!.Foto = nueva;
+            }
+
+            _foto = nueva;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            _errorFoto = "No se pudo cargar esa imagen (máximo 3 MB). Prueba con otro archivo.";
+            _errorFoto = "Error: " + ex.Message;
         }
     }
 

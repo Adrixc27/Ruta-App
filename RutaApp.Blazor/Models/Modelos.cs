@@ -2,10 +2,6 @@ using System.Globalization;
 
 namespace RutaApp.Blazor.Models;
 
-// ─────────────────────────────────────────────────────────────
-//  Modelos de la interfaz (los mismos que usaba la app WPF, ya sin INotifyPropertyChanged:
-//  Blazor vuelve a pintar el componente cuando cambia el estado).
-// ─────────────────────────────────────────────────────────────
 
 public class Ruta
 {
@@ -24,7 +20,7 @@ public class Ruta
     public string Lineas { get; set; } = "";             // chip de la pantalla Comparar
     public string Etiqueta { get; set; } = "";           // Recomendado / Más rápido / Económico
     public Trayecto TrayectoFavorito { get; set; }       // si es una opción de viaje marcada como favorita (aparece en Perfil)
-    public bool DatosReales { get; set; }                // true = Minutos/Tarifa vienen de la base de datos (el trazo del mapa puede ser de prueba)
+    public bool DatosReales { get; set; }                // true = Minutos/Tarifa vienen de la base de datos
 
     public string OrigenNombre { get; set; } = "";
     public string DestinoNombre { get; set; } = "";
@@ -46,36 +42,44 @@ public class Ruta
     public bool EsViaje { get; set; }
     public string Resumen { get; set; } = "";        // "Camina 4 min · Bus 12 min · Camina 3 min"
     public int CaminataMetros { get; set; }
-    public List<double[]> Trazo { get; set; }        // recorrido de la ruta [lat, lng] en orden (por calles)
+    public List<double[]> Trazo { get; set; }        // recorrido de la ruta [lat, lng] en orden
     public List<double[]> Waypoints { get; set; }    // puntos clave por donde pasa (para calcular el Trazo)
     public List<Tramo> Tramos { get; set; }          // solo en opciones de viaje: caminar / bus / caminar...
     public List<Sugerencia> Escalas { get; set; }    // paradas intermedias del viaje (A → B → C)
-    public List<PuntoControl> PuntosControl { get; set; }   // puntos de control del plano oficial (si la ruta tiene plano)
 
-    // Variantes (ramales) del plano oficial, por ejemplo Komatsu Inverso / Directo. Con más de una, el mapa deja elegir.
+    // Variantes (ramales) de la ruta, por ejemplo Komatsu Inverso / Directo. Con más de una, el mapa deja elegir.
+    // Vienen de la base de datos (RutaService): cada variante es una fila de routes con el mismo "grupo".
     public List<RutaOficial> Variantes { get; set; }
     public int VarianteActual { get; set; }
     public bool TieneVariantes => Variantes != null && Variantes.Count > 1;
     public RutaOficial Oficial => Variantes != null && Variantes.Count > 0 ? Variantes[VarianteActual] : null;
 
-    /// <summary>Cambia a la variante indicada del plano oficial: recorrido, puntos de control, frecuencia y horario.</summary>
+    /// <summary>Cambia a la variante indicada: recorrido, paradas, origen y destino.</summary>
     public void UsarVariante(int indice)
     {
         if (Variantes == null || indice < 0 || indice >= Variantes.Count) return;
         VarianteActual = indice;
         var o = Variantes[indice];
+
         Trazo = o.Trazo.Select(p => new[] { p[0], p[1] }).ToList();
-        Waypoints = null;   // el trazo ya es el oficial: no se recalcula con OSRM
-        PuntosControl = o.PuntosControl;
-        FrecuenciaMin = o.Frecuencia;
-        if (!string.IsNullOrEmpty(o.Horario)) Horario = o.Horario;
-        Paradas = o.PuntosControl.Count;
-        OrigenNombre = o.PuntosControl[0].Letra + " · " + o.PuntosControl[0].Nombre;
-        DestinoNombre = "Fin del ciclo (vuelve a " + o.PuntosControl[0].Letra + ")";
-        LatO = Trazo[0][0]; LngO = Trazo[0][1];
-        LatD = Trazo[Trazo.Count - 1][0]; LngD = Trazo[Trazo.Count - 1][1];
-        if (!DatosReales && o.CicloMin > 0) Minutos = o.CicloMin;
+        Waypoints = null;   // el trazo ya viene de la base de datos: no se recalcula con OSRM
+        Paradas = o.Paradas.Count;
+
+        if (o.Paradas.Count > 0)
+        {
+            OrigenNombre = o.Paradas[0].Nombre;
+            DestinoNombre = o.Paradas[o.Paradas.Count - 1].Nombre;
+            LatO = o.Paradas[0].Latitud; LngO = o.Paradas[0].Longitud;
+            LatD = o.Paradas[o.Paradas.Count - 1].Latitud;
+            LngD = o.Paradas[o.Paradas.Count - 1].Longitud;
+        }
+        else if (Trazo.Count > 0)
+        {
+            LatO = Trazo[0][0]; LngO = Trazo[0][1];
+            LatD = Trazo[Trazo.Count - 1][0]; LngD = Trazo[Trazo.Count - 1][1];
+        }
     }
+
     public string EtiquetaMayus => Etiqueta.ToUpperInvariant();
     public string TransbordosTexto =>
         Transbordos == 0 ? "Sin transbordos" : Transbordos == 1 ? "1 transbordo" : Transbordos + " transbordos";
@@ -84,7 +88,7 @@ public class Ruta
     public bool Seleccionada { get; set; }
 }
 
-/// <summary>Punto de control de una ruta oficial (A, B, C...): una intersección por donde pasa el camión.</summary>
+/// <summary>Punto de control de una ruta oficial (A, B, C...). Ya no se usa en la ruta; se deja por si otra clase lo referencia.</summary>
 public record PuntoControl(string Letra, string Nombre, double Lat, double Lng);
 
 public class Reciente

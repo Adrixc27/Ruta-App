@@ -1,7 +1,8 @@
 @page "/acceso"
 @page "/registro"
 @inject EstadoApp Estado
-@inject ServicioApi Api
+@inject UsuarioService Usuarios
+@inject NavigationManager Nav
 
 <PageTitle>@(_registro ? "Crear cuenta" : "Iniciar sesión") · R.U.T.A.</PageTitle>
 
@@ -28,8 +29,14 @@
                     <button type="button" class="btn-ghost btn-mini" @onclick='() => Aviso("La recuperación de contraseña estará disponible próximamente.")'>¿Olvidaste tu contraseña?</button>
                 </div>
 
-                @if (_loginError != null) { <p class="error-texto">@_loginError</p> }
-                @if (_aviso != null) { <p class="aviso-texto">@_aviso</p> }
+                @if (_loginError != null)
+                {
+                    <p class="error-texto">@_loginError</p>
+                }
+                @if (_aviso != null)
+                {
+                    <p class="aviso-texto">@_aviso</p>
+                }
                 <button type="button" class="btn btn-primario btn-ancho" disabled="@_ocupado" @onclick="IniciarSesion">Iniciar sesión</button>
 
                 <div class="divisor"><span>o continúa con</span></div>
@@ -61,8 +68,14 @@
 
                 <label class="terminos"><input type="checkbox" @bind="_terminos" /> <span>Acepto los Términos de servicio y la Política de privacidad de RUTA.</span></label>
 
-                @if (_regError != null) { <p class="error-texto">@_regError</p> }
-                @if (_aviso != null) { <p class="aviso-texto">@_aviso</p> }
+                @if (_regError != null)
+                {
+                    <p class="error-texto">@_regError</p>
+                }
+                @if (_aviso != null)
+                {
+                    <p class="aviso-texto">@_aviso</p>
+                }
                 <button type="button" class="btn btn-primario btn-ancho" disabled="@_ocupado" @onclick="Registrar">Crear cuenta</button>
 
                 <div class="divisor"><span>o regístrate con</span></div>
@@ -115,11 +128,12 @@
         _ocupado = true;
         try
         {
-            var usuario = await Api.LoginAsync(correo, _loginPass);
+            var usuario = await Usuarios.IniciarSesionAsync(correo, _loginPass);
             if (usuario == null) { _loginError = "Correo o contraseña incorrectos."; return; }
 
             _loginError = null;
-            Estado.IniciarSesion(usuario);
+            Sesion.Actual = usuario;
+            Estado.IniciarSesion(usuario.ParaEstado());
             await Estado.CompletarIngresoAsync();
         }
         catch (Exception)
@@ -145,11 +159,12 @@
         _ocupado = true;
         try
         {
-            var resultado = await Api.RegistrarAsync(nombre, correo, _regPass);
-            if (resultado.Usuario == null) { _regError = resultado.Error; return; }
+            var (usuario, error) = await Usuarios.RegistrarAsync(nombre, correo, _regPass);
+            if (usuario == null) { _regError = error ?? "No se pudo crear la cuenta."; return; }
 
             _regError = null;
-            Estado.IniciarSesion(resultado.Usuario);
+            Sesion.Actual = usuario;
+            Estado.IniciarSesion(usuario.ParaEstado());
             await Estado.CompletarIngresoAsync();
         }
         catch (Exception)
@@ -178,7 +193,7 @@
         return punto > arroba + 1 && punto < s.Length - 1;
     }
 
-    // ── Fuerza de la contraseña (4 barras) ────────────────────────────────
+    // ── Fuerza de la contraseña (4 barras) ───────────────────────────────
     private int Puntos
     {
         get
@@ -194,21 +209,33 @@
         }
     }
 
-    private string ColorFuerza => Puntos switch
+    private string ColorFuerza
     {
-        1 => "#EF4444",
-        2 => "#F59E0B",
-        3 => "var(--brand-primary)",
-        4 => "var(--success)",
-        _ => "var(--border-soft)"
-    };
+        get
+        {
+            switch (Puntos)
+            {
+                case 1: return "#EF4444";
+                case 2: return "#F59E0B";
+                case 3: return "var(--brand-primary)";
+                case 4: return "var(--success)";
+                default: return "var(--border-soft)";
+            }
+        }
+    }
 
-    private string TextoFuerza => Puntos switch
+    private string TextoFuerza
     {
-        1 => "Contraseña débil",
-        2 => "Contraseña media",
-        3 => "Contraseña buena",
-        4 => "Contraseña muy segura",
-        _ => "Usa 8+ caracteres con mayúsculas, números y símbolos"
-    };
+        get
+        {
+            switch (Puntos)
+            {
+                case 1: return "Contraseña débil";
+                case 2: return "Contraseña media";
+                case 3: return "Contraseña buena";
+                case 4: return "Contraseña muy segura";
+                default: return "Usa 8+ caracteres con mayúsculas, números y símbolos";
+            }
+        }
+    }
 }
