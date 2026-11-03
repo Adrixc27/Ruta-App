@@ -7,17 +7,20 @@ namespace RutaApp.Blazor.Services;
 /// Estado compartido entre pantallas (lo que en la app WPF era la clase estática Estado).
 /// Es un servicio "scoped": cada sesión del navegador tiene el suyo.
 /// </summary>
+
 public class EstadoApp
 {
     private readonly NavigationManager _nav;
     private readonly RutaRepositorio _repositorio;
     private readonly ServicioTrazos _trazos;
+    private readonly FavoritoService _favoritos;
 
-    public EstadoApp(NavigationManager nav, RutaRepositorio repositorio, ServicioTrazos trazos)
+    public EstadoApp(NavigationManager nav, RutaRepositorio repositorio, ServicioTrazos trazos, FavoritoService favoritos)
     {
         _nav = nav;
         _repositorio = repositorio;
         _trazos = trazos;
+        _favoritos = favoritos;
     }
 
     /// <summary>Los componentes se suscriben para volver a pintarse cuando algo del estado cambia.</summary>
@@ -33,16 +36,16 @@ public class EstadoApp
     public string Nombre { get; set; } = "Laura Guerrero";
     public string Correo { get; set; } = "laura.g@ruta.com";
     public bool Invitado { get; set; }
-    public UsuarioApi Usuario { get; set; }
+    public Usuario Usuario { get; set; }
 
     /// <summary>Pantalla a la que se va al entrar (las visitas como invitado desde la landing van directo a Rutas).</summary>
     public string DestinoTrasIngreso { get; set; } = "planificar";
 
-    public void IniciarSesion(UsuarioApi usuario)
+    public void IniciarSesion(Usuario usuario)
     {
         Usuario = usuario;
-        Nombre = usuario.Name;
-        Correo = usuario.Email;
+        Nombre = usuario.Nombre;
+        Correo = usuario.Correo;
         Invitado = false;
         HaIngresado = true;
     }
@@ -65,10 +68,25 @@ public class EstadoApp
     public async Task CompletarIngresoAsync()
     {
         await CargarRutasRealesAsync();
+        await CargarFavoritosAsync();
         _ = PrepararTrazosAsync();
         string destino = DestinoTrasIngreso;
         DestinoTrasIngreso = "planificar";
         Navegar(destino);
+    }
+
+    private async Task CargarFavoritosAsync()
+    {
+        if (Invitado || Usuario == null) return;
+        try
+        {
+            var ids = await _favoritos.ObtenerRutasAsync(Usuario.Id);
+            foreach (var r in Rutas) r.Guardada = ids.Contains(r.Numero);
+        }
+        catch (Exception)
+        {
+           
+        }
     }
 
     public void CerrarSesion()
@@ -76,6 +94,7 @@ public class EstadoApp
         HaIngresado = false;
         Invitado = false;
         Usuario = null;
+        foreach (var r in Rutas) r.Guardada = false;   // <- línea nueva
         DestinoTrasIngreso = "planificar";
         NuevaBusqueda();
         Origen = MiUbicacion;
@@ -196,6 +215,22 @@ public class EstadoApp
     {
         ruta.Guardada = !ruta.Guardada;
         Notificar();
+        _ = GuardarFavoritoAsync(ruta, ruta.Guardada);
+    }
+
+    private async Task GuardarFavoritoAsync(Ruta ruta, bool guardar)
+    {
+        if (Invitado || Usuario == null || ruta.EsViaje) return;   // invitado: solo en memoria
+        try
+        {
+            if (guardar) await _favoritos.AgregarAsync(Usuario.Id, ruta.Numero);
+            else await _favoritos.QuitarAsync(Usuario.Id, ruta.Numero);
+        }
+        catch (Exception)
+        {
+            ruta.Guardada = !guardar;   // no se pudo guardar: se deshace
+            Notificar();
+        }
     }
 
     /// <summary>Guarda el viaje del historial como trayecto (Perfil → Rutas Guardadas), o lo quita si ya estaba guardado.</summary>

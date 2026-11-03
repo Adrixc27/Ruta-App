@@ -1,6 +1,7 @@
 @page "/comunidad"
 @layout ShellLayout
 @inject EstadoApp Estado
+@inject ComunidadService ServicioComunidad
 
 <PageTitle>Comunidad · R.U.T.A.</PageTitle>
 
@@ -60,43 +61,66 @@
                 <header>
                     <span class="post-avatar @(p.Oficial ? "oficial" : "")">@p.Inicial</span>
                     <div class="post-autor">
-                        <span><b>@p.Autor</b>@if (p.Oficial) { <Icon Nombre="IcoBadgeCheck" Tam="14" Color="#0D9488" /> }</span>
-                        <small>@p.Tiempo</small>
-                    </div>
-                    <span class="post-tipo @p.Tipo"><Icon Nombre="@p.IconoTipo" Tam="12" /> @p.TipoTexto</span>
-                </header>
-                <h3>@p.Titulo</h3>
-                <p>@p.Cuerpo</p>
-                <div class="post-etiquetas">
-                    @foreach (var e in p.Etiquetas)
-                    {
-                        <span class="etiqueta @(e.EsRuta ? "ruta" : "")"><Icon Nombre="@e.Icono" Tam="12" /> @e.Texto</span>
-                    }
+                        <span><b>@p.Autor</b>@if (p.Oficial) {
+                            <Icon Nombre="IcoBadgeCheck" Tam="14" Color="#0D9488" />
+                        }
+                    </span>
+                    <small>@p.Tiempo</small>
                 </div>
-                <footer>
-                    <button type="button" class="btn-pie" @onclick="() => Like(p)">
-                        <Icon Nombre="IcoHeart" Tam="16" Color="@(p.MeGusta ? "#EF4444" : null)" Relleno="@(p.MeGusta ? "#EF4444" : null)" /> @p.Likes
-                    </button>
-                    <button type="button" class="btn-pie" @onclick='() => Mensaje("Los comentarios estarán disponibles próximamente.")'>
-                        <Icon Nombre="IcoMessage" Tam="16" /> @p.Comentarios
-                    </button>
-                    <button type="button" class="btn-pie derecha azul" @onclick="() => Cta(p)">@p.Cta <Icon Nombre="IcoArrowRight" Tam="14" /></button>
-                </footer>
-            </article>
-        }
+                <span class="post-tipo @p.Tipo"><Icon Nombre="@p.IconoTipo" Tam="12" /> @p.TipoTexto</span>
+            </header>
+            <h3>@p.Titulo</h3>
+            <p>@p.Cuerpo</p>
+            <div class="post-etiquetas">
+                @foreach (var e in p.Etiquetas)
+                {
+                    <span class="etiqueta @(e.EsRuta ? "ruta" : "")"><Icon Nombre="@e.Icono" Tam="12" /> @e.Texto</span>
+                }
+            </div>
+            <footer>
+                <button type="button" class="btn-pie" @onclick="() => Like(p)">
+                    <Icon Nombre="IcoHeart" Tam="16" Color="@(p.MeGusta ? "#EF4444" : null)" Relleno="@(p.MeGusta ? "#EF4444" : null)" /> @p.Likes
+                </button>
+                <button type="button" class="btn-pie" @onclick="() => AlternarComentarios(p)">
+                    <Icon Nombre="IcoMessage" Tam="16" /> @p.Comentarios
+                </button>
+                @if (EsMia(p))
+                {
+                    <button type="button" class="btn-pie" @onclick="() => Eliminar(p)">Eliminar</button>
+                }
+                <button type="button" class="btn-pie derecha azul" @onclick="() => Cta(p)">@p.Cta <Icon Nombre="IcoArrowRight" Tam="14" /></button>
+            </footer>
+
+            @if (_abierta == p)
+            {
+                <div class="comentarios">
+                    @foreach (var c in _comentarios)
+                    {
+                        <p><b>@c.Autor</b> · @c.Fecha.ToString("dd/MM HH:mm")<br />@c.Contenido</p>
+                    }
+                    @if (_comentarios.Count == 0)
+                    {
+                        <p class="vacio">Sé el primero en comentar.</p>
+                    }
+                    <CampoTexto @bind-Text="_nuevoComentario" Hint="Escribe un comentario..." MaxLength="300" Alto="40" />
+                    <button type="button" class="btn btn-primario btn-chico" @onclick="Comentar">Comentar</button>
+                </div>
+            }
+        </article>
+    }
+</div>
+
+@if (!Visibles.Any())
+{
+    <p class="vacio">No hay publicaciones que coincidan.</p>
+}
+
+@if (Estado.PublicacionesExtra.Count > 0)
+{
+    <div class="centrado-fila">
+        <button type="button" class="btn btn-contorno azul" @onclick="CargarMas">Cargar más publicaciones</button>
     </div>
-
-    @if (!Visibles.Any())
-    {
-        <p class="vacio">No hay publicaciones que coincidan.</p>
-    }
-
-    @if (Estado.PublicacionesExtra.Count > 0)
-    {
-        <div class="centrado-fila">
-            <button type="button" class="btn btn-contorno azul" @onclick="CargarMas">Cargar más publicaciones</button>
-        </div>
-    }
+}
 </div>
 
 @* ═══════════════ MODAL: NUEVA PUBLICACIÓN ═══════════════ *@
@@ -147,11 +171,14 @@
             <textarea class="textarea" rows="4" placeholder="Cuéntanos qué está pasando o qué te gustaría mejorar..." @bind="_mensaje" @bind:event="oninput"></textarea>
 
             <p class="nota-modal"><Icon Nombre="IcoInfo" Tam="14" /> Tu publicación será visible para toda la comunidad. Mantén un trato respetuoso.</p>
-            @if (_errorModal != null) { <p class="error-texto">@_errorModal</p> }
+            @if (_errorModal != null)
+            {
+                <p class="error-texto">@_errorModal</p>
+            }
 
             <div class="modal-acciones">
                 <button type="button" class="btn btn-contorno" @onclick="() => _modal = false">Cancelar</button>
-                <button type="button" class="btn btn-primario" @onclick="Publicar"><Icon Nombre="IcoSend" Tam="16" /> Publicar</button>
+                <button type="button" class="btn btn-primario" disabled="@_ocupado" @onclick="Publicar"><Icon Nombre="IcoSend" Tam="16" /> Publicar</button>
             </div>
         </div>
     </div>
@@ -160,17 +187,77 @@
 <Dialogo @bind-Visible="_dialogo" Mensaje="@_textoDialogo" />
 
 @code {
-    private string _tipo = "";            // "" = todo | aviso | pregunta | propuesta
+    private string _tipo = "";
     private string _busqueda = "";
     private bool _porPopularidad;
 
     private bool _modal;
+    private bool _ocupado;
     private string _nuevoTipo = "pregunta";
-    private int _rutaModal;               // número de la ruta relacionada elegida (0 = ninguna)
+    private int _rutaModal;
     private string _titulo = "", _mensaje = "", _errorModal;
 
     private bool _dialogo;
     private string _textoDialogo = "";
+
+    // Comentarios de la publicación abierta
+    private Publicacion _abierta;
+    private List<ComentarioDb> _comentarios = new();
+    private string _nuevoComentario = "";
+
+    private int IdUsuario => Sesion.Actual?.Id ?? 0;
+    private bool ConCuenta => !Estado.Invitado && IdUsuario > 0;
+    private bool EsMia(Publicacion p) => ConCuenta && p.Id > 0 && p.IdAutor == IdUsuario;
+
+    // ── Carga inicial ─────────────────────────────────────────────────────
+    protected override async Task OnInitializedAsync()
+    {
+        if (!ConCuenta) return;   // invitado: se quedan las publicaciones de demostración
+        try
+        {
+            var posts = await ServicioComunidad.ObtenerPublicacionesAsync(IdUsuario);
+            Estado.Publicaciones.Clear();
+            Estado.PublicacionesExtra.Clear();
+            int orden = posts.Count;
+            foreach (var d in posts)
+                Estado.Publicaciones.Add(Convertir(d, orden--));
+        }
+        catch (Exception)
+        {
+            // sin conexión: se muestran las de demostración
+        }
+    }
+
+    private Publicacion Convertir(PostDb d, int orden)
+    {
+        var p = new Publicacion
+        {
+            Id = d.Id,
+            IdAutor = d.IdUsuario,
+            Tipo = d.Tipo,
+            Autor = d.Autor,
+            Tiempo = Hace(d.Fecha),
+            Titulo = d.Titulo ?? "",
+            Cuerpo = d.Contenido,
+            Comentarios = d.Comentarios,
+            Likes = d.Likes,
+            MeGusta = d.MeGusta > 0,
+            Orden = orden,
+            RutaNumero = d.IdRuta ?? 0
+        };
+        if (d.IdRuta != null)
+            p.Etiquetas.Add(new Etiqueta { Texto = "Ruta " + d.IdRuta, EsRuta = true });
+        return p;
+    }
+
+    private static string Hace(DateTime fecha)
+    {
+        var t = DateTime.Now - fecha;
+        if (t.TotalMinutes < 1) return "ahora";
+        if (t.TotalMinutes < 60) return "hace " + (int)t.TotalMinutes + " min";
+        if (t.TotalHours < 24) return "hace " + (int)t.TotalHours + " h";
+        return "hace " + (int)t.TotalDays + " d";
+    }
 
     // ── Filtro, orden y conteos ───────────────────────────────────────────
     private IEnumerable<Publicacion> Visibles
@@ -203,15 +290,72 @@
         _dialogo = true;
     }
 
-    private static void Like(Publicacion p)
+    private async Task Like(Publicacion p)
     {
-        p.MeGusta = !p.MeGusta;
+        if (ConCuenta && p.Id > 0)
+        {
+            try
+            {
+                bool marcado = await ServicioComunidad.AlternarLikeAsync(IdUsuario, p.Id);
+                p.Likes += marcado ? 1 : -1;
+                p.MeGusta = marcado;
+            }
+            catch (Exception) { Mensaje("No se pudo guardar tu \"me gusta\". Intenta de nuevo."); }
+            return;
+        }
+        p.MeGusta = !p.MeGusta;   // invitado: solo en pantalla
         p.Likes += p.MeGusta ? 1 : -1;
+    }
+
+    private async Task AlternarComentarios(Publicacion p)
+    {
+        if (_abierta == p) { _abierta = null; return; }
+        _abierta = p;
+        _nuevoComentario = "";
+        _comentarios = new List<ComentarioDb>();
+        if (p.Id == 0) return;   // publicación de demostración
+        try { _comentarios = await ServicioComunidad.ObtenerComentariosAsync(p.Id); }
+        catch (Exception) { Mensaje("No se pudieron cargar los comentarios."); }
+    }
+
+    private async Task Comentar()
+    {
+        if (_abierta == null) return;
+        if (!ConCuenta || _abierta.Id == 0)
+        {
+            Mensaje("Inicia sesión para comentar en la comunidad.");
+            return;
+        }
+        string texto = _nuevoComentario.Trim();
+        if (texto.Length == 0) return;
+        try
+        {
+            if (await ServicioComunidad.ComentarAsync(IdUsuario, _abierta.Id, texto))
+            {
+                _nuevoComentario = "";
+                _comentarios = await ServicioComunidad.ObtenerComentariosAsync(_abierta.Id);
+                _abierta.Comentarios = _comentarios.Count;
+            }
+        }
+        catch (Exception) { Mensaje("No se pudo enviar el comentario. Intenta de nuevo."); }
+    }
+
+    private async Task Eliminar(Publicacion p)
+    {
+        try
+        {
+            if (await ServicioComunidad.EliminarAsync(IdUsuario, p.Id))
+            {
+                Estado.Publicaciones.Remove(p);
+                if (_abierta == p) _abierta = null;
+            }
+        }
+        catch (Exception) { Mensaje("No se pudo eliminar la publicación."); }
     }
 
     private void Cta(Publicacion p)
     {
-        if (p.Tipo == "pregunta") { Mensaje("Las respuestas estarán disponibles próximamente."); return; }
+        if (p.Tipo == "pregunta") { _ = AlternarComentarios(p); return; }
         Ruta ruta = p.RutaNumero > 0 ? Estado.BuscarRuta(p.RutaNumero) : null;
         Estado.Navegar("rutas", ruta);
     }
@@ -221,7 +365,7 @@
     // ── Modal "Nueva publicación" ─────────────────────────────────────────
     private void Nueva()
     {
-        if (Estado.Invitado)
+        if (!ConCuenta)
         {
             Mensaje("Inicia sesión o crea una cuenta para publicar en la comunidad.");
             return;
@@ -234,7 +378,7 @@
         _modal = true;
     }
 
-    private void Publicar()
+    private async Task Publicar()
     {
         string titulo = _titulo.Trim();
         string mensaje = _mensaje.Trim();
@@ -244,23 +388,41 @@
             return;
         }
 
-        var ruta = _rutaModal > 0 ? Estado.BuscarRuta(_rutaModal) : null;
-        var nueva = new Publicacion
+        _ocupado = true;
+        try
         {
-            Tipo = _nuevoTipo,
-            Autor = Estado.Nombre,
-            Tiempo = "ahora",
-            Titulo = titulo,
-            Cuerpo = mensaje,
-            Orden = Estado.Publicaciones.Count > 0 ? Estado.Publicaciones.Max(p => p.Orden) + 1 : 1,
-            RutaNumero = ruta?.Numero ?? 0
-        };
-        if (ruta != null)
-            nueva.Etiquetas.Add(new Etiqueta { Texto = "Ruta " + ruta.Numero, EsRuta = true });
+            int? idRuta = _rutaModal > 0 ? _rutaModal : null;
+            int id = await ServicioComunidad.CrearAsync(IdUsuario, _nuevoTipo, titulo, mensaje, idRuta, null);
+            if (id == 0) { _errorModal = "No se pudo publicar."; return; }
 
-        Estado.Publicaciones.Add(nueva);
-        _modal = false;
-        _tipo = "";
-        _busqueda = "";
+            var ruta = idRuta != null ? Estado.BuscarRuta(_rutaModal) : null;
+            var nueva = new Publicacion
+            {
+                Id = id,
+                IdAutor = IdUsuario,
+                Tipo = _nuevoTipo,
+                Autor = Estado.Nombre,
+                Tiempo = "ahora",
+                Titulo = titulo,
+                Cuerpo = mensaje,
+                Orden = Estado.Publicaciones.Count > 0 ? Estado.Publicaciones.Max(p => p.Orden) + 1 : 1,
+                RutaNumero = ruta?.Numero ?? 0
+            };
+            if (ruta != null)
+                nueva.Etiquetas.Add(new Etiqueta { Texto = "Ruta " + ruta.Numero, EsRuta = true });
+
+            Estado.Publicaciones.Add(nueva);
+            _modal = false;
+            _tipo = "";
+            _busqueda = "";
+        }
+        catch (Exception)
+        {
+            _errorModal = "No se pudo conectar con el servidor. Intenta de nuevo.";
+        }
+        finally
+        {
+            _ocupado = false;
+        }
     }
 }

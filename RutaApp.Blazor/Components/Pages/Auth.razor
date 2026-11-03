@@ -133,7 +133,7 @@
 
             _loginError = null;
             Sesion.Actual = usuario;
-            Estado.IniciarSesion(usuario.ParaEstado());
+            Estado.IniciarSesion(usuario);
             await Estado.CompletarIngresoAsync();
         }
         catch (Exception)
@@ -164,7 +164,7 @@
 
             _regError = null;
             Sesion.Actual = usuario;
-            Estado.IniciarSesion(usuario.ParaEstado());
+            Estado.IniciarSesion(usuario);
             await Estado.CompletarIngresoAsync();
         }
         catch (Exception)

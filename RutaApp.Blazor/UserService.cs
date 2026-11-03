@@ -146,7 +146,9 @@ namespace RutaApp.Blazor
                 "DELETE FROM report WHERE id_user = @id",
                 "DELETE FROM photo WHERE id_post IN (SELECT id_post FROM post WHERE id_user = @id)",
                 "DELETE FROM `comment` WHERE id_user = @id OR id_post IN (SELECT id_post FROM post WHERE id_user = @id)",
-                "DELETE FROM post WHERE id_user = @id"
+                "DELETE FROM post_like WHERE id_user = @id OR id_post IN (SELECT id_post FROM post WHERE id_user = @id)",
+                "DELETE FROM post WHERE id_user = @id",
+                "DELETE FROM post_like WHERE id_user = @id OR id_post IN (SELECT id_post FROM post WHERE id_user = @id)",
             };
 
                 foreach (var sql in dependientes)

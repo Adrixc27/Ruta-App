@@ -6,16 +6,19 @@ using Dapper;
 using MySqlConnector;
 
 namespace RutaApp.Blazor;
+// servicio para manejar las rutas oficiales de la aplicación
 
 public class RutaService
 {
+    // Cache de rutas para evitar consultas repetidas a la base de datos
     private List<RutaOficial>? _cache;
-
+    // Obtiene todas las rutas oficiales de la base de datos, incluyendo sus paradas y trazos.
     public async Task<List<RutaOficial>> ObtenerRutasAsync()
     {
         if (_cache != null) return _cache;
 
         await using var db = new MySqlConnection(Connection.ConnectionString);
+        // Obtiene todas las rutas oficiales activas, ordenadas por id
 
         var rutas = (await db.QueryAsync<RutaRow>(
             @"SELECT r.id_routes                   AS Id,
@@ -32,6 +35,7 @@ public class RutaService
               LEFT JOIN bus b ON b.id_bus = r.id_bus
               WHERE r.active_inactive = 1
               ORDER BY r.id_routes")).ToList();
+        // Obtiene todas las paradas de todas las rutas, ordenadas por ruta y orden de parada
 
         var paradas = (await db.QueryAsync<ParadaRow>(
             @"SELECT rs.id_route   AS RutaId,
@@ -43,7 +47,7 @@ public class RutaService
               FROM route_stop rs
               INNER JOIN stop s ON s.id_stop = rs.id_stop
               ORDER BY rs.id_route, rs.stop_order")).ToList();
-
+        //Agrupar las paradas por ruta
         var paradasPorRuta = paradas.ToLookup(p => p.RutaId);
 
         _cache = rutas.Select(r =>
@@ -73,8 +77,8 @@ public class RutaService
         return _cache;
     }
 
-    /// <summary>Calcula el recorrido por calles con OSRM a partir de las paradas y lo guarda en routes.trazo.
-    /// Útil al agregar rutas nuevas.</summary>
+    // Calcula el recorrido por calles con OSRM a partir de las paradas y lo guarda en routes.trazo.
+    
     public async Task<int> GenerarTrazoAsync(int idRuta)
     {
         await using var db = new MySqlConnection(Connection.ConnectionString);

@@ -8,7 +8,7 @@ public static class RegistroServicios
     /// Registra los servicios de la app. Las rutas y paradas se leen de MySQL (RutaService).
     /// El parámetro urlApi se conserva por compatibilidad con la app anfitriona.
     /// </summary>
-    public static IServiceCollection AgregarServiciosRuta(this IServiceCollection servicios, string urlApi)
+    public static IServiceCollection AgregarServiciosRuta(this IServiceCollection servicios)
     {
         // API desactivada: se usa la conexión directa a MySQL.
         // Si alguna clase todavía inyecta ServicioApi, descomenta este bloque hasta quitar ese uso.
@@ -32,6 +32,9 @@ public static class RegistroServicios
         servicios.AddSingleton<ServicioUbicacionIp>();
         servicios.AddSingleton<IServicioUbicacion>(p => p.GetRequiredService<ServicioUbicacionIp>());
         servicios.AddSingleton<UsuarioService>();
+        servicios.AddSingleton<FavoritoService>();
+        servicios.AddSingleton<PreferenciaService>();
+        servicios.AddSingleton<ComunidadService>();
         return servicios;
     }
 }

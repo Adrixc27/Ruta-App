@@ -8,7 +8,7 @@ public class Ruta
     public int Numero { get; set; }
     public string Nombre { get; set; } = "";
     public string Modo { get; set; } = "Autobús";        // para los filtros: Autobús / Exprés / Metro
-    public string ModoTexto { get; set; } = "Autobús";   // lo que se muestra: "Metro + Bus"
+    public string ModoTexto { get; set; } = "Autobús";   
     public int FrecuenciaMin { get; set; } = 10;
     public decimal Tarifa { get; set; } = 2.75m;
     public bool Desvio { get; set; }
@@ -158,6 +158,8 @@ public class Publicacion
     public string TipoTexto => Tipo.ToUpperInvariant();
     public string IconoTipo => Tipo == "aviso" ? "IcoAlert" : (Tipo == "pregunta" ? "IcoHelp" : "IcoBulb");
     public string Cta => Tipo == "pregunta" ? "Responder" : "Ver en el mapa";
+    public int Id { get; set; }        // id_post en la base de datos 
+    public int IdAutor { get; set; }   // id del usuario que publicó 
 }
 
 /// <summary>Un tramo del viaje: caminando (punteado) o en camión (línea azul).</summary>
@@ -184,7 +186,6 @@ public static class Geo
     public const double CentroLat = 28.6353;
     public const double CentroLng = -106.0889;
 
-    /// <summary>
     /// Camino "escalonado" entre dos puntos (como el dibujo de Figma).
     /// Es solo demostrativo: cuando tengas rutas reales, reemplázalo por las coordenadas verdaderas.
     /// </summary>
