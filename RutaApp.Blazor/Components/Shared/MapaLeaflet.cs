@@ -29,7 +29,7 @@ public sealed class MapaLeaflet : IAsyncDisposable
     private readonly SemaphoreSlim _cerrojo = new(1, 1);
 
     private IJSObjectReference _mapa;
-    private IJSObjectReference _capaRuta, _capaPuntos, _capaSugerencias;
+    private IJSObjectReference _capaRuta, _capaParadas, _capaPuntos, _capaSugerencias;
     private readonly Dictionary<string, (IJSObjectReference Capa, double Lat, double Lng)> _ubicaciones = new();
 
     public MapaLeaflet(IJSRuntime js, string id)
@@ -75,6 +75,7 @@ public sealed class MapaLeaflet : IAsyncDisposable
         await Soltar(zoom, teselas);
 
         _capaRuta = await NuevaCapa();
+        _capaParadas = await NuevaCapa();   // paradas de la ruta (círculos pequeños), sobre la línea
         _capaPuntos = await NuevaCapa();
         _capaSugerencias = await NuevaCapa();
     });
@@ -125,6 +126,28 @@ public sealed class MapaLeaflet : IAsyncDisposable
         await Soltar(icono, marcador);
     }
 
+    /// <summary>Parada de la ruta: círculo pequeño amarillo; el nombre aparece al pasar el mouse.</summary>
+    private async Task PonerParadaPequena(double lat, double lng, string nombre)
+    {
+        var c = await Crear("L.circleMarker", new[] { lat, lng }, new
+        {
+            radius = 4,
+            color = "#ffffff",
+            weight = 1.5,
+            fillColor = "#2563EB",
+            fillOpacity = 1
+        });
+        if (!string.IsNullOrWhiteSpace(nombre))
+            await c.InvokeVoidAsync("bindTooltip", WebUtility.HtmlEncode(nombre), new
+            {
+                direction = "top",
+                offset = new double[] { 0, -6 },
+                className = "pill"
+            });
+        await c.InvokeVoidAsync("addTo", _capaParadas);
+        await Soltar(c);
+    }
+
     private async Task PonerLinea(List<double[]> puntos, object estilo)
     {
         var linea = await Crear("L.polyline", puntos, estilo);
@@ -144,34 +167,41 @@ public sealed class MapaLeaflet : IAsyncDisposable
     private static readonly object EstiloCaminata = new { color = "#4A6FA5", weight = 4, opacity = 0.9, dashArray = "2,9", lineCap = "round" };
 
     // ── Ruta ──────────────────────────────────────────────────────────────
-    public Task LimpiarRuta() => Exclusivo(() => _capaRuta.InvokeVoidAsync("clearLayers").AsTask());
-
-    /// <summary>Línea azul de la ruta con sus paradas, origen y destino.</summary>
-    public Task DibujarRuta(List<double[]> linea, List<double[]> paradas, Marcador origen, Marcador destino,
-                            List<PuntoControlMapa> puntosControl = null) => Exclusivo(async () =>
+    public Task LimpiarRuta() => Exclusivo(async () =>
     {
         await _capaRuta.InvokeVoidAsync("clearLayers");
-        await PonerLinea(linea, EstiloBus);
-        foreach (var p in paradas) await PonerMarcador(_capaRuta, p[0], p[1], "m-s", 14);
-
-        // Puntos de control del plano oficial (A, B, C...): pines con la letra; el nombre sale al pasar el mouse
-        if (puntosControl != null)
-            foreach (var c in puntosControl)
-                await PonerMarcador(_capaRuta, c.Lat, c.Lng, "m-n", 22, c.Letra + " · " + c.Nombre, "top",
-                                    new double[] { 0, -12 }, textoIcono: c.Letra, rotuloPermanente: false);
-
-        await PonerMarcador(_capaRuta, origen.Lat, origen.Lng, "m-o", 22, origen.Nombre, "right", new double[] { 12, 0 });
-        // En un ciclo cerrado el destino es el mismo punto que el origen: no se dibuja dos veces
-        double metros = Math.Sqrt(Math.Pow((origen.Lat - destino.Lat) * 111000, 2) + Math.Pow((origen.Lng - destino.Lng) * 97500, 2));
-        if (metros > 30)
-            await PonerMarcador(_capaRuta, destino.Lat, destino.Lng, "m-d", 30, destino.Nombre, "top", new double[] { 0, -16 });
-        await Encuadrar(linea, 110);
+        await _capaParadas.InvokeVoidAsync("clearLayers");
     });
+
+    /// <summary>Línea azul de la ruta con sus paradas (círculos pequeños), origen y destino.</summary>
+    public Task DibujarRuta(List<double[]> linea, List<Marcador> paradas, Marcador origen, Marcador destino,
+                            List<PuntoControlMapa> puntosControl = null) => Exclusivo(async () =>
+                            {
+                                await _capaRuta.InvokeVoidAsync("clearLayers");
+                                await _capaParadas.InvokeVoidAsync("clearLayers");
+                                await PonerLinea(linea, EstiloBus);
+
+                                foreach (var p in paradas) await PonerParadaPequena(p.Lat, p.Lng, p.Nombre);
+
+                                // Puntos de control del plano oficial (A, B, C...): pines con la letra; el nombre sale al pasar el mouse
+                                if (puntosControl != null)
+                                    foreach (var c in puntosControl)
+                                        await PonerMarcador(_capaRuta, c.Lat, c.Lng, "m-n", 22, c.Letra + " · " + c.Nombre, "top",
+                                                            new double[] { 0, -12 }, textoIcono: c.Letra, rotuloPermanente: false);
+
+                                await PonerMarcador(_capaRuta, origen.Lat, origen.Lng, "m-o", 22, origen.Nombre, "right", new double[] { 12, 0 });
+                                // En un ciclo cerrado el destino es el mismo punto que el origen: no se dibuja dos veces
+                                double metros = Math.Sqrt(Math.Pow((origen.Lat - destino.Lat) * 111000, 2) + Math.Pow((origen.Lng - destino.Lng) * 97500, 2));
+                                if (metros > 30)
+                                    await PonerMarcador(_capaRuta, destino.Lat, destino.Lng, "m-d", 30, destino.Nombre, "top", new double[] { 0, -16 });
+                                await Encuadrar(linea, 110);
+                            });
 
     /// <summary>Opción de viaje: tramos caminando (punteado) y en camión (azul) con sus paradas y escalas.</summary>
     public Task DibujarViaje(List<TramoMapa> tramos, List<Marcador> paradas, Marcador origen, Marcador destino, List<Marcador> escalas) => Exclusivo(async () =>
     {
         await _capaRuta.InvokeVoidAsync("clearLayers");
+        await _capaParadas.InvokeVoidAsync("clearLayers");
         var todos = new List<double[]> { new[] { origen.Lat, origen.Lng }, new[] { destino.Lat, destino.Lng } };
 
         foreach (var t in tramos)
@@ -249,7 +279,11 @@ public sealed class MapaLeaflet : IAsyncDisposable
         await _capaPuntos.InvokeVoidAsync("clearLayers");
         var emojis = new Dictionary<string, string>
         {
-            ["parada"] = "🚍", ["farmacia"] = "💊", ["hospital"] = "🏥", ["escuela"] = "🏫", ["supermercado"] = "🛒"
+            ["parada"] = "🚍",
+            ["farmacia"] = "💊",
+            ["hospital"] = "🏥",
+            ["escuela"] = "🏫",
+            ["supermercado"] = "🛒"
         };
         foreach (var p in puntos)
         {
@@ -267,7 +301,7 @@ public sealed class MapaLeaflet : IAsyncDisposable
         {
             if (_mapa == null) return;
             await _mapa.InvokeVoidAsync("remove");
-            await Soltar(_capaRuta, _capaPuntos, _capaSugerencias, _mapa);
+            await Soltar(_capaRuta, _capaParadas, _capaPuntos, _capaSugerencias, _mapa);
             foreach (var u in _ubicaciones.Values) await Soltar(u.Capa);
             _mapa = null;
         }

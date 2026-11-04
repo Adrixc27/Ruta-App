@@ -43,20 +43,21 @@
             </div>
             @if (_tarjeta.TieneVariantes)
             {
-                @* Ramales del plano oficial: se puede cambiar entre la versión base y su variante *@
                 <div class="tarjeta-variantes">
                     <small>Variante</small>
                     @for (int i = 0; i < _tarjeta.Variantes.Count; i++)
                     {
                         int indice = i;
                         <button type="button" class="chip-radio @(_tarjeta.VarianteActual == indice ? "activo" : "")"
-                                @onclick="() => CambiarVariante(indice)">@_tarjeta.Variantes[indice].Variante</button>
+                                @onclick="() => CambiarVariante(indice)">
+                            @_tarjeta.Variantes[indice].Variante
+                        </button>
                     }
                 </div>
             }
             @if (_tarjeta.Oficial != null)
             {
-                <div class="tarjeta-plano">Plano oficial: @_tarjeta.Oficial.Nombre · @_tarjeta.Oficial.LongitudKm.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) km</div>
+                <div class="tarjeta-plano">@_tarjeta.Oficial.Nombre · @_tarjeta.Oficial.Paradas.Count paradas</div>
             }
             <div class="tarjeta-datos">
                 <div><b>@(_tarjeta.FrecuenciaMin) min</b><small>Frecuencia</small></div>
@@ -84,7 +85,7 @@
 
     private class Banner
     {
-        public string Modo = "texto";   // texto | viaje | ruta
+        public string Modo = "texto";
         public string Texto = "";
         public string Subtexto = "";
         public bool ConQuitar;
@@ -115,14 +116,12 @@
         }
         catch (Exception ex) when (ex is JSException or JSDisconnectedException or TaskCanceledException)
         {
-            _listo.TrySetResult(false);   // Leaflet sin cargar o circuito cerrado: el mapa no se muestra, el resto sigue
+            _listo.TrySetResult(false);
         }
     }
 
-    // Espera a que el mapa esté creado; false si no se pudo iniciar
     private async Task<bool> Listo() => !_destruido && await _listo.Task && !_destruido;
 
-    /// <summary>Ejecuta una operación del mapa cuando esté listo, ignorando si el circuito ya se cerró.</summary>
     private async Task EnMapa(Func<MapaLeaflet, Task> accion)
     {
         if (!await Listo()) return;
@@ -130,7 +129,6 @@
         catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException) { }
     }
 
-    // El mapa cambia de ancho cuando el sidebar se contrae o expande (después de la animación)
     private async void AlCambiarBarraLateral()
     {
         await Task.Delay(300);
@@ -162,7 +160,6 @@
     public void MostrarTarjeta(Ruta r) { _tarjeta = r; StateHasChanged(); }
     public void OcultarTarjeta() { _tarjeta = null; StateHasChanged(); }
 
-    // Botones de variante de la tarjeta: cambia el recorrido de la ruta y lo vuelve a dibujar
     private async Task CambiarVariante(int indice)
     {
         var r = _tarjeta;
@@ -175,36 +172,35 @@
     // ── Ruta ──────────────────────────────────────────────────────────────
     public Task LimpiarRuta() => EnMapa(m => m.LimpiarRuta());
 
-    /// <summary>Dibuja la línea azul de la ruta con sus paradas, origen y destino.</summary>
     public async Task DibujarRuta(Ruta r)
     {
-        // Primero un trazo rápido; en cuanto OSRM responde se reemplaza por el que sigue las calles
         if (r.EsViaje) { await DibujarViaje(r); return; }
-        if (r.Trazo != null && r.Trazo.Count >= 2) { await DibujarLinea(r, r.Trazo); return; }   // recorrido propio de la ruta
+        if (r.Trazo != null && r.Trazo.Count >= 2) { await DibujarLinea(r, r.Trazo); return; }
 
         int version = ++_versionRuta;
         await DibujarLinea(r, Geo.Camino(r.LatO, r.LngO, r.LatD, r.LngD));
         var linea = await Trazos.TrazoEntreAsync(r.LatO, r.LngO, r.LatD, r.LngD);
-        if (linea == null || version != _versionRuta) return;   // sin internet, o el usuario ya eligió otra ruta
+        if (linea == null || version != _versionRuta) return;
         await DibujarLinea(r, linea);
     }
 
+    // Con ruta de la base de datos se muestran todas sus paradas (con nombre); si no, tres repartidas (25 %, 50 %, 75 %)
     private Task DibujarLinea(Ruta r, List<double[]> pts)
     {
-        // Si la ruta tiene plano oficial se muestran sus puntos de control; si no, tres paradas repartidas
-        // a lo largo del recorrido (25 %, 50 % y 75 %)
-        var control = r.PuntosControl?.Select(c => new PuntoControlMapa(c.Letra, c.Nombre, c.Lat, c.Lng)).ToList();
-        var paradas = control != null
-            ? new List<double[]>()
-            : new[] { 0.25, 0.5, 0.75 }.Select(f => pts[(int)((pts.Count - 1) * f)]).ToList();
+        var paradas = (r.Oficial != null && r.Oficial.Paradas.Count > 0)
+            ? r.Oficial.Paradas.Select(p => new Marcador(p.Latitud, p.Longitud, p.Nombre)).ToList()
+            : new[] { 0.25, 0.5, 0.75 }
+                .Select(f => pts[(int)((pts.Count - 1) * f)])
+                .Select(q => new Marcador(q[0], q[1], null))
+                .ToList();
+
         var ini = pts[0];
         var fin = pts[pts.Count - 1];
         return EnMapa(m => m.DibujarRuta(pts, paradas,
             new Marcador(ini[0], ini[1], r.OrigenNombre),
-            new Marcador(fin[0], fin[1], r.DestinoNombre), control));
+            new Marcador(fin[0], fin[1], r.DestinoNombre), null));
     }
 
-    /// <summary>Opción de viaje: tramos caminando (punteado) y en camión (azul) con sus paradas.</summary>
     private Task DibujarViaje(Ruta r)
     {
         var tramos = r.Tramos;
@@ -232,12 +228,7 @@
             escalas));
     }
 
-    // ── Ubicaciones escritas por el usuario (solo ciudad de Chihuahua) ────
-    /// <summary>
-    /// Busca hasta 6 lugares de la ciudad de Chihuahua que coincidan con el texto (aunque esté abreviado, a medias
-    /// o sea el nombre de una calle) y los marca en el mapa con pines numerados.
-    /// Devuelve null si el usuario siguió escribiendo (resultado descartado) o la búsqueda falló.
-    /// </summary>
+    // ── Ubicaciones escritas por el usuario ───────────────────────────────
     public async Task<List<Sugerencia>> BuscarSugerenciasAsync(string tipo, string texto)
     {
         _versionUbic.TryGetValue(tipo, out int version);
@@ -253,7 +244,7 @@
         try
         {
             var lista = await Trazos.BuscarLugaresAsync(texto);
-            if (_versionUbic[tipo] != version) return null;   // el usuario siguió escribiendo
+            if (_versionUbic[tipo] != version) return null;
 
             await EnMapa(m => m.MostrarSugerencias(lista));
             return lista;
@@ -264,7 +255,6 @@
         }
     }
 
-    /// <summary>Marca la ubicación elegida (origen, destino o parada) y quita los pines de sugerencias.</summary>
     public async Task ElegirUbicacion(string tipo, string nombre, double lat, double lng, string etiqueta = "")
     {
         await LimpiarSugerencias();
@@ -276,20 +266,15 @@
     public Task LimpiarSugerencias() => EnMapa(m => m.MostrarSugerencias(null));
 
     // ── "Mi ubicación actual" ─────────────────────────────────────────────
-    /// <summary>Última ubicación obtenida (null si aún no se pide o no se pudo).</summary>
     public double[] MiPosicion => Estado.MiPosicion;
 
-    /// <summary>
-    /// Obtiene la ubicación del navegador (o una aproximada por IP si no da permiso) y la marca como origen.
-    /// Devuelve false si no se pudo.
-    /// </summary>
     public async Task<bool> MostrarMiUbicacionAsync()
     {
         if (!await Listo()) return false;
         var pos = Estado.MiPosicion;
         if (pos == null)
         {
-            pos = await Ubicacion.ObtenerAsync();   // GPS del equipo (MAUI) o, si no hay, ubicación aproximada por IP
+            pos = await Ubicacion.ObtenerAsync();
             Estado.MiPosicion = pos;
         }
         if (pos == null) return false;

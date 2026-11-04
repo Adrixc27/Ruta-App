@@ -1,33 +1,32 @@
 namespace RutaApp.Blazor.Services;
 
 /// <summary>
-/// Trae las rutas de la API (tabla routes) y los nombres de los camiones (tabla bus) y arma las Ruta de la app.
+/// Arma las Ruta de la app a partir de la base de datos (routes, bus, stop y route_stop) vía RutaService.
 /// </summary>
 public class RutaRepositorio
 {
-    private readonly ServicioApi _api;
+    private readonly RutaService _rutaService;
     private readonly ILogger<RutaRepositorio> _log;
 
-    public RutaRepositorio(ServicioApi api, ILogger<RutaRepositorio> log)
+    public RutaRepositorio(RutaService rutaService, ILogger<RutaRepositorio> log)
     {
-        _api = api;
+        _rutaService = rutaService;
         _log = log;
     }
 
-    /// <summary>Devuelve las rutas reales, o null si la API no responde o no hay datos.</summary>
+    /// <summary>Devuelve las rutas reales, o null si la base de datos no responde o no hay datos.</summary>
     public async Task<List<Ruta>> CargarAsync()
     {
         try
         {
-            var buses = await _api.ObtenerBusesAsync() ?? new List<BusApi>();
-            var rutas = await _api.ObtenerRutasAsync() ?? new List<RutaApi>();
+            var todas = await _rutaService.ObtenerRutasAsync();
 
-            var resultado = new List<Ruta>();
-            foreach (var fila in rutas)
-            {
-                var bus = buses.FirstOrDefault(b => b.Id == fila.IdBus);
-                resultado.Add(Armar(fila, bus));
-            }
+            // Las variantes de un mismo grupo (Komatsu Inverso / Directo) son una sola ruta en la lista
+            var resultado = todas
+                .GroupBy(o => o.Grupo)
+                .Select(g => Armar(g.ToList()))
+                .ToList();
+
             return resultado.Count > 0 ? resultado : null;
         }
         catch (Exception ex)
@@ -37,38 +36,34 @@ public class RutaRepositorio
         }
     }
 
-    private static Ruta Armar(RutaApi fila, BusApi bus)
+    private static Ruta Armar(List<RutaOficial> variantes)
     {
-        string nombre = string.IsNullOrWhiteSpace(fila.Name) ? (bus != null ? bus.Name : "Ruta " + fila.Id) : fila.Name.Trim();
+        var o = variantes[0];
+        string nombre = variantes.Count > 1 ? o.Grupo : o.Nombre;
 
         var r = new Ruta
         {
-            Numero = fila.Id,
+            Numero = o.Id,
             Nombre = nombre,
-            Lineas = bus != null ? bus.Name : nombre,
-            Tarifa = fila.Price,
-            Minutos = (int)Math.Round(fila.TravelMinutes),
-            Descripcion = fila.Description ?? "",
+            Lineas = string.IsNullOrWhiteSpace(o.BusNombre) ? nombre : o.BusNombre,
+            Tarifa = o.Precio ?? 0m,
+            Minutos = (int)Math.Round((o.TiempoRecorrido ?? TimeSpan.Zero).TotalMinutes),
+            Descripcion = o.Descripcion ?? "",
             OrigenNombre = nombre,
-            DestinoNombre = "Centro"
+            DestinoNombre = "Centro",
+            DatosReales = true
         };
 
-        // Minutos, tarifa, nombre y camión vienen de la base de datos.
-        r.DatosReales = true;
-
-        // Si la ruta tiene plano oficial (Rutas.pdf, BOWI.pdf o DALE UP) se usa su recorrido real.
-        // Algunas tienen variantes (Komatsu Inverso / Directo, Panamericana San Felipe / Mirador): arranca en la primera.
-        var variantes = TrazosPlanos.BuscarVariantes(nombre) ?? TrazosPlanos.BuscarVariantes(bus?.Name);
-        if (variantes != null)
+        // Con paradas en la base de datos se usa su recorrido; si hay variantes, arranca en la primera.
+        if (o.Trazo.Count >= 2)
         {
             r.Variantes = variantes;
             r.UsarVariante(0);
             return r;
         }
 
-        // Las demás rutas todavía no tienen paradas ni coordenadas en la base de datos:
-        // el recorrido en el mapa es un trazo DE PRUEBA (no representa el camino real de la ruta).
-        r.Waypoints = TrazoDePrueba(fila.Id);
+        // Sin paradas en la base de datos: el recorrido en el mapa es un trazo DE PRUEBA.
+        r.Waypoints = TrazoDePrueba(o.Id);
         r.LatO = r.Waypoints[0][0]; r.LngO = r.Waypoints[0][1];
         var ultimo = r.Waypoints[r.Waypoints.Count - 1];
         r.LatD = ultimo[0]; r.LngD = ultimo[1];
@@ -76,7 +71,6 @@ public class RutaRepositorio
     }
 
     // Recorridos de prueba que cruzan la ciudad pasando por el Centro; se asignan por id de ruta para que no se encimen.
-    // Cuando la BD tenga paradas con coordenadas, este método se reemplaza por los puntos reales.
     private static readonly double[][][] TrazosDePrueba =
     {
         new[] { new[] { 28.7000, -106.1100 }, new[] { Geo.CentroLat, Geo.CentroLng }, new[] { 28.6200, -106.0250 } },
