@@ -13,8 +13,8 @@ public class MainWindow : Window
         Title = "R.U.T.A.";
         Width = 1440;
         Height = 900;
-        MinWidth = 1100;
-        MinHeight = 700;
+        MinWidth = 380;
+        MinHeight = 560;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
         var web = new BlazorWebView

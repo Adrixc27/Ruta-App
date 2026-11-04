@@ -1,0 +1,37 @@
+@* Ajustes → Accesibilidad: criterios de movilidad para planificar (pantalla de diseño). *@
+@switch (Clave)
+{
+    case "accesibilidad":
+        <MarcoDetalle Categoria="Accesibilidad" Titulo="Priorizar rutas con accesibilidad" Subtitulo="Personaliza los criterios de movilidad que RUTA debe considerar al planificar.">
+            <ChildContent>
+                <DosColumnas Lateral="316">
+                    <Principal>
+                        <Tarjeta Titulo="Necesidades de accesibilidad" Subtitulo="Activamos opciones seguras y verificadas siempre que estén disponibles.">
+                            <FilaAjuste Icono="IcoUpDown" Titulo="Ascensores disponibles" Descripcion="Prioriza estaciones con ascensores operativos en ambos sentidos."><Interruptor Activo="true" /></FilaAjuste>
+                            <FilaAjuste Icono="IcoAccess" Titulo="Rampas de acceso" Descripcion="Busca paradas, estaciones y vehículos con acceso mediante rampa."><Interruptor Activo="true" /></FilaAjuste>
+                            <FilaAjuste Icono="IcoXCircle" Titulo="Trayectos sin escaleras" Descripcion="Evita rutas que requieran subir o bajar escaleras."><Interruptor Activo="true" /></FilaAjuste>
+                            <FilaAjuste Icono="IcoBuilding" Titulo="Estaciones accesibles" Descripcion="Muestra solo estaciones con infraestructura accesible verificada."><Interruptor Activo="true" /></FilaAjuste>
+                        </Tarjeta>
+                    </Principal>
+                    <Secundario>
+                        <Tarjeta Titulo="Perfil activo" Subtitulo="Tus preferencias se aplican a nuevas búsquedas.">
+                            <div class="perfil-activo">
+                                <CajaIcono Icono="IcoAccess" Lado="44" Relleno="true" />
+                                <div class="fila-ajuste-texto"><b>Movilidad asistida</b><small>4 criterios seleccionados</small></div>
+                            </div>
+                            <Aviso Icono="IcoAlert" Titulo="Datos en tiempo real" Tipo="alerta">Te avisaremos si un ascensor reportado como necesario deja de estar disponible.</Aviso>
+                        </Tarjeta>
+                        <Tarjeta Titulo="Información de accesibilidad" Subtitulo="Los datos se actualizan con reportes de operadores y de la comunidad." Clase="separada">
+                            <span class="enlace-flecha">Conoce nuestros criterios de verificación <Icon Nombre="IcoArrowRight" Tam="14" /></span>
+                        </Tarjeta>
+                    </Secundario>
+                </DosColumnas>
+            </ChildContent>
+            <Barra><BarraInferior Info="Las rutas accesibles pueden requerir más tiempo de viaje." TextoBoton="Guardar accesibilidad" /></Barra>
+        </MarcoDetalle>
+        break;
+}
+
+@code {
+    [Parameter] public string Clave { get; set; }
+}

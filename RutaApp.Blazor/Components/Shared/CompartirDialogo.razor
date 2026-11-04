@@ -1,0 +1,68 @@
+@inject IJSRuntime JS
+
+@* Muestra el código para compartir una parada, una ruta o un viaje personalizado, con botón para copiarlo. *@
+@if (Visible)
+{
+    <div class="modal-fondo" @onclick="Cerrar">
+        <div class="modal modal-compartir" @onclick:stopPropagation="true">
+            <div class="modal-cabecera">
+                <div>
+                    <h2>Compartir</h2>
+                    <p>@Titulo</p>
+                </div>
+                <button type="button" class="btn-icono suave" title="Cerrar" @onclick="Cerrar"><Icon Nombre="IcoX" Tam="16" /></button>
+            </div>
+
+            <p class="compartir-ayuda">Copia este código y envíalo por mensaje. Quien lo reciba puede agregarlo desde <b>Mi perfil → Importar código</b>.</p>
+            <textarea class="textarea codigo" rows="4" readonly @onfocus="Seleccionar" id="@_idCodigo">@Codigo</textarea>
+            @if (_mensaje != null)
+            {
+                <p class="aviso-texto">@_mensaje</p>
+            }
+            <div class="modal-acciones">
+                <button type="button" class="btn btn-primario" @onclick="Copiar"><Icon Nombre="IcoCopy" Tam="16" /> Copiar código</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public string Titulo { get; set; } = "";
+    [Parameter] public string Codigo { get; set; } = "";
+
+    private readonly string _idCodigo = "codigo-" + Guid.NewGuid().ToString("N");
+    private string _mensaje;
+
+    protected override void OnParametersSet()
+    {
+        if (!Visible) _mensaje = null;
+    }
+
+    private async Task Cerrar()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task Seleccionar()
+    {
+        try { await JS.InvokeVoidAsync("eval", "document.getElementById('" + _idCodigo + "')?.select()"); }
+        catch (Exception) { }
+    }
+
+    private async Task Copiar()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", Codigo);
+            _mensaje = "¡Código copiado!";
+        }
+        catch (Exception)
+        {
+            await Seleccionar();
+            _mensaje = "Selecciona el código y cópialo con Ctrl+C.";
+        }
+    }
+}

@@ -1,6 +1,7 @@
 @page "/comunidad"
 @layout ShellLayout
 @inject EstadoApp Estado
+@implements IDisposable
 @inject ComunidadService ServicioComunidad
 
 <PageTitle>Comunidad · R.U.T.A.</PageTitle>
@@ -16,17 +17,23 @@
         </button>
     </div>
 
-    @* Aviso fijo *@
-    <div class="aviso-fijo">
-        <span class="aviso-fijo-icono"><Icon Nombre="IcoAlert" Tam="18" Color="var(--warning)" /></span>
-        <div>
-            <small>AVISO ACTIVO · MOVILIDAD CHIHUAHUA</small>
-            <b>La Ruta 4 tiene un desvío temporal por obras en Zona Centro.</b>
+    @* Último aviso de la comunidad (datos reales de la base de datos) *@
+    @if (AvisoReciente != null)
+    {
+        <div class="aviso-fijo">
+            <span class="aviso-fijo-icono"><Icon Nombre="IcoAlert" Tam="18" Color="var(--warning)" /></span>
+            <div>
+                <small>AVISO RECIENTE · @AvisoReciente.Autor.ToUpperInvariant() · @AvisoReciente.Tiempo.ToUpperInvariant()</small>
+                <b>@AvisoReciente.Titulo</b>
+            </div>
+            @if (AvisoReciente.RutaNumero > 0)
+            {
+                <button type="button" class="btn btn-contorno btn-chico azul" @onclick="() => Cta(AvisoReciente)">
+                    <Icon Nombre="IcoPin" Tam="15" /> Ver ruta afectada
+                </button>
+            }
         </div>
-        <button type="button" class="btn btn-contorno btn-chico azul" @onclick="VerRutaAfectada">
-            <Icon Nombre="IcoPin" Tam="15" /> Ver ruta afectada
-        </button>
-    </div>
+    }
 
     @* Filtros *@
     <div class="filtros">
@@ -70,7 +77,13 @@
                 <span class="post-tipo @p.Tipo"><Icon Nombre="@p.IconoTipo" Tam="12" /> @p.TipoTexto</span>
             </header>
             <h3>@p.Titulo</h3>
-            <p>@p.Cuerpo</p>
+            <p>@TextoVisible(p)</p>
+            @if (TieneCodigo(p))
+            {
+                <button type="button" class="btn btn-contorno btn-chico importar-codigo" @onclick="() => Importar(p)">
+                    <Icon Nombre="IcoBookmark" Tam="15" /> Guardar en mi perfil
+                </button>
+            }
             <div class="post-etiquetas">
                 @foreach (var e in p.Etiquetas)
                 {
@@ -112,14 +125,23 @@
 
 @if (!Visibles.Any())
 {
-    <p class="vacio">No hay publicaciones que coincidan.</p>
-}
-
-@if (Estado.PublicacionesExtra.Count > 0)
-{
-    <div class="centrado-fila">
-        <button type="button" class="btn btn-contorno azul" @onclick="CargarMas">Cargar más publicaciones</button>
-    </div>
+    @if (Estado.ErrorPublicaciones)
+    {
+        <div class="card invitacion">
+            <Icon Nombre="IcoAlert" Color="var(--warning)" />
+            <b>No pudimos cargar la comunidad</b>
+            <small>Revisa tu conexión a internet e inténtalo de nuevo.</small>
+            <button type="button" class="btn-ghost" @onclick="Recargar"><Icon Nombre="IcoRefresh" Tam="14" /> Reintentar</button>
+        </div>
+    }
+    else if (Estado.Publicaciones.Count == 0)
+    {
+        <p class="vacio">Todavía no hay publicaciones. ¡Sé la primera persona en compartir algo con la comunidad!</p>
+    }
+    else
+    {
+        <p class="vacio">No hay publicaciones que coincidan.</p>
+    }
 }
 </div>
 
@@ -205,58 +227,38 @@
     private List<ComentarioDb> _comentarios = new();
     private string _nuevoComentario = "";
 
-    private int IdUsuario => Sesion.Actual?.Id ?? 0;
-    private bool ConCuenta => !Estado.Invitado && IdUsuario > 0;
+    private int IdUsuario => Estado.Usuario?.Id ?? 0;
+    private bool ConCuenta => Estado.ConCuenta;
     private bool EsMia(Publicacion p) => ConCuenta && p.Id > 0 && p.IdAutor == IdUsuario;
 
-    // ── Carga inicial ─────────────────────────────────────────────────────
+    private Publicacion AvisoReciente => Estado.Publicaciones.Where(p => p.Tipo == "aviso").OrderByDescending(p => p.Orden).FirstOrDefault();
+
+    // ── Carga inicial: publicaciones reales de la base de datos (también para invitados) ──
     protected override async Task OnInitializedAsync()
     {
-        if (!ConCuenta) return;   // invitado: se quedan las publicaciones de demostración
-        try
-        {
-            var posts = await ServicioComunidad.ObtenerPublicacionesAsync(IdUsuario);
-            Estado.Publicaciones.Clear();
-            Estado.PublicacionesExtra.Clear();
-            int orden = posts.Count;
-            foreach (var d in posts)
-                Estado.Publicaciones.Add(Convertir(d, orden--));
-        }
-        catch (Exception)
-        {
-            // sin conexión: se muestran las de demostración
-        }
+        Estado.Cambio += Refrescar;
+        await Estado.CargarPublicacionesAsync(true);
     }
 
-    private Publicacion Convertir(PostDb d, int orden)
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    private async Task Recargar() => await Estado.CargarPublicacionesAsync(true);
+
+    // ── Códigos para compartir dentro de una publicación ──────────────────
+    private static bool TieneCodigo(Publicacion p) => p.Cuerpo != null && p.Cuerpo.Contains(CodigoCompartir.Prefijo);
+
+    // El texto sin el código largo (el código se guarda con el botón "Guardar en mi perfil")
+    private static string TextoVisible(Publicacion p)
     {
-        var p = new Publicacion
-        {
-            Id = d.Id,
-            IdAutor = d.IdUsuario,
-            Tipo = d.Tipo,
-            Autor = d.Autor,
-            Tiempo = Hace(d.Fecha),
-            Titulo = d.Titulo ?? "",
-            Cuerpo = d.Contenido,
-            Comentarios = d.Comentarios,
-            Likes = d.Likes,
-            MeGusta = d.MeGusta > 0,
-            Orden = orden,
-            RutaNumero = d.IdRuta ?? 0
-        };
-        if (d.IdRuta != null)
-            p.Etiquetas.Add(new Etiqueta { Texto = "Ruta " + d.IdRuta, EsRuta = true });
-        return p;
+        if (!TieneCodigo(p)) return p.Cuerpo;
+        int i = p.Cuerpo.IndexOf(CodigoCompartir.Prefijo, StringComparison.Ordinal);
+        return p.Cuerpo.Substring(0, i).Trim();
     }
 
-    private static string Hace(DateTime fecha)
+    private void Importar(Publicacion p)
     {
-        var t = DateTime.Now - fecha;
-        if (t.TotalMinutes < 1) return "ahora";
-        if (t.TotalMinutes < 60) return "hace " + (int)t.TotalMinutes + " min";
-        if (t.TotalHours < 24) return "hace " + (int)t.TotalHours + " h";
-        return "hace " + (int)t.TotalDays + " d";
+        string resultado = Estado.ImportarCodigo(p.Cuerpo);
+        if (!string.IsNullOrEmpty(resultado)) Mensaje(resultado);
     }
 
     // ── Filtro, orden y conteos ───────────────────────────────────────────
@@ -277,12 +279,6 @@
 
     private int Contar(string tipo) => Estado.Publicaciones.Count(p => p.Tipo == tipo);
 
-    private void CargarMas()
-    {
-        Estado.Publicaciones.AddRange(Estado.PublicacionesExtra);
-        Estado.PublicacionesExtra.Clear();
-    }
-
     // ── Acciones de cada publicación ──────────────────────────────────────
     private void Mensaje(string texto)
     {
@@ -292,19 +288,14 @@
 
     private async Task Like(Publicacion p)
     {
-        if (ConCuenta && p.Id > 0)
+        if (!Estado.RequiereCuenta("Inicia sesión para dar \"me gusta\" y participar en la comunidad.")) return;
+        try
         {
-            try
-            {
-                bool marcado = await ServicioComunidad.AlternarLikeAsync(IdUsuario, p.Id);
-                p.Likes += marcado ? 1 : -1;
-                p.MeGusta = marcado;
-            }
-            catch (Exception) { Mensaje("No se pudo guardar tu \"me gusta\". Intenta de nuevo."); }
-            return;
+            bool marcado = await ServicioComunidad.AlternarLikeAsync(IdUsuario, p.Id);
+            p.Likes += marcado ? 1 : -1;
+            p.MeGusta = marcado;
         }
-        p.MeGusta = !p.MeGusta;   // invitado: solo en pantalla
-        p.Likes += p.MeGusta ? 1 : -1;
+        catch (Exception) { Mensaje("No se pudo guardar tu \"me gusta\". Intenta de nuevo."); }
     }
 
     private async Task AlternarComentarios(Publicacion p)
@@ -313,7 +304,6 @@
         _abierta = p;
         _nuevoComentario = "";
         _comentarios = new List<ComentarioDb>();
-        if (p.Id == 0) return;   // publicación de demostración
         try { _comentarios = await ServicioComunidad.ObtenerComentariosAsync(p.Id); }
         catch (Exception) { Mensaje("No se pudieron cargar los comentarios."); }
     }
@@ -321,11 +311,7 @@
     private async Task Comentar()
     {
         if (_abierta == null) return;
-        if (!ConCuenta || _abierta.Id == 0)
-        {
-            Mensaje("Inicia sesión para comentar en la comunidad.");
-            return;
-        }
+        if (!Estado.RequiereCuenta("Inicia sesión para comentar en la comunidad.")) return;
         string texto = _nuevoComentario.Trim();
         if (texto.Length == 0) return;
         try
@@ -360,16 +346,10 @@
         Estado.Navegar("rutas", ruta);
     }
 
-    private void VerRutaAfectada() => Estado.Navegar("rutas", Estado.Rutas.FirstOrDefault());
-
     // ── Modal "Nueva publicación" ─────────────────────────────────────────
     private void Nueva()
     {
-        if (!ConCuenta)
-        {
-            Mensaje("Inicia sesión o crea una cuenta para publicar en la comunidad.");
-            return;
-        }
+        if (!Estado.RequiereCuenta("Inicia sesión o crea una cuenta para publicar en la comunidad.")) return;
         _titulo = "";
         _mensaje = "";
         _errorModal = null;
@@ -403,15 +383,16 @@
                 Tipo = _nuevoTipo,
                 Autor = Estado.Nombre,
                 Tiempo = "ahora",
+                Fecha = DateTime.Now,
                 Titulo = titulo,
                 Cuerpo = mensaje,
                 Orden = Estado.Publicaciones.Count > 0 ? Estado.Publicaciones.Max(p => p.Orden) + 1 : 1,
                 RutaNumero = ruta?.Numero ?? 0
             };
             if (ruta != null)
-                nueva.Etiquetas.Add(new Etiqueta { Texto = "Ruta " + ruta.Numero, EsRuta = true });
+                nueva.Etiquetas.Add(new Etiqueta { Texto = ruta.Nombre, EsRuta = true });
 
-            Estado.Publicaciones.Add(nueva);
+            Estado.AgregarPublicacion(nueva);
             _modal = false;
             _tipo = "";
             _busqueda = "";
@@ -425,4 +406,6 @@
             _ocupado = false;
         }
     }
+
+    public void Dispose() => Estado.Cambio -= Refrescar;
 }

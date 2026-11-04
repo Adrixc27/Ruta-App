@@ -8,10 +8,8 @@
 <div class="split split-380">
     <div class="panel-lateral">
         <div class="panel-scroll">
-            <Stepper Paso="1" />
-
-            <div class="bloque">
-                <h1 class="titulo-panel">¿A dónde vas hoy?</h1>
+            <div class="encabezado-seccion">
+                <h1 class="titulo-seccion">¿A dónde vas hoy?</h1>
                 <p class="sub-panel">Planifica tu viaje en transporte público</p>
             </div>
 
@@ -19,7 +17,7 @@
             <div class="bloque">
                 <div class="campo-wrap">
                     <CampoTexto Text="@_origen" TextChanged="@(t => AlEscribir("origen", t))" Punto="var(--accent-origin)" Fondo="var(--bg-card)"
-                                Hint="¿Desde dónde sales?" OnFocoPerdido="CerrarSugerencias" />
+                                Hint="¿Desde dónde sales?" OnFocoPerdido="CerrarSugerencias" OnFoco='() => _campoActivo = "origen"' />
                     @Sugerencias("origen")
                 </div>
 
@@ -28,7 +26,7 @@
                     var e = escala;
                     <div class="campo-wrap escala">
                         <CampoTexto Text="@e.Texto" TextChanged="@(t => AlEscribir(e.Id, t))" Punto="var(--text-secondary)" Fondo="var(--bg-card)"
-                                    Hint="Parada intermedia" OnFocoPerdido="CerrarSugerencias" />
+                                    Hint="Parada intermedia" OnFocoPerdido="CerrarSugerencias" OnFoco="() => _campoActivo = e.Id" />
                         <button type="button" class="btn-icono" title="Quitar esta parada" @onclick="() => QuitarParada(e.Id)">✕</button>
                         @Sugerencias(e.Id)
                     </div>
@@ -36,14 +34,19 @@
 
                 <div class="campo-wrap">
                     <CampoTexto Text="@_destino" TextChanged="@(t => AlEscribir("destino", t))" Punto="var(--brand-primary)" Fondo="var(--bg-card)"
-                                Hint="¿A dónde vas?" OnFocoPerdido="CerrarSugerencias" />
+                                Hint="¿A dónde vas?" OnFocoPerdido="CerrarSugerencias" OnFoco='() => _campoActivo = "destino"' />
                     @Sugerencias("destino")
                 </div>
 
-                @if (_escalas.Count < MaxParadasIntermedias)
-                {
-                    <button type="button" class="btn-ghost" title="Agrega un lugar por el que quieres pasar antes de llegar al destino final" @onclick="AnadirParada">+ Añadir parada intermedia</button>
-                }
+                <div class="acciones-campos">
+                    @if (_escalas.Count < MaxParadasIntermedias)
+                    {
+                        <button type="button" class="btn-ghost" title="Agrega un lugar por el que quieres pasar antes de llegar al destino final" @onclick="AnadirParada">+ Añadir parada intermedia</button>
+                    }
+                    <button type="button" class="btn-ghost" title="Toca el mapa para poner @NombreCampoActivo" @onclick="() => EmpezarElegir(CampoParaElegir)">
+                        <Icon Nombre="IcoPin" Tam="15" /> Elegir en el mapa
+                    </button>
+                </div>
             </div>
 
             @if (_error != null)
@@ -54,36 +57,132 @@
                 Buscar y comparar rutas <Icon Nombre="IcoArrowRight" Tam="18" />
             </button>
 
-            @* Historial de viajes *@
-            <div class="label-upper">HISTORIAL DE VIAJES</div>
-            <p class="nota-panel">Tus viajes anteriores y los camiones que tomaste. Con la estrella los guardas en tu perfil.</p>
-            @if (Estado.Historial.Count == 0)
-            {
-                <p class="nota-panel">Aún no tienes viajes en tu historial.</p>
-            }
-            @foreach (var viaje in Estado.Historial)
-            {
-                var v = viaje;
-                <div class="viaje-historial">
-                    <Icon Nombre="IcoClock" Tam="18" Color="var(--text-secondary)" />
-                    <div class="viaje-texto">
-                        <b>@v.Titulo</b>
-                        <span class="azul">@v.CamionesTexto</span>
-                        <small>@v.Detalle</small>
+            @* Mis lugares (debajo del botón de buscar): casa, escuela y otros puntos para llenar los campos con un toque *@
+            <div class="bloque lugares-rapidos">
+                <div class="label-upper sin-margen">MIS LUGARES</div>
+
+                @if (_eligiendo != null)
+                {
+                    <div class="eligiendo-mapa">
+                        <Icon Nombre="IcoPin" Tam="18" Color="var(--brand-primary)" />
+                        <span>Toca un punto del mapa para elegir el lugar.</span>
+                        <button type="button" class="btn-ghost btn-mini" @onclick="CancelarElegir">Cancelar</button>
                     </div>
-                    <button type="button" class="btn-icono" title="Guardar viaje" @onclick="() => Estado.AlternarGuardadoHistorial(v)">
-                        <Icon Nombre="IcoStar" Tam="16" Color="var(--star)" Relleno="@(v.EstaGuardado ? "var(--star)" : null)" />
-                    </button>
-                </div>
+                }
+
+                @if (!Estado.ConCuenta)
+                {
+                    <p class="nota-panel"><a href="acceso" class="azul">Inicia sesión</a> para guardar tu casa, escuela u otros lugares y planificar más rápido.</p>
+                }
+                else if (Estado.Lugares.Count == 0)
+                {
+                    <p class="nota-panel">Aún no tienes lugares. Guarda tu casa o tu escuela con el botón de abajo, o agrégalos en <a href="perfil" class="azul">Mi perfil</a>.</p>
+                }
+                else
+                {
+                    <div class="chips-lugares">
+                        @foreach (var lugar in Estado.Lugares)
+                        {
+                            var l = lugar;
+                            <span class="chip-lugar-grupo">
+                                <button type="button" class="chip-lugar" title="@l.Direccion" @onclick="() => UsarLugar(l)">
+                                    <Icon Nombre="@l.Icono" Tam="15" /> @l.Nombre
+                                </button>
+                                <button type="button" class="chip-lugar-mapa" title="Ver @l.Nombre en el mapa" @onclick="() => VerLugar(l)"><Icon Nombre="IcoMap" Tam="14" /></button>
+                            </span>
+                        }
+                    </div>
+                    <p class="nota-panel">Toca un lugar para ponerlo en el campo que estás editando (@NombreCampoActivo), o el mapa para verlo.</p>
+                }
+
+                @if (!_guardandoLugar)
+                {
+                    <button type="button" class="btn-ghost" @onclick="EmpezarGuardarLugar"><Icon Nombre="IcoPlus" Tam="15" /> Guardar un lugar</button>
+                }
+                else
+                {
+                    <div class="card guardar-lugar">
+                        <CampoTexto @bind-Text="_nombreLugar" Hint="Nombre (por ejemplo: Casa)" MaxLength="30" Alto="40" />
+                        <div class="tipos-lugar">
+                            @foreach (var t in TiposLugar)
+                            {
+                                var tipo = t;
+                                <button type="button" class="chip-radio @(_tipoLugar == tipo.Clave ? "activo" : "")" @onclick="() => _tipoLugar = tipo.Clave">
+                                    <Icon Nombre="@tipo.Icono" Tam="13" /> @tipo.Texto
+                                </button>
+                            }
+                        </div>
+                        <div class="lugar-elegido">
+                            @if (LugarParaGuardar != null)
+                            {
+                                <Icon Nombre="IcoPin" Tam="16" Color="var(--brand-primary)" /> <b>@LugarParaGuardar.Nombre</b>
+                            }
+                            else
+                            {
+                                <span class="nota-panel">Elige el lugar: escribe una dirección en «¿A dónde vas?» o tócalo en el mapa.</span>
+                            }
+                        </div>
+                        <button type="button" class="btn btn-contorno btn-chico" @onclick='() => EmpezarElegir("lugar")'><Icon Nombre="IcoPin" Tam="15" /> Elegir en el mapa</button>
+                        @if (_errorLugar != null) { <p class="error-texto">@_errorLugar</p> }
+                        <div class="modal-acciones">
+                            <button type="button" class="btn btn-contorno btn-chico" @onclick="CancelarGuardarLugar">Cancelar</button>
+                            <button type="button" class="btn btn-primario btn-chico" @onclick="GuardarLugar">Guardar</button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* Historial de viajes: las rutas en las que ya viajaste *@
+            <div class="label-upper">HISTORIAL DE VIAJES</div>
+            @if (!Estado.ConCuenta)
+            {
+                <p class="nota-panel">Tu historial se guarda con tu cuenta. <a href="acceso" class="azul">Inicia sesión</a> para ver los viajes que hagas.</p>
+            }
+            else if (Estado.Historial.Count == 0)
+            {
+                <p class="nota-panel">Aún no tienes viajes en tu historial. Aquí verás las rutas en las que viajes.</p>
+            }
+            else
+            {
+                <p class="nota-panel">Toca un viaje para verlo en el mapa. Con el marcador lo guardas en tu perfil.</p>
+                @foreach (var viaje in Estado.Historial.Take(10))
+                {
+                    var v = viaje;
+                    <div class="viaje-historial @(_historialSel == v ? "sel" : "")" @onclick="() => VerHistorial(v)">
+                        <Icon Nombre="IcoHistory" Tam="18" Color="var(--text-secondary)" />
+                        <div class="viaje-texto">
+                            <b>@v.Titulo</b>
+                            <span class="azul">@v.CamionesTexto</span>
+                            <small>@v.Detalle</small>
+                        </div>
+                        <button type="button" class="btn-icono" title="@(v.EstaGuardado ? "Quitar de guardados" : "Guardar viaje")" @onclick="() => Estado.AlternarGuardadoHistorial(v)" @onclick:stopPropagation="true">
+                            <Icon Nombre="IcoBookmark" Tam="17" Color="@(v.EstaGuardado ? "var(--brand-primary)" : null)" Relleno="@(v.EstaGuardado ? "var(--brand-primary)" : null)" />
+                        </button>
+                    </div>
+                }
+                @if (Estado.Historial.Count > 10)
+                {
+                    <button type="button" class="btn-ghost" @onclick='() => Estado.Navegar("perfil")'>Ver todo el historial en mi perfil <Icon Nombre="IcoArrowRight" Tam="14" /></button>
+                }
             }
         </div>
     </div>
 
-    <Mapa @ref="_mapa" />
+    <Mapa @ref="_mapa" OnPlanificar="ReplanificarMostrado" OnClicMapa="AlClicMapa" />
 </div>
 
 @code {
     private const int MaxParadasIntermedias = 3;
+
+    private record TipoLugar(string Clave, string Icono, string Texto);
+
+    private static readonly TipoLugar[] TiposLugar =
+    {
+        new("casa", "IcoHome", "Casa"),
+        new("escuela", "IcoSchool", "Escuela"),
+        new("trabajo", "IcoBriefcase", "Trabajo"),
+        new("otro", "IcoFlag", "Otro")
+    };
 
     private class Escala
     {
@@ -97,14 +196,44 @@
     private int _contadorEscalas;
     private string _error;
     private bool _buscando;
+    private string _campoActivo = "destino";
 
     private string _tipoActivo = "";                       // a qué campo pertenecen las sugerencias abiertas
     private List<Sugerencia> _sugerencias = new();
     private readonly Dictionary<string, Sugerencia> _elegido = new();   // lugar elegido por campo
     private readonly Dictionary<string, CancellationTokenSource> _esperas = new();
 
+    // Viaje (del historial o del perfil) que se está viendo en el mapa
+    private Ruta _viajeMostrado;
+    private ViajeHistorial _historialSel;
+
+    // Guardar el lugar elegido (casa, escuela...)
+    private bool _guardandoLugar;
+    private string _nombreLugar = "", _tipoLugar = "casa", _errorLugar;
+    private Sugerencia _lugarMapa;       // lugar tocado en el mapa para guardarlo
+    private string _eligiendo;           // null, "lugar" o el campo para el que se está eligiendo un punto en el mapa
+    private SolicitudLugar _solicitud;   // viene del perfil: elegir un lugar tocando el mapa
+    private LugarGuardado _lugarVer;     // viene del perfil: mostrar este lugar en el mapa
+
+    private string NombreCampoActivo => _campoActivo switch
+    {
+        "origen" => "el origen",
+        "destino" => "el destino",
+        _ => "la parada intermedia"
+    };
+
     protected override void OnInitialized()
     {
+        _solicitud = Estado.TomarParametro<SolicitudLugar>();
+        _lugarVer = Estado.TomarParametro<LugarGuardado>();
+        _viajeMostrado = Estado.TomarParametro<Ruta>();   // por ejemplo un viaje guardado que se abre desde el perfil
+        if (_solicitud != null)
+        {
+            _guardandoLugar = true;
+            _nombreLugar = _solicitud.Nombre;
+            _tipoLugar = _solicitud.Tipo;
+        }
+
         // Lo que haya en Estado (por ejemplo al volver desde Comparar con "Editar búsqueda")
         _origen = string.IsNullOrWhiteSpace(Estado.Origen) ? EstadoApp.MiUbicacion : Estado.Origen;
         _destino = Estado.Destino;
@@ -120,6 +249,25 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
+        if (_lugarVer != null)
+        {
+            _mapa.BannerTexto("Mostrando " + _lugarVer.Nombre);
+            await _mapa.ElegirUbicacion("lugar", _lugarVer.Nombre, _lugarVer.Lat, _lugarVer.Lng);
+            return;
+        }
+        if (_solicitud != null)
+        {
+            await EmpezarElegir("lugar");
+            return;
+        }
+
+        if (_viajeMostrado != null)
+        {
+            await MostrarViajeAsync(_viajeMostrado, "Viaje guardado");
+            return;
+        }
+
         _mapa.BannerTexto("Visualizando mapa amplio de Chihuahua, Chih.");
 
         // Si venimos de una búsqueda anterior, se vuelven a marcar sus puntos; si no, solo "Mi ubicación actual"
@@ -140,6 +288,68 @@
     }
 
     private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    // ── Historial: ver un viaje anterior en el mapa ───────────────────────
+    private async Task VerHistorial(ViajeHistorial v)
+    {
+        if (!v.TieneRecorrido)
+        {
+            _mapa.BannerTexto("Este viaje se hizo antes de que se guardara su recorrido.");
+            return;
+        }
+        _historialSel = v;
+        await MostrarViajeAsync(Estado.RutaDeViaje(v), "Viaje anterior · " + v.Cuando);
+    }
+
+    private async Task MostrarViajeAsync(Ruta r, string subtitulo)
+    {
+        _viajeMostrado = r;
+        await QuitarMarcasDeBusquedaAsync();
+        _mapa.BannerViaje(r.Nombre, subtitulo);
+        _mapa.MostrarTarjeta(r);
+        await _mapa.DibujarRuta(r);
+        StateHasChanged();
+    }
+
+    // Quita del mapa el viaje que se estaba viendo (cuando el usuario empieza a escribir otra búsqueda)
+    private async Task OcultarViajeMostradoAsync()
+    {
+        if (_viajeMostrado == null) return;
+        _viajeMostrado = null;
+        _historialSel = null;
+        await _mapa.LimpiarRuta();
+        _mapa.OcultarTarjeta();
+        _mapa.BannerTexto("Visualizando mapa amplio de Chihuahua, Chih.");
+    }
+
+    private async Task QuitarMarcasDeBusquedaAsync()
+    {
+        await _mapa.QuitarUbicacion("origen");
+        await _mapa.QuitarUbicacion("destino");
+        foreach (var e in _escalas) await _mapa.QuitarUbicacion(e.Id);
+        await _mapa.LimpiarSugerencias();
+    }
+
+    // Botón de la tarjeta del viaje: vuelve a planificar el mismo origen, paradas y destino
+    private async Task ReplanificarMostrado()
+    {
+        var r = _viajeMostrado;
+        if (r == null) return;
+
+        _origen = r.OrigenNombre;
+        _destino = r.DestinoNombre;
+        _elegido["origen"] = new Sugerencia { Nombre = _origen, Lat = r.LatO, Lng = r.LngO };
+        _elegido["destino"] = new Sugerencia { Nombre = _destino, Lat = r.LatD, Lng = r.LngD };
+
+        _escalas.Clear();
+        foreach (var s in r.Escalas ?? new List<Sugerencia>())
+        {
+            string id = "escala" + (++_contadorEscalas);
+            _escalas.Add(new Escala { Id = id, Texto = s.Nombre });
+            _elegido[id] = s;
+        }
+        await Buscar();
+    }
 
     // ── Campos: origen, paradas intermedias (opcionales) y destino ────────
     private string TextoDe(string tipo) => tipo switch
@@ -182,12 +392,145 @@
         return i >= 0 ? (i + 1).ToString() : "";
     }
 
+    // ── Mis lugares (casa, escuela...) ────────────────────────────────────
+    // Pone el lugar en el campo que se estaba editando (por defecto, el destino) y lo marca en el mapa
+    private async Task UsarLugar(LugarGuardado l)
+    {
+        await OcultarViajeMostradoAsync();
+        string tipo = _campoActivo;
+        if (tipo != "origen" && tipo != "destino" && !_escalas.Any(e => e.Id == tipo)) tipo = "destino";
+
+        if (_esperas.Remove(tipo, out var cts)) cts.Cancel();
+        PonerTexto(tipo, l.Nombre);
+        _elegido[tipo] = new Sugerencia { Nombre = l.Nombre, Detalle = l.Direccion, Lat = l.Lat, Lng = l.Lng };
+        _sugerencias = new List<Sugerencia>();
+        _error = null;
+        await _mapa.ElegirUbicacion(tipo, l.Nombre, l.Lat, l.Lng, EtiquetaMarcador(tipo));
+    }
+
+    // El lugar que se puede guardar es el del campo de destino (o el origen si ya se eligió una dirección)
+    private Sugerencia LugarParaGuardar
+    {
+        get
+        {
+            if (_lugarMapa != null) return _lugarMapa;
+            if (_elegido.TryGetValue("destino", out var d) && d.Nombre == _destino && !double.IsNaN(d.Lat)) return d;
+            if (_elegido.TryGetValue("origen", out var o) && o.Nombre == _origen && !double.IsNaN(o.Lat)
+                && !_origen.Equals(EstadoApp.MiUbicacion, StringComparison.OrdinalIgnoreCase)) return o;
+            return null;
+        }
+    }
+
+    private bool PuedeGuardarLugar
+    {
+        get
+        {
+            var s = LugarParaGuardar;
+            return s != null && !Estado.Lugares.Any(l => Math.Abs(l.Lat - s.Lat) < 1e-5 && Math.Abs(l.Lng - s.Lng) < 1e-5);
+        }
+    }
+
+    private void EmpezarGuardarLugar()
+    {
+        if (!Estado.RequiereCuenta("Inicia sesión para guardar tus lugares (casa, escuela, trabajo…).")) return;
+        _nombreLugar = Estado.Lugares.Any(l => l.Tipo == "casa") ? "" : "Casa";
+        _tipoLugar = _nombreLugar == "Casa" ? "casa" : "otro";
+        _lugarMapa = null;
+        _errorLugar = null;
+        _guardandoLugar = true;
+    }
+
+    private async Task CancelarGuardarLugar()
+    {
+        _guardandoLugar = false;
+        _lugarMapa = null;
+        _errorLugar = null;
+        await CancelarElegir();
+        await _mapa.QuitarUbicacion("lugar");
+    }
+
+    private async Task GuardarLugar()
+    {
+        var s = LugarParaGuardar;
+        string nombre = _nombreLugar.Trim();
+        if (nombre.Length == 0) { _errorLugar = "Ponle un nombre al lugar."; return; }
+        if (s == null) { _errorLugar = "Elige el lugar: escribe una dirección o tócalo en el mapa."; return; }
+
+        _errorLugar = null;
+        Estado.AgregarLugar(nombre, _tipoLugar, s.Nombre, s.Lat, s.Lng);
+        _guardandoLugar = false;
+        _lugarMapa = null;
+        await _mapa.QuitarUbicacion("lugar");
+    }
+
+    // Muestra un lugar guardado en el mapa
+    private async Task VerLugar(LugarGuardado l)
+    {
+        await OcultarViajeMostradoAsync();
+        _mapa.BannerTexto("Mostrando " + l.Nombre);
+        await _mapa.ElegirUbicacion("lugar", l.Nombre, l.Lat, l.Lng);
+    }
+
+    // ── Elegir un punto tocando el mapa ───────────────────────────────────
+    private string CampoParaElegir =>
+        _campoActivo == "origen" || _campoActivo == "destino" || _escalas.Any(e => e.Id == _campoActivo) ? _campoActivo : "destino";
+
+    private async Task EmpezarElegir(string objetivo)
+    {
+        if (objetivo == "lugar" && !Estado.RequiereCuenta("Inicia sesión para guardar tus lugares (casa, escuela, trabajo…).")) return;
+        _eligiendo = objetivo;
+        _mapa.BannerTexto("Toca el mapa para elegir el lugar");
+        await _mapa.ActivarSeleccionAsync(true);
+        StateHasChanged();
+    }
+
+    private async Task CancelarElegir()
+    {
+        if (_eligiendo == null) return;
+        _eligiendo = null;
+        await _mapa.ActivarSeleccionAsync(false);
+        _mapa.BannerTexto("Visualizando mapa amplio de Chihuahua, Chih.");
+    }
+
+    // El usuario tocó el mapa: el punto se usa como lugar a guardar o como origen, parada o destino
+    private async Task AlClicMapa(double[] pos)
+    {
+        string objetivo = _eligiendo;
+        if (objetivo == null) return;
+        _eligiendo = null;
+        await _mapa.ActivarSeleccionAsync(false);
+
+        string nombre = await Estado.CalleDeAsync(pos[0], pos[1]);
+        if (string.IsNullOrWhiteSpace(nombre)) nombre = "Lugar elegido en el mapa";
+        var sug = new Sugerencia { Nombre = nombre, Lat = pos[0], Lng = pos[1] };
+
+        if (objetivo == "lugar")
+        {
+            _lugarMapa = sug;
+            _guardandoLugar = true;
+            _errorLugar = null;
+            await _mapa.ElegirUbicacion("lugar", nombre, pos[0], pos[1]);
+        }
+        else
+        {
+            await OcultarViajeMostradoAsync();
+            PonerTexto(objetivo, nombre);
+            _elegido[objetivo] = sug;
+            _error = null;
+            await _mapa.ElegirUbicacion(objetivo, nombre, pos[0], pos[1], EtiquetaMarcador(objetivo));
+        }
+        _mapa.BannerTexto("Lugar elegido: " + nombre);
+        StateHasChanged();
+    }
+
     // ── Ubicaciones en el mapa ────────────────────────────────────────────
     // Espera a que el usuario deje de escribir (450 ms) y entonces busca lugares parecidos
     private async Task AlEscribir(string tipo, string texto)
     {
+        await OcultarViajeMostradoAsync();
         PonerTexto(tipo, texto);
         _elegido.Remove(tipo);
+        _guardandoLugar = false;
         _error = null;
 
         if (_esperas.Remove(tipo, out var anterior)) anterior.Cancel();
@@ -226,6 +569,9 @@
         if (lista == null) return;   // el usuario siguió escribiendo, o falló la búsqueda
 
         var items = new List<Sugerencia>(lista);
+        // Los lugares guardados que coinciden con lo escrito salen primero
+        foreach (var l in Estado.Lugares.Where(l => l.Nombre.Contains(texto, StringComparison.CurrentCultureIgnoreCase)).Reverse())
+            items.Insert(0, new Sugerencia { Numero = "★", Nombre = l.Nombre, Detalle = "Mi lugar · " + l.TipoTexto, Lat = l.Lat, Lng = l.Lng });
         if (tipo == "origen")
             items.Insert(0, new Sugerencia { Numero = "◎", Nombre = EstadoApp.MiUbicacion, Detalle = "Usar la ubicación de este equipo", Lat = double.NaN });
 

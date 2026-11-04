@@ -35,6 +35,7 @@ public static class RegistroServicios
         servicios.AddSingleton<FavoritoService>();
         servicios.AddSingleton<PreferenciaService>();
         servicios.AddSingleton<ComunidadService>();
+        servicios.AddSingleton<DatosUsuarioService>();             // historial, viajes y lugares guardados de cada usuario
         return servicios;
     }
 }

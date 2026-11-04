@@ -28,14 +28,17 @@ public class ServicioTrazos
             w[1].ToString("R", CultureInfo.InvariantCulture) + "," + w[0].ToString("R", CultureInfo.InvariantCulture)));
     }
 
-    /// <summary>Recorrido por calles entre puntos "lng,lat;lng,lat;..." (OSRM). null si no hay internet.</summary>
-    public async Task<List<double[]>> TrazoOsrmAsync(string coordenadas)
+    /// <summary>Recorrido por calles entre puntos "lng,lat;lng,lat;..." (OSRM). null si no hay internet. aPie = por banquetas y andadores.</summary>
+    public async Task<List<double[]>> TrazoOsrmAsync(string coordenadas, bool aPie = false)
     {
-        if (_cacheOsrm.TryGetValue(coordenadas, out var guardado)) return guardado;
+        string clave = (aPie ? "pie|" : "") + coordenadas;
+        if (_cacheOsrm.TryGetValue(clave, out var guardado)) return guardado;
         try
         {
-            string json = await Http.GetStringAsync(
-                "https://router.project-osrm.org/route/v1/driving/" + coordenadas + "?overview=full&geometries=geojson");
+            string url = aPie
+                ? "https://routing.openstreetmap.de/routed-foot/route/v1/foot/"
+                : "https://router.project-osrm.org/route/v1/driving/";
+            string json = await Http.GetStringAsync(url + coordenadas + "?overview=full&geometries=geojson");
             using var doc = System.Text.Json.JsonDocument.Parse(json);
             var raiz = doc.RootElement;
             if (raiz.GetProperty("code").GetString() != "Ok") return null;
@@ -43,7 +46,7 @@ public class ServicioTrazos
             foreach (var c in raiz.GetProperty("routes")[0].GetProperty("geometry").GetProperty("coordinates").EnumerateArray())
                 lista.Add(new[] { c[1].GetDouble(), c[0].GetDouble() });   // Leaflet usa [lat, lng]
             if (lista.Count < 2) return null;
-            _cacheOsrm[coordenadas] = lista;
+            _cacheOsrm[clave] = lista;
             return lista;
         }
         catch (Exception ex)
@@ -54,41 +57,107 @@ public class ServicioTrazos
     }
 
     /// <summary>
-    /// Calcula el recorrido por calles de las rutas que tienen Waypoints (OSRM, todas a la vez) y lo deja en Ruta.Trazo.
-    /// Devuelve false si alguna no se pudo calcular (sin internet): se usan los puntos clave y se reintenta la próxima vez.
+    /// Ajusta una línea que une puntos en línea recta (por ejemplo las paradas de una ruta) para que siga las calles.
+    /// Se toman puntos cada ~350 m y se piden a OSRM en grupos de 25. Devuelve null si no hay internet: se queda la línea original.
     /// </summary>
-    public async Task<bool> PrepararAsync(IEnumerable<Ruta> todas)
+    public async Task<List<double[]>> AjustarACallesAsync(List<double[]> puntos, bool aPie = false)
     {
-        var rutas = todas.Where(r => r.Waypoints != null && r.Waypoints.Count >= 2).ToList();
-        var claves = rutas.Select(r => ClaveOsrm(r.Waypoints)).ToList();
+        if (puntos == null || puntos.Count < 2) return null;
+        var muestra = Muestrear(puntos, 350, 200);
 
-        // Las que faltan se piden todas al mismo tiempo
-        var faltan = claves.Where(c => !_cacheOsrm.ContainsKey(c)).Distinct().ToList();
-        await Task.WhenAll(faltan.Select(c => TrazoOsrmAsync(c)));
-
-        bool completo = true;
-        for (int n = 0; n < rutas.Count; n++)
+        const int tamano = 25;
+        var grupos = new List<List<double[]>>();
+        for (int inicio = 0; inicio < muestra.Count - 1; inicio += tamano - 1)
         {
-            var r = rutas[n];
-            if (!_cacheOsrm.TryGetValue(claves[n], out var trazo))
-            {
-                completo = false;
-                trazo = new List<double[]>(r.Waypoints);
-            }
-            r.Trazo = trazo;
-
-            double metros = 0;
-            double k = Math.Cos(trazo[0][0] * Math.PI / 180);
-            for (int i = 1; i < trazo.Count; i++)
-            {
-                double dx = (trazo[i][1] - trazo[i - 1][1]) * 111320 * k;
-                double dy = (trazo[i][0] - trazo[i - 1][0]) * 110574;
-                metros += Math.Sqrt(dx * dx + dy * dy);
-            }
-            if (!r.DatosReales) r.Minutos = Math.Max(5, (int)Math.Round(metros / 333));   // los minutos de la BD no se pisan
-            r.Paradas = Math.Max(2, (int)(metros / 400) + 1);
+            var grupo = muestra.Skip(inicio).Take(tamano).ToList();
+            if (grupo.Count >= 2) grupos.Add(grupo);
         }
-        return completo;
+
+        // Hasta 3 peticiones a la vez; si alguna falla, ese trozo se queda con sus puntos originales
+        var limite = new SemaphoreSlim(3);
+        var partes = await Task.WhenAll(grupos.Select(async g =>
+        {
+            await limite.WaitAsync();
+            try { return await TrazoOsrmAsync(ClaveOsrm(g), aPie) ?? g; }
+            finally { limite.Release(); }
+        }));
+
+        var resultado = new List<double[]>();
+        foreach (var parte in partes)
+        {
+            var copia = parte.ToList();
+            if (resultado.Count > 0) copia.RemoveAt(0);
+            resultado.AddRange(copia);
+        }
+        return resultado.Count >= 2 ? resultado : null;
+    }
+
+    /// <summary>
+    /// Corrige un recorrido guardado: casi todo ya sigue las calles, pero algunos tramos largos cortan esquinas
+    /// (la línea salta por encima de las manzanas). Cada tramo recto largo se compara con la ruta real por calles (OSRM)
+    /// y solo se reemplaza si la calle da una vuelta notable. Devuelve (nuevo recorrido o null si nada cambió, completo).
+    /// completo = false si algún tramo no se pudo consultar (sin internet): conviene reintentar luego.
+    /// </summary>
+    public async Task<(List<double[]> Linea, bool Completo)> ReparaTramosRectosAsync(List<double[]> pts, double minimoMetros = 400)
+    {
+        if (pts == null || pts.Count < 2) return (null, true);
+        double k = Math.Cos(pts[0][0] * Math.PI / 180);
+        double Largo(List<double[]> l) => Enumerable.Range(1, l.Count - 1).Sum(i => Dist(l[i - 1], l[i]));
+        double Dist(double[] a, double[] b)
+        {
+            double dx = (a[1] - b[1]) * 111320 * k, dy = (a[0] - b[0]) * 110574;
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
+
+        var largos = Enumerable.Range(1, pts.Count - 1).Where(i => Dist(pts[i - 1], pts[i]) >= minimoMetros).ToList();
+        if (largos.Count == 0) return (null, true);
+
+        var limite = new SemaphoreSlim(3);
+        var resultados = await Task.WhenAll(largos.Select(async i =>
+        {
+            await limite.WaitAsync();
+            try
+            {
+                var calle = await TrazoOsrmAsync(ClaveOsrm(new[] { pts[i - 1], pts[i] }));
+                if (calle == null) return (i, (List<double[]>)null, false);
+                bool daVuelta = Largo(calle) > Dist(pts[i - 1], pts[i]) * 1.15;
+                return (i, daVuelta ? calle : null, true);
+            }
+            finally { limite.Release(); }
+        }));
+
+        bool completo = resultados.All(r => r.Item3);
+        var cambios = resultados.Where(r => r.Item2 != null).ToDictionary(r => r.i, r => r.Item2);
+        if (cambios.Count == 0) return (null, completo);
+
+        var nuevo = new List<double[]> { pts[0] };
+        for (int i = 1; i < pts.Count; i++)
+        {
+            if (cambios.TryGetValue(i, out var calle)) nuevo.AddRange(calle.Skip(1));
+            nuevo.Add(pts[i]);
+        }
+        return (nuevo, completo);
+    }
+
+    // Se queda con un punto cada "separacion" metros (siempre el primero y el último), con un máximo de puntos
+    private static List<double[]> Muestrear(List<double[]> pts, double separacion, int maximo)
+    {
+        var res = new List<double[]> { pts[0] };
+        double k = Math.Cos(pts[0][0] * Math.PI / 180);
+        double acumulado = 0;
+        for (int i = 1; i < pts.Count - 1; i++)
+        {
+            double dx = (pts[i][1] - pts[i - 1][1]) * 111320 * k, dy = (pts[i][0] - pts[i - 1][0]) * 110574;
+            acumulado += Math.Sqrt(dx * dx + dy * dy);
+            if (acumulado >= separacion) { res.Add(pts[i]); acumulado = 0; }
+        }
+        res.Add(pts[pts.Count - 1]);
+        if (res.Count <= maximo) return res;
+
+        var corto = new List<double[]>();
+        double paso = (res.Count - 1) / (double)(maximo - 1);
+        for (int i = 0; i < maximo; i++) corto.Add(res[(int)Math.Round(i * paso)]);
+        return corto;
     }
 
     /// <summary>Nombre de la calle en esas coordenadas (OpenStreetMap / Nominatim), o null si no hay internet o no se encontró.</summary>
@@ -109,12 +178,6 @@ public class ServicioTrazos
             return null;
         }
         catch { return null; }
-    }
-
-    /// <summary>Opción de viaje (OSRM) entre dos puntos para dibujar una ruta que aún no tiene recorrido propio.</summary>
-    public Task<List<double[]>> TrazoEntreAsync(double latO, double lngO, double latD, double lngD)
-    {
-        return TrazoOsrmAsync(ClaveOsrm(new[] { new[] { latO, lngO }, new[] { latD, lngD } }));
     }
 
     // ── Buscador de lugares (Photon + Nominatim) ──────────────────────────

@@ -6,31 +6,22 @@ namespace RutaApp.Blazor.Components.Shared;
 /// <summary>Un punto con nombre en el mapa (origen, destino, parada o escala).</summary>
 public record Marcador(double Lat, double Lng, string Nombre);
 
-/// <summary>Punto de control de una ruta oficial: se dibuja como un pin con su letra.</summary>
-public record PuntoControlMapa(string Letra, string Nombre, double Lat, double Lng);
-
-/// <summary>Un tramo del viaje: en camión (línea azul) o caminando (punteado).</summary>
-public record TramoMapa(bool EsBus, List<double[]> Puntos);
+/// <summary>Un tramo del viaje: en camión (línea de color) o caminando (punteado).</summary>
+public record TramoMapa(bool EsBus, List<double[]> Puntos, string Color = null);
 
 /// <summary>Un punto de referencia cargado de OpenStreetMap (parada, farmacia, hospital...).</summary>
 public record PuntoReferencia(double Lat, double Lng, string Nombre, string Tipo);
 
 /// <summary>
-/// Controla un mapa Leaflet desde C#. Leaflet es la única librería de JavaScript que se usa: aquí se llaman sus
-/// funciones (L.map, L.marker, L.polyline...) directamente con JS interop, sin código JavaScript propio.
-/// Las operaciones se hacen de una en una (un cerrojo) para que dos dibujos seguidos no se mezclen.
+/// Controla un mapa Leaflet desde C#. Todo lo que hay que dibujar viaja en UNA sola llamada a wwwroot/mapa.js
+/// (la ruta con todas sus paradas, los marcadores, etc.), en lugar de una llamada por cada marcador: con rutas largas
+/// esto es mucho más rápido y evita que el mapa se trabe.
 /// </summary>
 public sealed class MapaLeaflet : IAsyncDisposable
 {
-    private static readonly double[] Centro = { Geo.CentroLat, Geo.CentroLng };
-
     private readonly IJSRuntime _js;
     private readonly string _id;
-    private readonly SemaphoreSlim _cerrojo = new(1, 1);
-
-    private IJSObjectReference _mapa;
-    private IJSObjectReference _capaRuta, _capaParadas, _capaPuntos, _capaSugerencias;
-    private readonly Dictionary<string, (IJSObjectReference Capa, double Lat, double Lng)> _ubicaciones = new();
+    private bool _iniciado;
 
     public MapaLeaflet(IJSRuntime js, string id)
     {
@@ -38,274 +29,189 @@ public sealed class MapaLeaflet : IAsyncDisposable
         _id = id;
     }
 
-    // ── Utilidades de JS interop ──────────────────────────────────────────
-    private ValueTask<IJSObjectReference> Crear(string funcion, params object[] args) =>
-        _js.InvokeAsync<IJSObjectReference>(funcion, args);
-
-    private static async Task Soltar(params IJSObjectReference[] referencias)
+    // ── Descripción de lo que se envía al script (nombres en minúscula: así los lee mapa.js) ──
+    private sealed class M
     {
-        foreach (var r in referencias)
-            if (r != null) await r.DisposeAsync();
+        public double lat { get; set; }
+        public double lng { get; set; }
+        public string html { get; set; }
+        public int w { get; set; }
+        public int h { get; set; }
+        public double ax { get; set; }
+        public double ay { get; set; }
+        public string rotulo { get; set; }
+        public string dir { get; set; }
+        public double[] off { get; set; }
+        public bool perm { get; set; }
+        public string popup { get; set; }
+        public int z { get; set; }
     }
 
-    private async Task<T> Exclusivo<T>(Func<Task<T>> accion)
+    private sealed class L
     {
-        await _cerrojo.WaitAsync();
-        try { return await accion(); }
-        finally { _cerrojo.Release(); }
+        public List<double[]> pts { get; set; }
+        public string color { get; set; }
+        public int peso { get; set; } = 6;
+        public bool punteada { get; set; }
+        public bool borde { get; set; }
+        public double opacidad { get; set; } = 1;
     }
 
-    private Task Exclusivo(Func<Task> accion) => Exclusivo(async () => { await accion(); return true; });
+    private static string Svg(string icono, int tam) =>
+        "<svg viewBox=\"0 0 24 24\" width=\"" + tam + "\" height=\"" + tam + "\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" " +
+        "stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"" + Iconos.Rutas[icono] + "\"/></svg>";
 
-    // ── Creación del mapa ─────────────────────────────────────────────────
-    public Task Iniciar() => Exclusivo(async () =>
+    // Pin en forma de gota: la punta marca el lugar exacto
+    private static M Pin(double lat, double lng, string clase, string icono, string nombre, int z)
     {
-        _mapa = await Crear("L.map", _id, new { zoomControl = false });
-        await _mapa.InvokeVoidAsync("setView", Centro, 13);
-
-        var zoom = await Crear("L.control.zoom", new { position = "topright" });
-        await zoom.InvokeVoidAsync("addTo", _mapa);
-
-        var teselas = await Crear("L.tileLayer", "https://tile.openstreetmap.org/{z}/{x}/{y}.png", new
+        return new M
         {
-            attribution = "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>",
-            maxZoom = 19
-        });
-        await teselas.InvokeVoidAsync("addTo", _mapa);
-        await Soltar(zoom, teselas);
-
-        _capaRuta = await NuevaCapa();
-        _capaParadas = await NuevaCapa();   // paradas de la ruta (círculos pequeños), sobre la línea
-        _capaPuntos = await NuevaCapa();
-        _capaSugerencias = await NuevaCapa();
-    });
-
-    private async Task<IJSObjectReference> NuevaCapa()
-    {
-        var capa = await Crear("L.layerGroup");
-        await capa.InvokeVoidAsync("addTo", _mapa);
-        return capa;
+            lat = lat, lng = lng, w = 36, h = 40, ax = 18, ay = 36, z = z,
+            html = "<div class=\"mk-pin " + clase + "\"><div class=\"mk-pin-cuerpo\">" + Svg(icono, 15) + "</div></div>",
+            rotulo = string.IsNullOrWhiteSpace(nombre) ? null : nombre, dir = "right", off = new double[] { 16, -22 }, perm = true
+        };
     }
 
-    /// <summary>Hay que llamarlo cuando cambia el tamaño del contenedor (por ejemplo al contraer el sidebar).</summary>
-    public Task InvalidarTamano() => Exclusivo(() => _mapa.InvokeVoidAsync("invalidateSize").AsTask());
+    private static M Origen(double lat, double lng, string nombre) => Pin(lat, lng, "mk-pin-o", "IcoNavigation", nombre, 600);
+    private static M Destino(double lat, double lng, string nombre) => Pin(lat, lng, "mk-pin-d", "IcoFlag", nombre, 700);
 
-    // ── Marcadores y líneas ───────────────────────────────────────────────
-    // Clases de los marcadores (definidas en app.css): m-o origen, m-d destino, m-n numerado, m-s parada del recorrido,
-    // m-p parada de autobús, m-r punto de referencia.
-    private static string HtmlIcono(string clase, string texto = null) => clase switch
+    private static M Numerado(double lat, double lng, string texto, string nombre, bool permanente) => new M
     {
-        "m-d" => "<div class=\"m-d\"><i></i></div>",
-        "m-n" => "<div class=\"m-n\">" + WebUtility.HtmlEncode(texto ?? "+") + "</div>",
-        _ => "<div class=\"" + clase + "\"></div>"
+        lat = lat, lng = lng, w = 26, h = 26, ax = 13, ay = 13, z = 500,
+        html = "<div class=\"mk-num\">" + WebUtility.HtmlEncode(texto) + "</div>",
+        rotulo = string.IsNullOrWhiteSpace(nombre) ? null : nombre, dir = "top", off = new double[] { 0, -12 }, perm = permanente
     };
 
-    private async Task PonerMarcador(IJSObjectReference capa, double lat, double lng, string clase, int tam,
-                                     string rotulo = null, string direccion = "top", double[] desplazamiento = null,
-                                     string textoIcono = null, string popupHtml = null, bool rotuloPermanente = true)
+    // Parada de camión: círculo blanco con el icono del camión, del color de la ruta
+    private static M Parada(double lat, double lng, string nombre, string color, bool grande, bool rotuloFijo) => new M
     {
-        var icono = await Crear("L.divIcon", new
-        {
-            className = "",
-            html = HtmlIcono(clase, textoIcono),
-            iconSize = new[] { tam, tam },
-            iconAnchor = new[] { tam / 2.0, tam / 2.0 }
-        });
-        var marcador = await Crear("L.marker", new[] { lat, lng }, new { icon = icono });
-        await marcador.InvokeVoidAsync("addTo", capa);
+        lat = lat, lng = lng, w = grande ? 28 : 20, h = grande ? 28 : 20, ax = grande ? 14 : 10, ay = grande ? 14 : 10, z = grande ? 450 : 300,
+        html = "<div class=\"mk-parada" + (grande ? " grande" : "") + (nombre != null && nombre.Contains("zona") ? " zona" : "") + "\" style=\"--c:" + (color ?? "#2563EB") + "\">" + Svg("IcoBus", grande ? 15 : 11) + "</div>",
+        rotulo = string.IsNullOrWhiteSpace(nombre) ? null : nombre, dir = "top", off = new double[] { 0, grande ? -14 : -10 }, perm = rotuloFijo
+    };
 
-        if (rotulo != null)   // el texto se escapa: viene del usuario o de los buscadores
-            await marcador.InvokeVoidAsync("bindTooltip", WebUtility.HtmlEncode(rotulo), new
-            {
-                permanent = rotuloPermanente,
-                direction = direccion,
-                offset = desplazamiento ?? new double[] { 0, 0 },
-                className = "pill"
-            });
-        if (popupHtml != null) await marcador.InvokeVoidAsync("bindPopup", popupHtml);
-        await Soltar(icono, marcador);
+    private static M MiPosicion(double lat, double lng) => new M
+    {
+        lat = lat, lng = lng, w = 26, h = 26, ax = 13, ay = 13, z = 1000,
+        html = "<div class=\"mk-yo\"><i></i></div>", rotulo = "Estás aquí", dir = "top", off = new double[] { 0, -12 }
+    };
+
+    private static (string Icono, string Color, string Texto) Estilo(string tipo) => tipo switch
+    {
+        "parada" => ("IcoBus", "#CA8A04", "Parada de camión"),
+        "farmacia" => ("IcoPill", "#16A34A", "Farmacia"),
+        "hospital" => ("IcoHospital", "#DC2626", "Hospital"),
+        "escuela" => ("IcoSchool", "#2563EB", "Escuela"),
+        "supermercado" => ("IcoCart", "#EA580C", "Supermercado"),
+        _ => ("IcoPin", "#0D9488", "Punto de referencia")
+    };
+
+    private static double Metros(Marcador a, Marcador b) =>
+        Math.Sqrt(Math.Pow((a.Lat - b.Lat) * 111000, 2) + Math.Pow((a.Lng - b.Lng) * 97500, 2));
+
+    // ── Llamadas al script ────────────────────────────────────────────────
+    private ValueTask Llamar(string funcion, params object[] args)
+    {
+        if (!_iniciado) return ValueTask.CompletedTask;
+        var todos = new object[args.Length + 1];
+        todos[0] = _id;
+        Array.Copy(args, 0, todos, 1, args.Length);
+        return _js.InvokeVoidAsync("rutaMapa." + funcion, todos);
     }
 
-    /// <summary>Parada de la ruta: círculo pequeño amarillo; el nombre aparece al pasar el mouse.</summary>
-    private async Task PonerParadaPequena(double lat, double lng, string nombre)
+    public async Task Iniciar(object referencia = null)
     {
-        var c = await Crear("L.circleMarker", new[] { lat, lng }, new
-        {
-            radius = 4,
-            color = "#ffffff",
-            weight = 1.5,
-            fillColor = "#2563EB",
-            fillOpacity = 1
-        });
-        if (!string.IsNullOrWhiteSpace(nombre))
-            await c.InvokeVoidAsync("bindTooltip", WebUtility.HtmlEncode(nombre), new
-            {
-                direction = "top",
-                offset = new double[] { 0, -6 },
-                className = "pill"
-            });
-        await c.InvokeVoidAsync("addTo", _capaParadas);
-        await Soltar(c);
+        await _js.InvokeVoidAsync("rutaMapa.iniciar", _id, referencia);
+        _iniciado = true;
     }
 
-    private async Task PonerLinea(List<double[]> puntos, object estilo)
-    {
-        var linea = await Crear("L.polyline", puntos, estilo);
-        await linea.InvokeVoidAsync("addTo", _capaRuta);
-        await Soltar(linea);
-    }
+    /// <summary>Activa o desactiva que un clic en el mapa se avise a C# (para elegir un lugar tocando el mapa).</summary>
+    public Task ActivarSeleccion(bool activo) => Llamar("seleccion", activo).AsTask();
 
-    private async Task Encuadrar(IEnumerable<double[]> puntos, int relleno, int? zoomMaximo = null)
-    {
-        await _mapa.InvokeVoidAsync("invalidateSize");   // por si el contenedor cambió de tamaño desde que se creó
-        var limites = await Crear("L.latLngBounds", puntos.ToList());
-        await _mapa.InvokeVoidAsync("fitBounds", limites, new { padding = new[] { relleno, relleno }, maxZoom = zoomMaximo });
-        await Soltar(limites);
-    }
-
-    private static readonly object EstiloBus = new { color = "#2563EB", weight = 5, opacity = 1, lineJoin = "round", lineCap = "round" };
-    private static readonly object EstiloCaminata = new { color = "#4A6FA5", weight = 4, opacity = 0.9, dashArray = "2,9", lineCap = "round" };
+    /// <summary>Hay que llamarlo cuando cambia el tamaño del contenedor (por ejemplo al contraer el sidebar).</summary>
+    public Task InvalidarTamano() => Llamar("invalidar").AsTask();
 
     // ── Ruta ──────────────────────────────────────────────────────────────
-    public Task LimpiarRuta() => Exclusivo(async () =>
+    public Task LimpiarRuta() => Llamar("limpiarRuta").AsTask();
+
+    /// <summary>Línea de la ruta con sus paradas (se ven al acercar el zoom), origen y destino.</summary>
+    public Task DibujarRuta(List<double[]> linea, List<Marcador> paradas, Marcador origen, Marcador destino, string color, bool encuadrar = true)
     {
-        await _capaRuta.InvokeVoidAsync("clearLayers");
-        await _capaParadas.InvokeVoidAsync("clearLayers");
-    });
+        var marcadores = new List<M> { Origen(origen.Lat, origen.Lng, origen.Nombre) };
+        // En un ciclo cerrado el destino es el mismo punto que el origen: no se dibuja dos veces
+        if (Metros(origen, destino) > 30) marcadores.Add(Destino(destino.Lat, destino.Lng, destino.Nombre));
 
-    /// <summary>Línea azul de la ruta con sus paradas (círculos pequeños), origen y destino.</summary>
-    public Task DibujarRuta(List<double[]> linea, List<Marcador> paradas, Marcador origen, Marcador destino,
-                            List<PuntoControlMapa> puntosControl = null) => Exclusivo(async () =>
-                            {
-                                await _capaRuta.InvokeVoidAsync("clearLayers");
-                                await _capaParadas.InvokeVoidAsync("clearLayers");
-                                await PonerLinea(linea, EstiloBus);
-
-                                foreach (var p in paradas) await PonerParadaPequena(p.Lat, p.Lng, p.Nombre);
-
-                                // Puntos de control del plano oficial (A, B, C...): pines con la letra; el nombre sale al pasar el mouse
-                                if (puntosControl != null)
-                                    foreach (var c in puntosControl)
-                                        await PonerMarcador(_capaRuta, c.Lat, c.Lng, "m-n", 22, c.Letra + " · " + c.Nombre, "top",
-                                                            new double[] { 0, -12 }, textoIcono: c.Letra, rotuloPermanente: false);
-
-                                await PonerMarcador(_capaRuta, origen.Lat, origen.Lng, "m-o", 22, origen.Nombre, "right", new double[] { 12, 0 });
-                                // En un ciclo cerrado el destino es el mismo punto que el origen: no se dibuja dos veces
-                                double metros = Math.Sqrt(Math.Pow((origen.Lat - destino.Lat) * 111000, 2) + Math.Pow((origen.Lng - destino.Lng) * 97500, 2));
-                                if (metros > 30)
-                                    await PonerMarcador(_capaRuta, destino.Lat, destino.Lng, "m-d", 30, destino.Nombre, "top", new double[] { 0, -16 });
-                                await Encuadrar(linea, 110);
-                            });
-
-    /// <summary>Opción de viaje: tramos caminando (punteado) y en camión (azul) con sus paradas y escalas.</summary>
-    public Task DibujarViaje(List<TramoMapa> tramos, List<Marcador> paradas, Marcador origen, Marcador destino, List<Marcador> escalas) => Exclusivo(async () =>
-    {
-        await _capaRuta.InvokeVoidAsync("clearLayers");
-        await _capaParadas.InvokeVoidAsync("clearLayers");
-        var todos = new List<double[]> { new[] { origen.Lat, origen.Lng }, new[] { destino.Lat, destino.Lng } };
-
-        foreach (var t in tramos)
+        return Llamar("dibujarRuta", new
         {
-            await PonerLinea(t.Puntos, t.EsBus ? EstiloBus : EstiloCaminata);
-            todos.AddRange(t.Puntos);
-        }
-        foreach (var p in paradas)
-            await PonerMarcador(_capaRuta, p.Lat, p.Lng, "m-s", 14, p.Nombre, "top", new double[] { 0, -8 });
+            lineas = new[] { new L { pts = linea, color = color, borde = true, peso = 6 } },
+            paradas = paradas.Select(p => Parada(p.Lat, p.Lng, p.Nombre, color, false, false)).ToList(),
+            marcadores,
+            relleno = 110,
+            encuadrar
+        }).AsTask();
+    }
+
+    /// <summary>Opción de viaje: tramos caminando (punteado) y en camión (color de cada ruta) con sus paradas y escalas.</summary>
+    public Task DibujarViaje(List<TramoMapa> tramos, List<Marcador> paradas, Marcador origen, Marcador destino, List<Marcador> escalas)
+    {
+        var lineas = tramos.Select(t => t.EsBus
+            ? new L { pts = t.Puntos, color = t.Color ?? "#2563EB", borde = true, peso = 6 }
+            : new L { pts = t.Puntos, color = "#475569", punteada = true, peso = 5, opacidad = 0.95 }).ToList();
+
+        var marcadores = new List<M>();
         for (int i = 0; i < escalas.Count; i++)
-        {
-            var e = escalas[i];
-            await PonerMarcador(_capaRuta, e.Lat, e.Lng, "m-n", 22, e.Nombre, "top", new double[] { 0, -12 }, textoIcono: (i + 1).ToString());
-            todos.Add(new[] { e.Lat, e.Lng });
-        }
-        await PonerMarcador(_capaRuta, origen.Lat, origen.Lng, "m-o", 22, origen.Nombre, "right", new double[] { 12, 0 });
-        await PonerMarcador(_capaRuta, destino.Lat, destino.Lng, "m-d", 30, destino.Nombre, "top", new double[] { 0, -16 });
-        await Encuadrar(todos, 110);
-    });
+            marcadores.Add(Numerado(escalas[i].Lat, escalas[i].Lng, (i + 1).ToString(), escalas[i].Nombre, true));
+        marcadores.AddRange(paradas.Select(p => Parada(p.Lat, p.Lng, p.Nombre, "#2563EB", true, false)));
+        marcadores.Add(Origen(origen.Lat, origen.Lng, origen.Nombre));
+        marcadores.Add(Destino(destino.Lat, destino.Lng, destino.Nombre));
+
+        return Llamar("dibujarRuta", new { lineas, paradas = new List<M>(), marcadores, relleno = 110, encuadrar = true }).AsTask();
+    }
 
     // ── Ubicaciones que escribe el usuario (origen, destino y paradas intermedias) ──
-    public Task PonerUbicacion(string tipo, double lat, double lng, string nombre, string etiqueta) => Exclusivo(async () =>
+    public Task PonerUbicacion(string tipo, double lat, double lng, string nombre, string etiqueta)
     {
-        await QuitarCapaUbicacion(tipo);
-        var capa = await Crear("L.layerGroup");
-        await capa.InvokeVoidAsync("addTo", _mapa);
-
-        bool esOrigen = tipo == "origen", esDestino = tipo == "destino";
-        if (esOrigen) await PonerMarcador(capa, lat, lng, "m-o", 22, nombre, "right", new double[] { 12, 0 });
-        else if (esDestino) await PonerMarcador(capa, lat, lng, "m-d", 30, nombre, "top", new double[] { 0, -16 });
-        else await PonerMarcador(capa, lat, lng, "m-n", 22, nombre, "top", new double[] { 0, -12 }, textoIcono: string.IsNullOrEmpty(etiqueta) ? "+" : etiqueta);
-
-        _ubicaciones[tipo] = (capa, lat, lng);
-        await EncuadrarUbicaciones();
-    });
-
-    public Task QuitarUbicacion(string tipo) => Exclusivo(async () =>
-    {
-        await QuitarCapaUbicacion(tipo);
-        await EncuadrarUbicaciones();
-    });
-
-    private async Task QuitarCapaUbicacion(string tipo)
-    {
-        if (!_ubicaciones.Remove(tipo, out var u)) return;
-        await u.Capa.InvokeVoidAsync("remove");
-        await Soltar(u.Capa);
+        M m = tipo == "origen" ? Origen(lat, lng, nombre)
+            : tipo == "destino" ? Destino(lat, lng, nombre)
+            : Numerado(lat, lng, string.IsNullOrEmpty(etiqueta) ? "+" : etiqueta, nombre, true);
+        return Llamar("ponerUbicacion", tipo, m).AsTask();
     }
 
-    private async Task EncuadrarUbicaciones()
-    {
-        var pts = _ubicaciones.Values.Select(u => new[] { u.Lat, u.Lng }).ToList();
-        if (pts.Count == 1) await _mapa.InvokeVoidAsync("setView", pts[0], 15);
-        else if (pts.Count > 1) await Encuadrar(pts, 110, 16);
-    }
+    public Task QuitarUbicacion(string tipo) => Llamar("quitarUbicacion", tipo).AsTask();
 
     // ── Sugerencias mientras el usuario escribe: pines numerados ──────────
-    public Task MostrarSugerencias(List<Sugerencia> lista) => Exclusivo(async () =>
+    public Task MostrarSugerencias(List<Sugerencia> lista)
     {
-        await _capaSugerencias.InvokeVoidAsync("clearLayers");
-        if (lista == null || lista.Count == 0) return;
-
-        for (int i = 0; i < lista.Count; i++)
-            await PonerMarcador(_capaSugerencias, lista[i].Lat, lista[i].Lng, "m-n", 22, lista[i].Nombre, "top",
-                                new double[] { 0, -10 }, textoIcono: (i + 1).ToString(), rotuloPermanente: false);
-
-        var pts = lista.Select(s => new[] { s.Lat, s.Lng }).ToList();
-        if (pts.Count == 1) await _mapa.InvokeVoidAsync("setView", pts[0], 16);
-        else await Encuadrar(pts, 90, 16);
-    });
+        var marcas = lista?.Select((s, i) => Numerado(s.Lat, s.Lng, (i + 1).ToString(), s.Nombre, false)).ToList();
+        return Llamar("sugerencias", marcas).AsTask();
+    }
 
     // ── Paradas y puntos de referencia ────────────────────────────────────
-    public Task CargarPuntos(List<PuntoReferencia> puntos) => Exclusivo(async () =>
+    public Task CargarPuntos(List<PuntoReferencia> puntos)
     {
-        await _capaPuntos.InvokeVoidAsync("clearLayers");
-        var emojis = new Dictionary<string, string>
+        var marcas = puntos.Select(p =>
         {
-            ["parada"] = "🚍",
-            ["farmacia"] = "💊",
-            ["hospital"] = "🏥",
-            ["escuela"] = "🏫",
-            ["supermercado"] = "🛒"
-        };
-        foreach (var p in puntos)
-        {
-            string emoji = emojis.GetValueOrDefault(p.Tipo, "📍");
-            string popup = "<b>" + WebUtility.HtmlEncode(string.IsNullOrEmpty(p.Nombre) ? p.Tipo : p.Nombre) + "</b><br>" +
-                           emoji + " " + WebUtility.HtmlEncode(p.Tipo);
-            await PonerMarcador(_capaPuntos, p.Lat, p.Lng, p.Tipo == "parada" ? "m-p" : "m-r", 12, popupHtml: popup);
-        }
-    });
+            var (icono, color, texto) = Estilo(p.Tipo);
+            return new M
+            {
+                lat = p.Lat, lng = p.Lng, w = 22, h = 22, ax = 11, ay = 11, z = 200,
+                html = "<div class=\"mk-poi\" style=\"--c:" + color + "\">" + Svg(icono, 12) + "</div>",
+                popup = "<b>" + WebUtility.HtmlEncode(string.IsNullOrEmpty(p.Nombre) ? texto : p.Nombre) + "</b><br>" + WebUtility.HtmlEncode(texto)
+            };
+        }).ToList();
+        return Llamar("puntos", marcas).AsTask();
+    }
+
+    // ── Mi posición en vivo ───────────────────────────────────────────────
+    public Task PonerPosicion(double lat, double lng, bool centrar) => Llamar("posicion", MiPosicion(lat, lng), centrar).AsTask();
+
+    public Task Centrar(double lat, double lng) => Llamar("zoomA", lat, lng).AsTask();
 
     public async ValueTask DisposeAsync()
     {
-        await _cerrojo.WaitAsync();
-        try
-        {
-            if (_mapa == null) return;
-            await _mapa.InvokeVoidAsync("remove");
-            await Soltar(_capaRuta, _capaParadas, _capaPuntos, _capaSugerencias, _mapa);
-            foreach (var u in _ubicaciones.Values) await Soltar(u.Capa);
-            _mapa = null;
-        }
+        if (!_iniciado) return;
+        _iniciado = false;
+        try { await _js.InvokeVoidAsync("rutaMapa.quitar", _id); }
         catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or JSException) { }
-        finally { _cerrojo.Release(); }
     }
 }

@@ -55,6 +55,9 @@ public class RutaService
             var lista = paradasPorRuta[r.Id]
                 .Select(p => new Parada(p.Id, p.Nombre ?? "", p.Latitud, p.Longitud, p.Orden ?? 0))
                 .ToList();
+            var trazo = string.IsNullOrEmpty(r.Trazo)
+                ? lista.Select(p => new[] { p.Latitud, p.Longitud }).ToList()
+                : Decodificar(r.Trazo);
 
             return new RutaOficial
             {
@@ -68,9 +71,9 @@ public class RutaService
                 TiempoRecorrido = r.TiempoRecorrido,
                 TiempoEstimado = r.TiempoEstimado,
                 Paradas = lista,
-                Trazo = string.IsNullOrEmpty(r.Trazo)
-                    ? lista.Select(p => new[] { p.Latitud, p.Longitud }).ToList()
-                    : Decodificar(r.Trazo)
+                Trazo = trazo,
+                // Con trazo guardado (generado con OSRM) ya sigue las calles; sin él solo hay una línea recta entre paradas
+                TrazoEnCalles = !string.IsNullOrEmpty(r.Trazo)
             };
         }).ToList();
 

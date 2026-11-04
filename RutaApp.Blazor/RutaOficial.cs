@@ -13,7 +13,9 @@ public class RutaOficial
     public TimeSpan? TiempoEstimado { get; set; }
 
     public List<Parada> Paradas { get; set; } = new();
-    public List<double[]> Trazo { get; set; } = new();  
+    public List<double[]> Trazo { get; set; } = new();
+    public bool Reparado { get; set; }         // los tramos que cortaban esquinas ya se corrigieron
+    public bool TrazoEnCalles { get; set; }   // true = el trazo guardado en la base de datos ya sigue las calles
 }
 // Representa una parada de una ruta oficial
 public record Parada(int Id, string Nombre, double Latitud, double Longitud, int Orden);

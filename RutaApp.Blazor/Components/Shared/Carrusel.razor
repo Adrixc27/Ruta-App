@@ -1,6 +1,6 @@
 @implements IDisposable
 
-@* Carrusel de pantallas completas con cambio automático (fundido), puntos para elegir y pausa al pasar el mouse. *@
+@* Carrusel de pantallas completas con cambio automático (fundido), flechas para pasar de imagen, puntos para elegir y pausa al pasar el mouse. *@
 <div class="carrusel" @onmouseenter="Pausar" @onmouseleave="Reanudar">
     @for (int i = 0; i < Total; i++)
     {
@@ -21,11 +21,19 @@
             }
         </div>
     }
+
+    <button type="button" class="carrusel-flecha izquierda" title="Imagen anterior" aria-label="Imagen anterior" @onclick="Anterior">
+        <Icon Nombre="IcoChevronLeft" Tam="22" />
+    </button>
+    <button type="button" class="carrusel-flecha derecha" title="Imagen siguiente" aria-label="Imagen siguiente" @onclick="Siguiente">
+        <Icon Nombre="IcoChevronRight" Tam="22" />
+    </button>
+
     <div class="carrusel-puntos">
         @for (int i = 0; i < Total; i++)
         {
             int indice = i;
-            <span class="punto @(indice == _actual ? "activo" : "")" @onclick="() => Ir(indice)"></span>
+            <button type="button" class="punto @(indice == _actual ? "activo" : "")" aria-label="@("Ir a la imagen " + (indice + 1))" @onclick="() => Ir(indice)"></button>
         }
     </div>
 </div>
@@ -44,6 +52,8 @@
         ("delicias.jpg", "DELICIAS")
     };
 
+    private static readonly TimeSpan Cada = TimeSpan.FromSeconds(6);
+
     private int Total => Fotos.Length + (ConMarca ? 1 : 0);
     private int _actual;
     private bool _pausado;
@@ -56,7 +66,7 @@
             if (_pausado) return;
             _actual = (_actual + 1) % Total;
             StateHasChanged();
-        }), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+        }), null, Cada, Cada);
     }
 
     private void Pausar() => _pausado = true;
@@ -64,9 +74,12 @@
 
     private void Ir(int indice)
     {
-        _actual = indice;
-        _timer?.Change(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));   // reinicia la cuenta
+        _actual = (indice % Total + Total) % Total;
+        _timer?.Change(Cada, Cada);   // reinicia la cuenta
     }
+
+    private void Anterior() => Ir(_actual - 1);
+    private void Siguiente() => Ir(_actual + 1);
 
     public void Dispose() => _timer?.Dispose();
 }

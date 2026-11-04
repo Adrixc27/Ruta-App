@@ -25,6 +25,7 @@ public class RutaRepositorio
             var resultado = todas
                 .GroupBy(o => o.Grupo)
                 .Select(g => Armar(g.ToList()))
+                .Where(r => r != null)
                 .ToList();
 
             return resultado.Count > 0 ? resultado : null;
@@ -36,8 +37,12 @@ public class RutaRepositorio
         }
     }
 
-    private static Ruta Armar(List<RutaOficial> variantes)
+    // Solo se muestran rutas con recorrido real (paradas o trazo en la base de datos); no se inventan recorridos de prueba
+    private static Ruta Armar(List<RutaOficial> todas)
     {
+        var variantes = todas.Where(v => v.Trazo.Count >= 2).ToList();
+        if (variantes.Count == 0) return null;
+
         var o = variantes[0];
         string nombre = variantes.Count > 1 ? o.Grupo : o.Nombre;
 
@@ -51,38 +56,10 @@ public class RutaRepositorio
             Descripcion = o.Descripcion ?? "",
             OrigenNombre = nombre,
             DestinoNombre = "Centro",
-            DatosReales = true
+            DatosReales = true,
+            Variantes = variantes
         };
-
-        // Con paradas en la base de datos se usa su recorrido; si hay variantes, arranca en la primera.
-        if (o.Trazo.Count >= 2)
-        {
-            r.Variantes = variantes;
-            r.UsarVariante(0);
-            return r;
-        }
-
-        // Sin paradas en la base de datos: el recorrido en el mapa es un trazo DE PRUEBA.
-        r.Waypoints = TrazoDePrueba(o.Id);
-        r.LatO = r.Waypoints[0][0]; r.LngO = r.Waypoints[0][1];
-        var ultimo = r.Waypoints[r.Waypoints.Count - 1];
-        r.LatD = ultimo[0]; r.LngD = ultimo[1];
+        r.UsarVariante(0);
         return r;
-    }
-
-    // Recorridos de prueba que cruzan la ciudad pasando por el Centro; se asignan por id de ruta para que no se encimen.
-    private static readonly double[][][] TrazosDePrueba =
-    {
-        new[] { new[] { 28.7000, -106.1100 }, new[] { Geo.CentroLat, Geo.CentroLng }, new[] { 28.6200, -106.0250 } },
-        new[] { new[] { 28.5900, -106.1000 }, new[] { Geo.CentroLat, Geo.CentroLng }, new[] { 28.6900, -106.0450 } },
-        new[] { new[] { 28.6100, -106.1450 }, new[] { Geo.CentroLat, Geo.CentroLng }, new[] { 28.6300, -106.0400 } },
-        new[] { new[] { 28.6800, -106.0950 }, new[] { Geo.CentroLat, Geo.CentroLng }, new[] { 28.6000, -106.0850 } },
-        new[] { new[] { 28.6350, -106.1500 }, new[] { Geo.CentroLat, Geo.CentroLng }, new[] { 28.6500, -106.0250 } }
-    };
-
-    private static List<double[]> TrazoDePrueba(int idRuta)
-    {
-        var plantilla = TrazosDePrueba[Math.Abs(idRuta) % TrazosDePrueba.Length];
-        return plantilla.Select(p => new[] { p[0], p[1] }).ToList();
     }
 }

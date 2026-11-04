@@ -9,8 +9,8 @@
     case "general":
         <AjustesGeneral Clave="@Clave" />
         break;
-    case "transporte":
-        <AjustesTransporte Clave="@Clave" />
+    case "accesibilidad":
+        <AjustesAccesibilidad Clave="@Clave" />
         break;
     case "soporte":
         <AjustesSoporte Clave="@Clave" />
@@ -38,12 +38,9 @@
         bool es(string clave) => ajuste.Contains(clave, StringComparison.OrdinalIgnoreCase);
 
         (Grupo, Clave) =
-            es("Notificaciones") ? ("general", "notificaciones") :
             es("Unidades") ? ("general", "unidades") :
             es("Idioma") ? ("general", "idioma") :
-            es("Modo preferido") ? ("transporte", "modo") :
-            es("transbordos") ? ("transporte", "transbordos") :
-            es("accesibilidad") ? ("transporte", "accesibilidad") :
+            es("accesibilidad") ? ("accesibilidad", "accesibilidad") :
             es("Reportar") ? ("soporte", "reportar") :
             es("Centro de ayuda") ? ("soporte", "ayuda") :
             es("comentarios") ? ("soporte", "comentarios") :

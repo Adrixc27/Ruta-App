@@ -2,29 +2,30 @@
 @implements IDisposable
 @inject EstadoApp Estado
 
-@* Diseño de la app: sidebar que se contrae + zona de pantallas. Solo se entra con sesión (o como invitado). *@
+@* Diseño de la app: sidebar que se contrae (barra inferior en pantallas chicas) + barra que dice dónde estás + zona de pantallas.
+   Solo se entra con sesión (o como invitado). *@
 @if (Estado.HaIngresado)
 {
     <div class="app-shell">
         <aside class="sidebar @(_colapsado ? "colapsado" : "")">
-            <div class="sidebar-marca marca">
+            <a href="planificar" class="sidebar-marca marca marca-clickable" title="Ir al inicio">
                 <div class="marca-logo">R</div>
                 @if (!_colapsado)
                 {
                     <div class="marca-texto"><b>RUTA</b><small>TRANSPORTE PÚBLICO</small></div>
                 }
-            </div>
+            </a>
 
-            <nav class="sidebar-menu">
+            <nav class="sidebar-menu" aria-label="Menú principal">
                 @if (!_colapsado)
                 {
                     <div class="sidebar-etiqueta">MENÚ</div>
                 }
-                <a href="planificar" class="nav-btn @Activo("planificar")" title="Planificar viaje">
+                <a href="planificar" class="nav-btn @Activo("planificar")" title="Planificar viaje" aria-current="@AriaActual("planificar")">
                     <Icon Nombre="IcoMap" />
                     @if (!_colapsado) { <span>Planificar viaje</span> }
                 </a>
-                <a href="rutas" class="nav-btn @Activo("rutas")" title="Rutas">
+                <a href="rutas" class="nav-btn @Activo("rutas")" title="Rutas" aria-current="@AriaActual("rutas")">
                     <Icon Nombre="IcoRoute" />
                     @if (!_colapsado) { <span>Rutas</span> }
                     @if (Estado.TotalGuardadas > 0)
@@ -32,22 +33,22 @@
                         <em class="nav-badge">@Estado.TotalGuardadas</em>
                     }
                 </a>
-                <a href="comunidad" class="nav-btn @Activo("comunidad")" title="Comunidad">
+                <a href="comunidad" class="nav-btn @Activo("comunidad")" title="Comunidad" aria-current="@AriaActual("comunidad")">
                     <Icon Nombre="IcoUsers" />
                     @if (!_colapsado) { <span>Comunidad</span> }
                 </a>
-                <a href="perfil" class="nav-btn @Activo("perfil")" title="Mi perfil">
+                <a href="perfil" class="nav-btn @Activo("perfil")" title="Mi perfil" aria-current="@AriaActual("perfil")">
                     <Icon Nombre="IcoUser" />
                     @if (!_colapsado) { <span>Mi perfil</span> }
                 </a>
-                <a href="configuracion" class="nav-btn @Activo("configuracion")" title="Configuración">
+                <a href="configuracion" class="nav-btn @Activo("configuracion")" title="Configuración" aria-current="@AriaActual("configuracion")">
                     <Icon Nombre="IcoSettings" />
                     @if (!_colapsado) { <span>Configuración</span> }
                 </a>
             </nav>
 
             <div class="sidebar-pie">
-                <button type="button" class="nav-btn" title="@(_colapsado ? "Expandir menú" : "Contraer menú")" @onclick="AlternarBarra">
+                <button type="button" class="nav-btn nav-contraer" title="@(_colapsado ? "Expandir menú" : "Contraer menú")" @onclick="AlternarBarra">
                     <Icon Nombre="@(_colapsado ? "IcoChevronRight" : "IcoChevronLeft")" />
                     @if (!_colapsado) { <span>Contraer menú</span> }
                 </button>
@@ -60,7 +61,36 @@
             </div>
         </aside>
 
-        <main class="contenido">@Body</main>
+        <main class="contenido">
+            @* Barra de ubicación: siempre dice en qué pantalla estás y quién tiene la sesión *@
+            <div class="barra-ubicacion">
+                <nav class="migas" aria-label="Dónde estás">
+                    <a href="planificar" class="miga-inicio"><Icon Nombre="IcoHome" Tam="15" /> Inicio</a>
+                    @foreach (var miga in Migas)
+                    {
+                        <Icon Nombre="IcoChevronRight" Tam="13" Color="var(--text-secondary)" />
+                        <span class="miga @(miga == Migas.Last() ? "actual" : "")">@miga</span>
+                    }
+                </nav>
+                <div class="barra-usuario">
+                    @if (Estado.Invitado)
+                    {
+                        <span class="chip-invitado" title="Estás explorando sin cuenta">Modo invitado</span>
+                        <a href="acceso" class="btn-ghost btn-mini">Iniciar sesión</a>
+                    }
+                    else
+                    {
+                        <a href="perfil" class="usuario-chip" title="Mi perfil">
+                            <span class="usuario-avatar" style="@(string.IsNullOrEmpty(Estado.Usuario?.Foto) ? "" : $"background-image:url({Estado.Usuario.Foto})")">
+                                @if (string.IsNullOrEmpty(Estado.Usuario?.Foto)) { @EstadoApp.Iniciales(Estado.Nombre) }
+                            </span>
+                            <span class="usuario-nombre">@Estado.Nombre</span>
+                        </a>
+                    }
+                </div>
+            </div>
+            <div class="contenido-cuerpo">@Body</div>
+        </main>
     </div>
 
     @if (_confirmarCierre)
@@ -70,6 +100,22 @@
                 <h2>¿Confirmas que quieres cerrar sesión?</h2>
                 <button type="button" class="btn btn-primario btn-grande" @onclick="ConfirmarCierre">Cerrar sesión</button>
                 <button type="button" class="btn btn-contorno btn-grande" @onclick="() => _confirmarCierre = false">Cancelar</button>
+            </div>
+        </div>
+    }
+
+    @* Guardar rutas, viajes y lugares es solo con cuenta: este aviso invita a iniciar sesión *@
+    @if (Estado.AvisoSesion != null)
+    {
+        <div class="modal-fondo" @onclick="Estado.CerrarAvisoSesion">
+            <div class="modal modal-dialogo" @onclick:stopPropagation="true">
+                <div class="aviso-sesion-icono"><Icon Nombre="IcoLock" Tam="26" Color="var(--brand-primary)" /></div>
+                <h2>Inicia sesión para continuar</h2>
+                <p>@Estado.AvisoSesion</p>
+                <div class="modal-acciones">
+                    <button type="button" class="btn btn-contorno" @onclick="Estado.CerrarAvisoSesion">Ahora no</button>
+                    <button type="button" class="btn btn-primario" @onclick="Estado.IrAIniciarSesion">Iniciar sesión</button>
+                </div>
             </div>
         </div>
     }
@@ -99,12 +145,37 @@
         Nav.LocationChanged += AlCambiarUbicacion;
     }
 
+    private string Ruta => new Uri(Nav.Uri).AbsolutePath.Trim('/');
+
     // Marca el botón de la pantalla actual (Comparar cuenta como Planificar; los detalles de ajustes, como Configuración)
-    private string Activo(string clave)
+    private string Activo(string clave) => EsActivo(clave) ? "activo" : "";
+    private string AriaActual(string clave) => EsActivo(clave) ? "page" : null;
+
+    private bool EsActivo(string clave)
     {
-        string ruta = new Uri(Nav.Uri).AbsolutePath.Trim('/');
-        if (clave == "planificar") return ruta is "planificar" or "comparar" ? "activo" : "";
-        return ruta == clave || ruta.StartsWith(clave + "/") ? "activo" : "";
+        string ruta = Ruta;
+        if (clave == "planificar") return ruta is "planificar" or "comparar";
+        return ruta == clave || ruta.StartsWith(clave + "/");
+    }
+
+    // Dónde estás: "Inicio › Planificar viaje › Comparar rutas"
+    private List<string> Migas
+    {
+        get
+        {
+            string ruta = Ruta;
+            return ruta switch
+            {
+                "planificar" => new() { "Planificar viaje" },
+                "comparar" => new() { "Planificar viaje", "Comparar rutas" },
+                "rutas" => new() { "Rutas" },
+                "comunidad" => new() { "Comunidad" },
+                "perfil" => new() { "Mi perfil" },
+                "configuracion" => new() { "Configuración" },
+                _ when ruta.StartsWith("configuracion/") => new() { "Configuración", "Ajuste" },
+                _ => new() { }
+            };
+        }
     }
 
     private void AlternarBarra()

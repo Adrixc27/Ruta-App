@@ -28,6 +28,7 @@
     [Parameter] public string Tipo { get; set; } = "text";
     [Parameter] public int MaxLength { get; set; }
     [Parameter] public EventCallback OnFocoPerdido { get; set; }
+    [Parameter] public EventCallback OnFoco { get; set; }
     [Parameter] public EventCallback<KeyboardEventArgs> OnTecla { get; set; }
     [Parameter] public RenderFragment ChildContent { get; set; }
 
@@ -43,7 +44,11 @@
         await TextChanged.InvokeAsync(Text);
     }
 
-    private void AlEnfocar() => _enfocado = true;
+    private async Task AlEnfocar()
+    {
+        _enfocado = true;
+        await OnFoco.InvokeAsync();
+    }
 
     private async Task AlPerderFoco()
     {

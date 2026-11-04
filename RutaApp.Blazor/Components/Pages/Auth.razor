@@ -66,6 +66,15 @@
                 </div>
                 <p class="fuerza-texto">@TextoFuerza</p>
 
+                <label class="etiqueta-form arriba-form">Confirmar contraseña</label>
+                <CampoPassword @bind-Text="_regPass2" OnTecla="TeclaRegistro" />
+                @if (_regPass2.Length > 0)
+                {
+                    <p class="fuerza-texto @(_regPass == _regPass2 ? "coincide" : "no-coincide")">
+                        @(_regPass == _regPass2 ? "✓ Las contraseñas coinciden" : "Las contraseñas no coinciden")
+                    </p>
+                }
+
                 <label class="terminos"><input type="checkbox" @bind="_terminos" /> <span>Acepto los Términos de servicio y la Política de privacidad de RUTA.</span></label>
 
                 @if (_regError != null)
@@ -93,7 +102,7 @@
     private bool _ocupado;
     private bool _terminos;
     private string _loginCorreo = "", _loginPass = "";
-    private string _regNombre = "", _regCorreo = "", _regPass = "";
+    private string _regNombre = "", _regCorreo = "", _regPass = "", _regPass2 = "";
     private string _loginError, _regError, _aviso;
 
     private string Titular => _registro ? "Tus rutas favoritas, siempre a la mano." : "Muévete por tu ciudad sin perderte.";
@@ -115,6 +124,11 @@
     private async Task TeclaLogin(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await IniciarSesion();
+    }
+
+    private async Task TeclaRegistro(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await Registrar();
     }
 
     // ── Acciones ──────────────────────────────────────────────────────────
@@ -154,6 +168,7 @@
         if (nombre.Length < 2) { _regError = "Escribe tu nombre completo."; return; }
         if (!EsCorreo(correo)) { _regError = "Escribe un correo válido, por ejemplo tu@correo.com."; return; }
         if (_regPass.Length < 6) { _regError = "La contraseña debe tener al menos 6 caracteres."; return; }
+        if (_regPass != _regPass2) { _regError = "Las contraseñas no coinciden. Escríbela igual en los dos campos."; return; }
         if (!_terminos) { _regError = "Debes aceptar los términos para continuar."; return; }
 
         _ocupado = true;

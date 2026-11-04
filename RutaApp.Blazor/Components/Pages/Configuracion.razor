@@ -38,7 +38,7 @@
     }
 
     <div class="card pie-config">
-        <span>RUTA v4.12.0 - Compilación web estable</span>
+        <span>RUTA - Versión de escritorio</span>
         <button type="button" class="btn-ghost subrayado" @onclick='() => Estado.Navegar("ajuste", "Términos de servicio")'>Términos legales y licencias</button>
     </div>
 </div>
@@ -48,8 +48,8 @@
 
     private readonly List<CategoriaAjustes> _categorias = new()
     {
-        new CategoriaAjustes { Titulo = "GENERAL", Ajustes = { "Idioma de la aplicación", "Unidades de distancia (km / mi)", "Notificaciones push" } },
-        new CategoriaAjustes { Titulo = "PREFERENCIAS DE TRANSPORTE", Ajustes = { "Modo preferido (Metro, Autobús, Tren)", "Evitar transbordos complejos", "Priorizar rutas con accesibilidad" } },
+        new CategoriaAjustes { Titulo = "GENERAL", Ajustes = { "Idioma de la aplicación", "Unidades de distancia (km / mi)" } },
+        new CategoriaAjustes { Titulo = "ACCESIBILIDAD", Ajustes = { "Priorizar rutas con accesibilidad" } },
         new CategoriaAjustes { Titulo = "SOPORTE", Ajustes = { "Reportar un problema en la ruta", "Centro de ayuda", "Enviar comentarios" } },
         new CategoriaAjustes { Titulo = "LEGAL", Ajustes = { "Términos de servicio", "Política de privacidad", "Sobre Nosotros" } }
     };

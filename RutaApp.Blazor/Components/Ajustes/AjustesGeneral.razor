@@ -1,36 +1,6 @@
-@* Ajustes → General: Notificaciones push, Unidades de distancia e Idioma (pantallas de diseño, sin funcionalidad todavía). *@
+@* Ajustes → General: Unidades de distancia e Idioma (pantallas de diseño, sin funcionalidad todavía). *@
 @switch (Clave)
 {
-    case "notificaciones":
-        <MarcoDetalle Categoria="General" Titulo="Notificaciones push" Subtitulo="Controla qué alertas recibe tu cuenta y cuándo quieres recibirlas.">
-            <ChildContent>
-                <DosColumnas Lateral="316">
-                    <Principal>
-                        <Tarjeta Titulo="Alertas y avisos" Subtitulo="Personaliza tus notificaciones. Las alertas críticas de seguridad siempre permanecerán activas.">
-                            <div class="fila-maestra">
-                                <div class="fila-ajuste-texto"><b>Permitir notificaciones push</b><small>Activadas en este equipo</small></div>
-                                <Interruptor Activo="true" />
-                            </div>
-                            <FilaAjuste Icono="IcoSend" Titulo="Alertas de ruta" Descripcion="Cambios, retrasos y cancelaciones en rutas guardadas."><Interruptor Activo="true" /></FilaAjuste>
-                            <FilaAjuste Icono="IcoAlert" Titulo="Incidencias cercanas" Descripcion="Interrupciones y cierres relevantes en tu zona."><Interruptor Activo="true" /></FilaAjuste>
-                            <FilaAjuste Icono="IcoClock" Titulo="Recordatorios de viaje" Descripcion="Avisos 10 minutos antes de la hora de salida."><Interruptor Activo="true" /></FilaAjuste>
-                            <FilaAjuste Icono="IcoSparkles" Titulo="Novedades de RUTA" Descripcion="Funciones nuevas, consejos y comunicaciones del producto."><Interruptor Activo="false" /></FilaAjuste>
-                        </Tarjeta>
-                    </Principal>
-                    <Secundario>
-                        <Tarjeta Titulo="Resumen" Subtitulo="Frecuencia estimada según tu actividad.">
-                            <ParValor Etiqueta="Alertas activas" Valor="3 de 4" Recuadro="true" />
-                            <ParValor Etiqueta="Promedio semanal" Valor="5 avisos" Recuadro="true" />
-                            <ParValor Etiqueta="Horario silencioso" Valor="23:00–07:00" Recuadro="true" />
-                            <Aviso Icono="IcoCheckCircle" Titulo="Permisos del sistema" Tipo="ok">RUTA tiene permiso para mostrar avisos en este equipo.</Aviso>
-                        </Tarjeta>
-                    </Secundario>
-                </DosColumnas>
-            </ChildContent>
-            <Barra><BarraInferior Info="Puedes cambiar estos ajustes en cualquier momento." TextoBoton="Guardar preferencias" /></Barra>
-        </MarcoDetalle>
-        break;
-
     case "unidades":
         <MarcoDetalle Categoria="General" Titulo="Unidades de distancia" Subtitulo="Define cómo se muestran las distancias durante la planificación y navegación.">
             <ChildContent>
