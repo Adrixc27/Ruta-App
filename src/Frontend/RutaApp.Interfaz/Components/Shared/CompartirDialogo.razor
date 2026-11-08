@@ -1,0 +1,60 @@
+@inject IPortapapeles Portapapeles
+
+@* Compartir en 3 pasos: copiar el código, enviarlo, y que la otra persona lo pegue en Planificar. *@
+@if (Visible)
+{
+    <div class="modal-fondo" @onclick="Cerrar">
+        <div class="modal modal-compartir" @onclick:stopPropagation="true">
+            <div class="modal-cabecera">
+                <div>
+                    <h2>@T["Compartir"]</h2>
+                    <p>@Titulo</p>
+                </div>
+                <button type="button" class="btn-icono suave" title="@(T["Cerrar"])" @onclick="Cerrar"><Icon Nombre="IcoX" Tam="16" /></button>
+            </div>
+
+            <ol class="compartir-pasos">
+                <li><span>1</span> @T["Copia el código"]</li>
+                <li><span>2</span> @T["Envíalo por mensaje"]</li>
+                <li><span>3</span> @T["La otra persona lo pega en"] <b>@T["Planificar → Pegar un código"]</b></li>
+            </ol>
+
+            <button type="button" class="btn btn-grande btn-ancho @(_copiado ? "btn-exito" : "btn-primario")" @onclick="Copiar">
+                <Icon Nombre="@(_copiado ? "IcoCheck" : "IcoCopy")" Tam="18" /> @(_copiado ? "¡Código copiado!" : "Copiar código")
+            </button>
+
+            <input class="codigo-linea" readonly value="@Codigo" aria-label="@(T["Código para compartir"])" />
+            @if (_mensaje != null)
+            {
+                <p class="aviso-texto">@T[_mensaje]</p>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public string Titulo { get; set; } = "";
+    [Parameter] public string Codigo { get; set; } = "";
+
+    private string _mensaje;
+    private bool _copiado;
+
+    protected override void OnParametersSet()
+    {
+        if (!Visible) { _mensaje = null; _copiado = false; }
+    }
+
+    private async Task Cerrar()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task Copiar()
+    {
+        _copiado = await Portapapeles.CopiarAsync(Codigo);
+        _mensaje = _copiado ? null : "No se pudo copiar solo: toca el código para seleccionarlo y cópialo con Ctrl+C.";
+    }
+}

@@ -1,0 +1,40 @@
+@* "Sobre Nosotros": se usa en Configuración y en la página pública. *@
+<DosColumnas Lateral="@Lateral">
+    <Principal>
+        <div class="mision">
+            <div class="mision-logo">@T["R"]</div>
+            <small>@T["NUESTRA MISIÓN"]</small>
+            <h2>@T["Moverte por la ciudad debe ser claro, accesible y confiable."]</h2>
+            <p>@T["RUTA reúne información de operadores, datos abiertos y reportes de la comunidad para ayudarte a tomar mejores decisiones de viaje."]</p>
+        </div>
+        <Tarjeta Titulo="@(T["Nuestro compromiso"])" Subtitulo="@(T["Diseñamos una herramienta pública y útil para cada forma de moverse."])" Clase="separada">
+            <div class="tres-columnas pequenas">
+                <div class="mosaico"><Icon Nombre="IcoAccess" Tam="20" /><b>@T["Accesible"]</b><small>@T["Preferencias de movilidad incluidas desde el inicio."]</small></div>
+                <div class="mosaico"><Icon Nombre="IcoShield" Tam="20" /><b>@T["Responsable"]</b><small>@T["Privacidad y transparencia en cada decisión."]</small></div>
+                <div class="mosaico"><Icon Nombre="IcoUsers" Tam="20" /><b>@T["Colaborativa"]</b><small>@T["Información mejorada por toda la comunidad."]</small></div>
+            </div>
+        </Tarjeta>
+    </Principal>
+    <Secundario>
+        <Tarjeta Titulo="@(T["RUTA para escritorio"])" Subtitulo="@(T["Información técnica de esta instalación."])">
+            <ParValor Etiqueta="@(T["Versión"])" Valor="4.12.0" />
+            <ParValor Etiqueta="@(T["Compilación"])" Valor="2026.10.01 · estable" />
+            <ParValor Etiqueta="@(T["Datos de transporte"])" Valor="Actualizados hace 4 min" />
+            <ParValor Etiqueta="@(T["Licencia"])" Valor="RUTA Community License" />
+            <div class="version-ok"><Icon Nombre="IcoCheckCircle" Tam="18" Color="var(--success)" /> @T["Tienes la versión más reciente"]</div>
+        </Tarjeta>
+        <Tarjeta Titulo="@(T["Contacto"])" Subtitulo="@(T["¿Tienes una propuesta, alianza o consulta institucional?"])" Clase="separada">
+            <div class="contacto-linea"><Icon Nombre="IcoMail" Tam="18" /><b>hola@ruta.com</b></div>
+            <div class="contacto-linea"><Icon Nombre="IcoPin" Tam="18" /><span>@Ubicacion</span></div>
+            <div class="botones-fila">
+                <Boton Texto="@(T["Escribirnos"])" Icono="IcoSend" />
+                <Boton Texto="@(T["Sitio web"])" Icono="IcoExternal" Relleno="false" />
+            </div>
+        </Tarjeta>
+    </Secundario>
+</DosColumnas>
+
+@code {
+    [Parameter] public string Ubicacion { get; set; } = "Chihuahua, CHIH";
+    [Parameter] public int Lateral { get; set; } = 376;
+}

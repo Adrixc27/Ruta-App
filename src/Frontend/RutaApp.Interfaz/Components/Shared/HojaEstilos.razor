@@ -1,0 +1,11 @@
+@using RutaApp.Interfaz.Estilos
+
+<style>@Hoja.Completa</style>
+
+@code {
+    private bool _pintada;
+
+    protected override bool ShouldRender() => !_pintada;
+
+    protected override void OnAfterRender(bool firstRender) => _pintada = true;
+}

@@ -1,0 +1,85 @@
+@implements IDisposable
+
+@* Carrusel de pantallas completas con cambio automático (fundido), flechas para pasar de imagen, puntos para elegir y pausa al pasar el mouse. *@
+<div class="carrusel" @onmouseenter="Pausar" @onmouseleave="Reanudar">
+    @for (int i = 0; i < Total; i++)
+    {
+        int indice = i;
+        <div class="carrusel-slide @(indice == _actual ? "visible" : "")">
+            @if (ConMarca && indice == 0)
+            {
+                <SlideMarca Titular="@Titular" Subtitular="@Subtitular" />
+            }
+            else
+            {
+                var foto = Fotos[indice - (ConMarca ? 1 : 0)];
+                <div class="slide-foto" style="background-image:url('img/carrusel/@foto.Archivo')">
+                    <div class="slide-foto-velo"></div>
+                    <div class="slide-foto-titulo">@T["Ciudades donde"]<br />@T["está R.U.T.A."]</div>
+                    <div class="slide-foto-ciudad">@foto.Ciudad</div>
+                </div>
+            }
+        </div>
+    }
+
+    <button type="button" class="carrusel-flecha izquierda" title="@(T["Imagen anterior"])" aria-label="@(T["Imagen anterior"])" @onclick="Anterior">
+        <Icon Nombre="IcoChevronLeft" Tam="22" />
+    </button>
+    <button type="button" class="carrusel-flecha derecha" title="@(T["Imagen siguiente"])" aria-label="@(T["Imagen siguiente"])" @onclick="Siguiente">
+        <Icon Nombre="IcoChevronRight" Tam="22" />
+    </button>
+
+    <div class="carrusel-puntos">
+        @for (int i = 0; i < Total; i++)
+        {
+            int indice = i;
+            <button type="button" class="punto @(indice == _actual ? "activo" : "")" aria-label="@("Ir a la imagen " + (indice + 1))" @onclick="() => Ir(indice)"></button>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>Si es true, la primera diapositiva es el panel azul de marca (con Titular y Subtitular).</summary>
+    [Parameter] public bool ConMarca { get; set; } = true;
+    [Parameter] public string Titular { get; set; } = "";
+    [Parameter] public string Subtitular { get; set; } = "";
+
+    // Fotos de las ciudades donde está R.U.T.A.
+    private static readonly (string Archivo, string Ciudad)[] Fotos =
+    {
+        ("chihuahua.jpg", "CHIHUAHUA"),
+        ("cdjuarez.jpg", "CD. JUAREZ"),
+        ("delicias.jpg", "DELICIAS")
+    };
+
+    private static readonly TimeSpan Cada = TimeSpan.FromSeconds(6);
+
+    private int Total => Fotos.Length + (ConMarca ? 1 : 0);
+    private int _actual;
+    private bool _pausado;
+    private Timer _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new Timer(_ => InvokeAsync(() =>
+        {
+            if (_pausado) return;
+            _actual = (_actual + 1) % Total;
+            StateHasChanged();
+        }), null, Cada, Cada);
+    }
+
+    private void Pausar() => _pausado = true;
+    private void Reanudar() => _pausado = false;
+
+    private void Ir(int indice)
+    {
+        _actual = (indice % Total + Total) % Total;
+        _timer?.Change(Cada, Cada);   // reinicia la cuenta
+    }
+
+    private void Anterior() => Ir(_actual - 1);
+    private void Siguiente() => Ir(_actual + 1);
+
+    public void Dispose() => _timer?.Dispose();
+}

@@ -1,0 +1,27 @@
+@implements IDisposable
+@inject EstadoApp Estado
+
+@* Lo que puede salir en cualquier pantalla (también en la landing): el aviso breve y la confirmación de cerrar sesión. *@
+@if (Estado.Aviso != null)
+{
+    <div class="toast-aviso" role="status"><Icon Nombre="IcoCheckCircle" Tam="18" /> <span>@T[Estado.Aviso]</span></div>
+}
+
+@if (Estado.ConfirmandoCierre)
+{
+    <div class="modal-fondo" @onclick="Estado.CancelarCierreSesion">
+        <div class="modal modal-sesion" role="dialog" aria-modal="true" aria-label="@(T["Cerrar sesión"])" @onclick:stopPropagation="true">
+            <h2>@T["¿Confirmas que quieres cerrar sesión?"]</h2>
+            <button type="button" class="btn btn-primario btn-grande" @onclick="Estado.ConfirmarCierreSesion">@T["Cerrar sesión"]</button>
+            <button type="button" class="btn btn-contorno btn-grande" @onclick="Estado.CancelarCierreSesion">@T["Cancelar"]</button>
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized() => Estado.Cambio += Refrescar;
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Estado.Cambio -= Refrescar;
+}

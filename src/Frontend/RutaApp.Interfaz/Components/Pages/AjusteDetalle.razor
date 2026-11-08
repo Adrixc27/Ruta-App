@@ -1,0 +1,56 @@
+@page "/configuracion/ajuste"
+@layout ShellLayout
+
+<PageTitle>@T[Nombre] · R.U.T.A.</PageTitle>
+
+@* Pantalla de detalle de un ajuste (Configuración → ...). *@
+@switch (Grupo)
+{
+    case "general":
+        <AjustesGeneral Clave="@Clave" />
+        break;
+    case "accesibilidad":
+        <AjustesAccesibilidad Clave="@Clave" />
+        break;
+    case "cuenta":
+        <AjustesCuenta Clave="@Clave" />
+        break;
+    case "soporte":
+        <AjustesSoporte Clave="@Clave" />
+        break;
+    case "legal":
+        <AjustesLegal Clave="@Clave" />
+        break;
+    default:
+        <MarcoDetalle Categoria="@(T["Configuración"])" Titulo="@Nombre" Subtitulo="@(T["No encontramos este ajuste."])">
+            <ChildContent><div></div></ChildContent>
+        </MarcoDetalle>
+        break;
+}
+
+@code {
+    /// <summary>Nombre del ajuste tal como aparece en la lista de Configuración.</summary>
+    [SupplyParameterFromQuery(Name = "nombre")] public string Nombre { get; set; }
+
+    private string Grupo { get; set; } = "";
+    private string Clave { get; set; } = "";
+
+    protected override void OnParametersSet()
+    {
+        string ajuste = Nombre ?? "";
+        bool es(string clave) => ajuste.Contains(clave, StringComparison.OrdinalIgnoreCase);
+
+        (Grupo, Clave) =
+            es("Unidades") ? ("general", "unidades") :
+            es("Idioma") ? ("general", "idioma") :
+            es("Accesibilidad") ? ("accesibilidad", "accesibilidad") :
+            es("Mi cuenta") ? ("cuenta", "cuenta") :
+            es("Reportar") ? ("soporte", "reportar") :
+            es("Comentarios") ? ("soporte", "comentarios") :
+            es("Centro de ayuda") ? ("soporte", "ayuda") :
+            es("Términos") ? ("legal", "terminos") :
+            es("privacidad") ? ("legal", "privacidad") :
+            es("Sobre Nosotros") ? ("legal", "sobre") :
+            ("", "");
+    }
+}

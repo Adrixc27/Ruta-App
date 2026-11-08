@@ -1,0 +1,134 @@
+namespace RutaApp.Interfaz.Estilos;
+
+/// <summary>Degradados, capas y sombras azuladas, y responsivo básico.</summary>
+public static class CssTonosAzul
+{
+    public const string Reglas = """
+        /* Tonos de azul: degradados suaves, capas y sombras azuladas, solo con azules de la paleta */
+
+        /* Fondos: de --bg-panel a un tono más oscuro, para que las pantallas no sean planas */
+        html, body { background: var(--bg-panel-2); }
+        .app-shell, .contenido { background: linear-gradient(160deg, var(--blue-50) 0%, var(--bg-panel) 45%, var(--bg-panel-2) 100%); }
+        .publico, .landing, .sobre { background: linear-gradient(160deg, var(--blue-50) 0%, var(--bg-panel) 50%, var(--bg-panel-2) 100%); }
+        .auth-panel { background: linear-gradient(160deg, var(--blue-50) 0%, var(--bg-panel) 55%, var(--bg-panel-2) 100%); }
+        .panel-lateral { background: linear-gradient(180deg, var(--blue-50) 0%, var(--bg-panel) 40%, var(--bg-panel-2) 100%); }
+        .sobre-cabecera { background: linear-gradient(90deg, var(--bg-page) 0%, var(--bg-sidebar) 100%); }
+
+        /* Sidebar: azul claro que se oscurece hacia abajo; el botón activo es un degradado de la marca */
+        .sidebar { background: linear-gradient(180deg, var(--bg-sidebar) 0%, var(--bg-sidebar-2) 100%); box-shadow: 2px 0 16px rgba(37, 99, 235, .10); }
+        .nav-btn:hover { background: rgba(255, 255, 255, .55); }
+        .nav-btn.activo { background: var(--grad-marca); box-shadow: var(--sombra-azul); }
+        .marca-logo { background: var(--grad-marca); box-shadow: 0 4px 10px rgba(37, 99, 235, .30); }
+        .marca-logo-blanco, .marca-clara .marca-logo { background: #fff; box-shadow: 0 4px 10px rgba(27, 54, 93, .18); }
+        .sidebar-sesion { border-top-color: var(--blue-300); }
+
+        /* Botones */
+        .btn-primario { background: var(--grad-marca); box-shadow: var(--sombra-azul); }
+        .btn-primario:hover:not(:disabled) { opacity: 1; filter: brightness(1.07); box-shadow: 0 8px 20px rgba(37, 99, 235, .36); }
+        .btn-primario:active:not(:disabled) { opacity: 1; filter: brightness(.94); box-shadow: 0 3px 8px rgba(37, 99, 235, .30); }
+        .btn-contorno { background: linear-gradient(180deg, #fff 0%, var(--blue-50) 100%); }
+        .btn-contorno:hover:not(:disabled) { background: var(--blue-100); border-color: var(--blue-300); }
+        .btn-suave { background: linear-gradient(180deg, var(--blue-50) 0%, var(--bg-panel) 100%); }
+        .btn-suave:hover { background: var(--blue-100); }
+        .btn-sinborde { background: #fff; box-shadow: 0 2px 8px rgba(37, 99, 235, .12); }
+        .btn-ghost:hover, .btn-ghost-oscuro:hover { background: var(--blue-100); }
+        .btn-icono:hover { background: var(--blue-100); color: var(--brand-primary); }
+        .btn-icono.suave { background: var(--blue-100); }
+        .btn-icono.suave:hover { background: var(--blue-200); }
+
+        /* Tarjetas y paneles: capa clara con borde azul y sombra azulada */
+        .card, .tarjeta { background: linear-gradient(180deg, #fff 0%, var(--bg-card) 100%); box-shadow: var(--sombra-card); }
+        .tarjeta { border-color: var(--blue-200); }
+        .card { border-color: var(--blue-200); }
+        .tarjeta-titulo { color: var(--text-primary); }
+        .auth-tarjeta { background: linear-gradient(180deg, #fff 0%, var(--bg-card) 100%); border-color: var(--blue-200); }
+        .tarjeta-flotante { box-shadow: 0 14px 40px rgba(37, 99, 235, .18); }
+        .modal { background: linear-gradient(180deg, #fff 0%, var(--bg-card) 100%); border-color: var(--blue-200); }
+
+        /* Campos */
+        .campo { border-color: var(--blue-200); background: linear-gradient(180deg, #fff 0%, var(--blue-50) 100%); }
+        .campo:hover { border-color: var(--blue-300); }
+        .campo.enfocado { border-color: var(--brand-primary); box-shadow: 0 0 0 3px rgba(96, 165, 250, .35); }
+        .textarea:focus { box-shadow: 0 0 0 3px rgba(96, 165, 250, .35); }
+
+        /* Elementos seleccionados o resaltados: de azul muy claro a azul claro */
+        .opcion-ruta, .ruta-item, .viaje-historial, .trayecto, .post, .categoria-ayuda, .ajuste-item { transition: background .15s, border-color .15s, box-shadow .15s, transform .15s; }
+        .opcion-ruta:hover, .ruta-item:hover, .trayecto:hover { border-color: var(--blue-300); box-shadow: 0 6px 16px rgba(37, 99, 235, .12); }
+        .opcion-ruta.sel, .ruta-item.sel { background: var(--grad-suave); border-color: var(--brand-primary); box-shadow: 0 6px 18px rgba(37, 99, 235, .18); }
+        .ruta-numero { background: linear-gradient(135deg, var(--blue-100) 0%, var(--blue-200) 100%); }
+        .ruta-item.sel .ruta-numero { background: var(--grad-marca); }
+        .viaje-historial:hover { background: var(--blue-100); }
+        .post:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(37, 99, 235, .16); }
+        .post-avatar { background: var(--grad-marca); }
+        .post-avatar.oficial { background: linear-gradient(135deg, #99F6E4 0%, var(--accent-reference) 100%); }
+        .ajuste-item { background: linear-gradient(90deg, var(--bg-panel) 0%, var(--blue-50) 100%); }
+        .ajuste-item:hover { background: linear-gradient(90deg, var(--blue-100) 0%, var(--blue-200) 100%); }
+        .categoria h3 { color: var(--blue-700); }
+
+        /* Chips, pestañas y filtros */
+        .seg.activo, .pill-radio.activo { background: var(--grad-marca); box-shadow: var(--sombra-azul); }
+        .chip-radio.activo { background: var(--grad-suave); border-color: var(--brand-primary); }
+        .chip-radio:hover, .pill-radio:hover { background: var(--blue-50); }
+        .pestanas { background: linear-gradient(180deg, #fff 0%, var(--blue-50) 100%); }
+        .chip-linea { background: linear-gradient(135deg, var(--blue-100) 0%, var(--blue-200) 100%); }
+        .chip-primario { background: var(--grad-marca); }
+        .chip-tinte { background: var(--blue-100); }
+        .etiqueta-opcion.recomendado { background: linear-gradient(135deg, var(--blue-100) 0%, var(--blue-200) 100%); }
+        .etiqueta.ruta { background: var(--blue-100); border-color: var(--blue-200); }
+        .contador { background: var(--blue-100); }
+
+        /* Stepper */
+        .stepper .paso.activo .circulo { background: var(--grad-marca); box-shadow: 0 3px 8px rgba(37, 99, 235, .35); }
+        .stepper .conector { background: var(--blue-200); }
+        .stepper .conector.hecho { background: linear-gradient(90deg, var(--blue-500), var(--blue-700)); }
+
+        /* Landing, acceso y carrusel: la marca pasa de azul medio a azul profundo */
+        .slide-marca { background: linear-gradient(150deg, var(--blue-500) 0%, var(--blue-600) 45%, var(--blue-800) 100%); }
+        .burbuja { background: var(--blue-200); opacity: .14; }
+        .landing-tarjeta { border-color: var(--blue-200); box-shadow: 0 18px 50px rgba(37, 99, 235, .22); }
+        .landing-texto h1 { background: linear-gradient(135deg, var(--text-primary) 0%, var(--blue-700) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .mision { background: linear-gradient(140deg, var(--blue-500) 0%, var(--blue-600) 50%, var(--blue-800) 100%); box-shadow: 0 12px 28px rgba(37, 99, 235, .28); }
+
+        /* Mapa: cristal azulado */
+        .glass { background: linear-gradient(180deg, rgba(239, 246, 255, .96) 0%, rgba(220, 234, 248, .94) 100%); border-color: var(--blue-200); box-shadow: 0 8px 22px rgba(37, 99, 235, .14); }
+        .mapa-tarjeta { background: linear-gradient(180deg, rgba(255, 255, 255, .98) 0%, rgba(239, 246, 255, .97) 100%); }
+        .tarjeta-numero { background: var(--grad-marca); }
+        .tarjeta-boton { background: var(--grad-marca); box-shadow: var(--sombra-azul); }
+        .tarjeta-guardar { background: var(--blue-100); }
+        .tarjeta-guardar.off { background: #fff; }
+
+        /* Pantallas de ajustes */
+        .caja-icono { background: linear-gradient(135deg, var(--blue-100) 0%, var(--blue-200) 100%); }
+        .caja-icono.llena { background: var(--grad-marca); }
+        .interruptor.activo { background: var(--grad-marca); }
+        .opcion-radio.sel, .modo-tarjeta.sel, .opcion-ejemplo.sel, .fila-maestra, .perfil-activo { background: var(--grad-suave); }
+        .aviso { background: linear-gradient(135deg, var(--blue-50) 0%, var(--blue-100) 100%); }
+        .aviso-ok { background: var(--success-tint); }
+        .aviso-alerta { background: var(--warning-tint); }
+        .indice-item.activo { background: var(--grad-suave); }
+        .mosaico { background: linear-gradient(180deg, var(--blue-50) 0%, var(--bg-panel) 100%); }
+        .sync { background: var(--success-tint); }
+        .deslizador { background: linear-gradient(to right, var(--blue-500), var(--blue-700) var(--p), var(--blue-100) var(--p)); }
+
+        /* Perfil */
+        .avatar { background-color: var(--blue-100); background-image: linear-gradient(135deg, var(--blue-100), var(--blue-200)); }
+        .trayecto-icono, .tipo-icono { background: linear-gradient(135deg, var(--blue-100) 0%, var(--blue-200) 100%); }
+
+        /* Barras de desplazamiento y selección */
+        * { scrollbar-color: var(--blue-300) transparent; }
+        .sugerencias { background: linear-gradient(180deg, #fff 0%, var(--blue-50) 100%); border-color: var(--blue-200); box-shadow: 0 8px 24px rgba(37, 99, 235, .20); }
+        .sugerencia:hover { background: var(--blue-100); }
+
+        /* Responsivo básico */
+        @media (max-width: 1100px) {
+            .landing-contenido { grid-template-columns: 1fr; padding: 24px; }
+            .landing-cabecera { padding: 22px 24px 0; }
+            .landing-tarjeta { width: 100%; height: 520px; }
+            .auth { grid-template-columns: 1fr; }
+            .auth-carrusel { display: none; }
+            .perfil-grid, .categorias { grid-template-columns: 1fr; }
+            .sobre-cabecera { padding: 0 24px; }
+            .sobre-cuerpo { padding: 24px; }
+        }
+        """;
+}

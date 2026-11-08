@@ -1,0 +1,94 @@
+@implements IDisposable
+
+@* Animación de entrada de la landing: un camión cruza la pantalla revelando las letras de "RUTA", que se desvanecen para dar paso a la landing. Un clic la salta. *@
+@if (_visible)
+{
+    <div class="intro @(_saliendo ? "saliendo" : "")" @onclick="Saltar">
+        <div class="intro-marca @(_fase == Fase.Desvaneciendo ? "desvanece" : "")">
+            @if (_fase != Fase.Oculta)
+            {
+                <div class="intro-letras @(_fase == Fase.Pasando ? "revelando" : "revelado")">
+                    <div class="intro-nombre">@T["RUTA"]</div>
+                    <div class="intro-lema"><b>@T["R"]</b>@T["ecomendador"] <b>@T["U"]</b>@T["rbano de"] <b>@T["T"]</b>@T["ransporte"] <b>@T["A"]</b>@T["ccesible"]</div>
+                </div>
+            }
+        </div>
+        @if (_fase == Fase.Pasando)
+        {
+            <div class="intro-escena">
+                <div class="intro-carretera"></div>
+                <div class="intro-camion"><Icon Nombre="IcoBus" Tam="130" Relleno="white" /></div>
+            </div>
+        }
+        <div class="intro-pista">@T["Toca para omitir"]</div>
+    </div>
+}
+
+@code {
+    private enum Fase { Oculta, Pasando, Mostrando, Desvaneciendo }
+
+    private const double SegundosPasada = 3.6;      // lo que tarda el camión en cruzar
+    private const double SegundosLetras = 1.4;      // las letras se quedan visibles
+    private const double SegundosDesvanecer = 0.7;
+
+    private bool _visible = true;
+    private bool _saliendo;
+    private bool _terminada;
+    private Fase _fase = Fase.Oculta;
+    private CancellationTokenSource _cts;
+
+    [Parameter] public EventCallback OnTerminada { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _cts = new CancellationTokenSource();
+        _ = SecuenciaAsync(_cts.Token);
+    }
+
+    private async Task SecuenciaAsync(CancellationToken token)
+    {
+        try
+        {
+            _fase = Fase.Pasando;
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(TimeSpan.FromSeconds(SegundosPasada), token);
+
+            _fase = Fase.Mostrando;
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(TimeSpan.FromSeconds(SegundosLetras), token);
+
+            _fase = Fase.Desvaneciendo;
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(TimeSpan.FromSeconds(SegundosDesvanecer), token);
+
+            await TerminarAsync();
+        }
+        catch (TaskCanceledException) { }
+        catch (ObjectDisposedException) { }
+    }
+
+    private async Task Saltar()
+    {
+        _cts?.Cancel();
+        await TerminarAsync();
+    }
+
+    // Se desvanece la pantalla y se entrega la landing
+    private async Task TerminarAsync()
+    {
+        if (_terminada) return;
+        _terminada = true;
+        _saliendo = true;
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(500);
+        _visible = false;
+        await InvokeAsync(StateHasChanged);
+        await OnTerminada.InvokeAsync();
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}

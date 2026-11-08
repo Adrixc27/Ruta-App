@@ -1,0 +1,78 @@
+@inject EstadoApp Estado
+
+@* Ajustes → General: unidades de distancia. Se aplican al momento en toda la app (rutas, caminatas, instrucciones). *@
+@switch (Clave)
+{
+    case "unidades":
+        <MarcoDetalle Categoria="@(T["General"])" Titulo="@(T["Unidades de distancia"])" Subtitulo="@(T["Elige cómo se muestran las distancias en rutas, caminatas e instrucciones."])">
+            <ChildContent>
+                <DosColumnas Lateral="356">
+                    <Principal>
+                        <Tarjeta Titulo="@(T["Sistema de medida"])" Subtitulo="@(T["El cambio se aplica al momento, no hay que guardar."])">
+                            <OpcionRadio Titulo="Kilómetros" Descripcion="Metros para tramos cortos y kilómetros para trayectos largos." Insignia="@(!Millas ? "En uso" : null)"
+                                         Seleccionada="@(!Millas)" OnClick="@(() => Elegir("km"))" />
+                            <OpcionRadio Titulo="Millas" Descripcion="Pies para tramos cortos y millas para trayectos largos." Insignia="@(Millas ? "En uso" : null)"
+                                         Seleccionada="@(Millas)" OnClick="@(() => Elegir("mi"))" />
+                        </Tarjeta>
+                    </Principal>
+                    <Secundario>
+                        <Tarjeta Titulo="@(T["Vista previa"])" Subtitulo="@(T["Así se verán las distancias."])">
+                            <ParValor Etiqueta="@(T["Caminar a la parada"])" Valor="@(Formato.Distancia(450) + " · 6 min")" Recuadro="true" />
+                            <ParValor Etiqueta="@(T["Viajar en camión"])" Valor="@(Formato.Distancia(7400) + " · 22 min")" Recuadro="true" />
+                            <ParValor Etiqueta="@(T["Caminar al destino"])" Valor="@(Formato.Distancia(280) + " · 4 min")" Recuadro="true" />
+                            <div class="separador"></div>
+                            <div class="total-distancia"><b>@T["Distancia total"]</b><h4>@Formato.Distancia(8130)</h4></div>
+                        </Tarjeta>
+                    </Secundario>
+                </DosColumnas>
+            </ChildContent>
+        </MarcoDetalle>
+        break;
+
+    case "idioma":
+        <MarcoDetalle Categoria="@(T["General"])" Titulo="@(T["Idioma"])" Subtitulo="@(T["Elige el idioma de la aplicación."])">
+            <ChildContent>
+                <DosColumnas Lateral="356">
+                    <Principal>
+                        <Tarjeta Titulo="@(T["Idioma de la aplicación"])" Subtitulo="@(T["El cambio se aplica al momento, no hay que guardar."])">
+                            <OpcionRadio Titulo="Español" Descripcion="Todos los textos de la app en español." Insignia="@(!Ingles ? T["En uso"] : null)"
+                                         Seleccionada="@(!Ingles)" OnClick="@(() => ElegirIdioma("es"))" />
+                            <OpcionRadio Titulo="English" Descripcion="All app texts in English." Insignia="@(Ingles ? T["En uso"] : null)"
+                                         Seleccionada="@(Ingles)" OnClick="@(() => ElegirIdioma("en"))" />
+                        </Tarjeta>
+                    </Principal>
+                    <Secundario>
+                        <Tarjeta Titulo="@(T["Vista previa"])" Subtitulo="@(T["Así se verán los textos."])">
+                            <ParValor Etiqueta="@(T["Planificar viaje"])" Valor="@(T["Elige cómo llegar"])" Recuadro="true" />
+                            <ParValor Etiqueta="@(T["Historial"])" Valor="@Formato.Hace(DateTime.Now.AddHours(-3))" Recuadro="true" />
+                            <Aviso Icono="IcoInfo" Titulo="@(T["Nota"])">@T["Los datos que vienen de la base de datos (nombres de rutas y publicaciones) se muestran como fueron escritos."]</Aviso>
+                        </Tarjeta>
+                    </Secundario>
+                </DosColumnas>
+            </ChildContent>
+        </MarcoDetalle>
+        break;
+}
+
+@code {
+    [Parameter] public string Clave { get; set; }
+
+    private bool Millas => Estado.Ajustes.Datos.Unidades == "mi";
+    private bool Ingles => Estado.Ajustes.Datos.Idioma == "en";
+
+    private void ElegirIdioma(string idioma)
+    {
+        if (Estado.Ajustes.Datos.Idioma == idioma) return;
+        Estado.Ajustes.Datos.Idioma = idioma;
+        Estado.Ajustes.Guardar();   // toda la interfaz se vuelve a dibujar con el idioma nuevo
+        Estado.MostrarAviso(idioma == "en" ? "Language: English" : "Idioma: Español");
+    }
+
+    private void Elegir(string unidad)
+    {
+        if (Estado.Ajustes.Datos.Unidades == unidad) return;
+        Estado.Ajustes.Datos.Unidades = unidad;
+        Estado.Ajustes.Guardar();
+        Estado.MostrarAviso(unidad == "mi" ? "Distancias en millas" : "Distancias en kilómetros");
+    }
+}

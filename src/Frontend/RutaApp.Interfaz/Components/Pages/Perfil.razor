@@ -1,0 +1,631 @@
+@page "/perfil"
+@layout ShellLayout
+@implements IDisposable
+@inject EstadoApp Estado
+@inject UsuarioService Usuarios
+@inject ComunidadService Comunidad
+@inject ServicioTrazos Trazos
+@inject IServicioUbicacion Ubicacion
+
+<PageTitle>@T["Mi perfil · R.U.T.A."]</PageTitle>
+
+<div class="pagina">
+    <div class="pagina-cabecera">
+        <div>
+            <h1>@T["Mi Perfil"]<Ayuda Titulo="@(T["Mi perfil"])" Texto="@(T["Tus datos, tu historial de viajes, tus rutas guardadas (individuales y personalizadas) y tus lugares. Desde aquí también puedes compartir o pegar un código."])" /></h1>
+            <p>@T["Administra tu información, tu historial, tus rutas guardadas y tus lugares"]</p>
+        </div>
+    </div>
+
+    <div class="perfil-grid">
+        <div>
+            <div class="card perfil-datos">
+                <div class="avatar avatar-grande" style="@(_foto != null ? $"background-image:url({_foto})" : "")">
+                    @if (_foto == null) { @EstadoApp.Iniciales(Estado.Nombre) }
+                </div>
+                <h2>@Estado.Nombre</h2>
+                <p class="miembro">@(Estado.ConCuenta ? "Miembro de R.U.T.A." : "Estás explorando sin cuenta")</p>
+                <hr />
+                <div class="dato"><span>@T["Correo:"]</span><b>@Estado.Correo</b></div>
+                <div class="dato"><span>@T["Dispositivo:"]</span><b>@T["Aplicación de escritorio"]</b></div>
+                @if (Estado.ConCuenta)
+                {
+                    <div class="dato"><span>@T["Viajes:"]</span><b>@Estado.Historial.Count</b></div>
+                    <div class="dato"><span>@T["Rutas guardadas:"]</span><b>@(Estado.TotalGuardadas + Estado.Trayectos.Count)</b></div>
+                    <div class="dato"><span>@T["Lugares:"]</span><b>@Estado.Lugares.Count</b></div>
+                }
+            </div>
+
+            <div class="card perfil-acciones">
+                @if (Estado.ConCuenta)
+                {
+                    <button type="button" class="btn btn-suave btn-ancho" @onclick="EditarNombre"><Icon Nombre="IcoPencil" Tam="15" /> @T["Editar nombre de usuario"]</button>
+                    <label class="btn btn-suave btn-ancho" title="@(T["Elegir una imagen"])">
+                        <Icon Nombre="IcoUser" Tam="15" /> @T["Cambiar foto de perfil"]
+                        <InputFile OnChange="CambiarFoto" accept="image/png,image/jpeg,image/bmp,image/webp" hidden />
+                    </label>
+                    @if (_errorFoto != null) { <p class="error-texto">@T[_errorFoto]</p> }
+                }
+                else
+                {
+                    <p class="nota-panel">@T["Crea una cuenta para guardar rutas, lugares y viajes, y ver tu historial."]</p>
+                    <a href="acceso" class="btn btn-primario btn-ancho">@T["Iniciar sesión"]</a>
+                }
+            </div>
+
+            @* Importar lo que compartió otra persona *@
+            <div class="card perfil-acciones">
+                <b class="titulo-mini">@T["Pegar un código"]</b>
+                <p class="nota-panel">@T["Pega el código que te compartieron (una ruta, un lugar o un viaje) y se guarda en tu perfil."]</p>
+                <CampoTexto @bind-Text="_codigoImportar" Icono="IcoShare" Hint="@(T["RUTA1:..."])" Alto="42" />
+                <button type="button" class="btn btn-contorno btn-ancho" @onclick="Importar">@T["Guardar en mi perfil"]</button>
+                @if (_mensajeImportar != null) { <p class="aviso-texto">@T[_mensajeImportar]</p> }
+            </div>
+        </div>
+
+        <div class="card perfil-trayectos">
+            @if (!Estado.ConCuenta)
+            {
+                <div class="vacio-sesion">
+                    <Icon Nombre="IcoLock" Tam="34" Color="var(--brand-primary)" />
+                    <h3>@T["Inicia sesión para ver tu perfil completo"]</h3>
+                    <p>@T["Tu historial de viajes, tus rutas guardadas y tus lugares (casa, escuela…) se guardan con tu cuenta."]</p>
+                    <a href="acceso" class="btn btn-primario">@T["Iniciar sesión"]</a>
+                </div>
+            }
+            else
+            {
+                <div class="pestanas pestanas-perfil">
+                    <button type="button" class="seg @(_pestana == "historial" ? "activo" : "")" @onclick='() => _pestana = "historial"'>
+                        <Icon Nombre="IcoHistory" Tam="15" /> @T["Historial"] <em class="contador">@Estado.Historial.Count</em>
+                    </button>
+                    <button type="button" class="seg @(_pestana == "guardadas" ? "activo" : "")" @onclick='() => _pestana = "guardadas"'>
+                        <Icon Nombre="IcoBookmark" Tam="15" /> @T["Guardadas"] <em class="contador">@(Estado.TotalGuardadas + Estado.Trayectos.Count)</em>
+                    </button>
+                    <button type="button" class="seg @(_pestana == "lugares" ? "activo" : "")" @onclick='() => _pestana = "lugares"'>
+                        <Icon Nombre="IcoHome" Tam="15" /> @T["Mis lugares"] <em class="contador">@Estado.Lugares.Count</em>
+                    </button>
+                </div>
+
+                @if (_pestana == "historial")
+                {
+                    <div class="trayectos-cabecera">
+                        <h3>@T["Historial de viajes"]</h3>
+                        @if (Estado.Historial.Count > 0)
+                        {
+                            <button type="button" class="btn-ghost" @onclick="() => _confirmarBorrar = true"><Icon Nombre="IcoTrash" Tam="15" /> @T["Borrar historial"]</button>
+                        }
+                    </div>
+                    @if (Estado.Historial.Count > 0)
+                    {
+                        <div class="filtros-perfil">
+                            <CampoTexto @bind-Text="_busquedaHistorial" Icono="IcoSearch" Hint="@(T["Buscar por origen, destino o camión…"])" Alto="40" />
+                            <div class="chips">
+                                @foreach (var p in Periodos)
+                                {
+                                    var clave = p.Clave;
+                                    <button type="button" class="chip-radio @(_periodo == clave ? "activo" : "")" @onclick="() => _periodo = clave">@T[p.Texto]</button>
+                                }
+                                <button type="button" class="chip-radio @(_soloGuardados ? "activo" : "")" @onclick="() => _soloGuardados = !_soloGuardados">
+                                    <Icon Nombre="IcoBookmark" Tam="13" /> @T["Solo guardados"]
+                                </button>
+                                <button type="button" class="chip-radio" @onclick="() => _antiguosPrimero = !_antiguosPrimero">
+                                    <Icon Nombre="IcoHistory" Tam="13" /> @T[_antiguosPrimero ? "Más antiguos primero" : "Más recientes primero"]
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    <div class="trayectos-lista">
+                        @foreach (var viaje in HistorialFiltrado)
+                        {
+                            var v = viaje;
+                            <div class="trayecto">
+                                <span class="trayecto-icono"><Icon Nombre="IcoHistory" Tam="20" Color="var(--brand-primary)" /></span>
+                                <div class="trayecto-texto">
+                                    <b>@v.Titulo</b>
+                                    <span class="azul">@v.CamionesTexto</span>
+                                    <small>@v.Detalle</small>
+                                </div>
+                                @if (v.TieneRecorrido)
+                                {
+                                    <button type="button" class="btn-icono" title="@(T["Ver en el mapa"])" @onclick="() => VerHistorial(v)"><Icon Nombre="IcoMap" Tam="18" /></button>
+                                }
+                                <button type="button" class="btn-icono" title="@(v.EstaGuardado ? "Quitar de guardados" : "Guardar viaje")" @onclick="() => Estado.AlternarGuardadoHistorial(v)">
+                                    <Icon Nombre="IcoBookmark" Tam="18" Color="@(v.EstaGuardado ? "var(--brand-primary)" : null)" Relleno="@(v.EstaGuardado ? "var(--brand-primary)" : null)" />
+                                </button>
+                            </div>
+                        }
+                        @if (Estado.Historial.Count == 0)
+                        {
+                            <p class="vacio">@T["Aún no tienes viajes. Cuando pulses «Comenzar viaje», aparecerá aquí."]</p>
+                        }
+                        else if (!HistorialFiltrado.Any())
+                        {
+                            <p class="vacio">@T["Ningún viaje coincide con esos filtros."]</p>
+                        }
+                    </div>
+                }
+                else if (_pestana == "guardadas")
+                {
+                    <div class="trayectos-cabecera">
+                        <h3>@T["Rutas guardadas"]</h3>
+                        <button type="button" class="btn-ghost" @onclick='() => Estado.Navegar("planificar")'><Icon Nombre="IcoPlus" Tam="16" /> @T["Agregar nueva"]</button>
+                    </div>
+                    <div class="filtros-perfil">
+                        <CampoTexto @bind-Text="_busquedaGuardadas" Icono="IcoSearch" Hint="@(T["Buscar entre tus rutas guardadas…"])" Alto="40" />
+                    </div>
+                    <div class="chips filtro-guardadas">
+                        @foreach (var f in new[] { ("todas", "Todas"), ("individuales", "Individuales"), ("personalizadas", "Personalizadas") })
+                        {
+                            var clave = f.Item1;
+                            <button type="button" class="chip-radio @(_filtro == clave ? "activo" : "")" @onclick="() => _filtro = clave">@T[f.Item2]</button>
+                        }
+                        <span class="separador-chips"></span>
+                        @foreach (var o in OrdenesGuardadas)
+                        {
+                            var clave = o.Clave;
+                            <button type="button" class="chip-radio @(_ordenGuardadas == clave ? "activo" : "")" @onclick="() => _ordenGuardadas = clave">@T[o.Texto]</button>
+                        }
+                    </div>
+
+                    <div class="trayectos-lista">
+                        @if (_filtro != "personalizadas")
+                        {
+                            @foreach (var ruta in RutasGuardadas)
+                            {
+                                var r = ruta;
+                                <div class="trayecto">
+                                    <span class="trayecto-icono" style="background:@r.Color"><b class="ruta-mini">@r.NumeroTexto</b><span class="simbolo-ruta" aria-hidden="true">@r.Simbolo</span></span>
+                                    <div class="trayecto-texto">
+                                        <b>@r.Nombre</b>
+                                        <span class="azul">@T["Ruta individual"]</span>
+                                        <small>@r.Meta</small>
+                                    </div>
+                                    <button type="button" class="btn-icono" title="@(T["Ver en el mapa"])" @onclick='() => Estado.Navegar("rutas", r)'><Icon Nombre="IcoMap" Tam="18" /></button>
+                                    <button type="button" class="btn-icono" title="@(T["Compartir"])" @onclick="() => CompartirRuta(r)"><Icon Nombre="IcoShare" Tam="18" /></button>
+                                    <button type="button" class="btn-icono" title="@(T["Quitar de guardadas"])" @onclick="() => Estado.AlternarGuardada(r)"><Icon Nombre="IcoTrash" Tam="18" /></button>
+                                </div>
+                            }
+                        }
+                        @if (_filtro != "individuales")
+                        {
+                            @foreach (var trayecto in TrayectosGuardados)
+                            {
+                                var t = trayecto;
+                                <div class="trayecto">
+                                    <span class="trayecto-icono"><Icon Nombre="IcoNavigation" Tam="20" Color="var(--brand-primary)" /></span>
+                                    <div class="trayecto-texto">
+                                        <b>@t.Alias @if (t.Compartido) { <span class="etiqueta-variantes">@T["Compartido"]</span> }</b>
+                                        <span class="azul">@t.Recorrido</span>
+                                        <small>@t.Detalle</small>
+                                    </div>
+                                    @if (t.TieneRecorrido)
+                                    {
+                                        <button type="button" class="btn-icono" title="@(T["Ver en el mapa"])" @onclick="() => VerTrayecto(t)"><Icon Nombre="IcoMap" Tam="18" /></button>
+                                    }
+                                    <button type="button" class="btn-icono" title="@(T["Compartir"])" @onclick="() => CompartirTrayecto(t)"><Icon Nombre="IcoShare" Tam="18" /></button>
+                                    <button type="button" class="btn-icono" title="@(T["Eliminar"])" @onclick="() => PedirEliminar(t)"><Icon Nombre="IcoTrash" Tam="18" /></button>
+                                </div>
+                            }
+                        }
+                        @if (HayVacioGuardadas)
+                        {
+                            <p class="vacio">@(HayBusquedaGuardadas ? "Ninguna ruta guardada coincide con la búsqueda." : _filtro == "individuales" ? "Aún no guardas rutas individuales. Toca el marcador en Rutas." :
+                                               _filtro == "personalizadas" ? "Aún no guardas viajes personalizados. Guárdalos desde Comparar o el historial." :
+                                               "Aún no tienes rutas guardadas.")</p>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="trayectos-cabecera">
+                        <h3>@T["Mis lugares"]</h3>
+                        <button type="button" class="btn-ghost" @onclick="() => _agregandoLugar = !_agregandoLugar"><Icon Nombre="IcoPlus" Tam="16" /> @T["Agregar lugar"]</button>
+                    </div>
+                    <p class="nota-panel">@T["Guarda tu casa, escuela u otros puntos de referencia: aparecen como atajos al planificar tu viaje."]</p>
+
+                    @if (_agregandoLugar)
+                    {
+                        <div class="card form-lugar">
+                            <CampoTexto @bind-Text="_nombreLugar" Hint="@(T["Nombre (por ejemplo: Casa)"])" MaxLength="30" Alto="42" />
+                            <div class="tipos-lugar">
+                                @foreach (var t in TiposLugar)
+                                {
+                                    var tipo = t;
+                                    <button type="button" class="chip-radio @(_tipoLugar == tipo.Clave ? "activo" : "")" @onclick="() => _tipoLugar = tipo.Clave">
+                                        <Icon Nombre="@tipo.Icono" Tam="13" /> @T[tipo.Texto]
+                                    </button>
+                                }
+                            </div>
+                            <div class="campo-wrap">
+                                <CampoTexto Text="@_direccionLugar" TextChanged="BuscarDireccion" Icono="IcoSearch" Hint="@(T["Busca la dirección o el lugar…"])" Alto="42" />
+                                @if (_resultados.Count > 0)
+                                {
+                                    <div class="sugerencias">
+                                        @foreach (var sug in _resultados)
+                                        {
+                                            var s = sug;
+                                            <div class="sugerencia" @onclick="() => ElegirDireccion(s)" tabindex="0" role="button" @onkeydown="@((KeyboardEventArgs e) => { if (Teclado.EsActivacion(e)) ElegirDireccion(s); })">
+                                                <span class="sug-num"><Icon Nombre="IcoPin" Tam="12" /></span>
+                                                <div><b>@s.Nombre</b><small>@s.Detalle</small></div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <div class="lugar-opciones">
+                                <button type="button" class="btn btn-contorno btn-chico" disabled="@_buscandoUbicacion" @onclick="UsarMiUbicacion"><Icon Nombre="IcoLocate" Tam="15" /> @(_buscandoUbicacion ? "Buscando…" : "Mi ubicación")</button>
+                                <button type="button" class="btn btn-contorno btn-chico" title="@(T["Se abre el mapa para que toques el lugar"])" @onclick="ElegirEnMapa"><Icon Nombre="IcoPin" Tam="15" /> @T["Tocar en el mapa"]</button>
+                            </div>
+                            @if (_elegidaLugar != null) { <p class="aviso-texto">@T["Lugar elegido:"] <b>@_elegidaLugar.Nombre</b></p> }
+                            @if (_errorLugar != null) { <p class="error-texto">@T[_errorLugar]</p> }
+                            <div class="modal-acciones">
+                                <button type="button" class="btn btn-contorno btn-chico" @onclick="() => _agregandoLugar = false">@T["Cancelar"]</button>
+                                <button type="button" class="btn btn-primario btn-chico" @onclick="GuardarLugar">@T["Guardar lugar"]</button>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="trayectos-lista">
+                        @foreach (var lugar in Estado.Lugares)
+                        {
+                            var l = lugar;
+                            <div class="trayecto">
+                                <span class="trayecto-icono"><Icon Nombre="@l.Icono" Tam="20" Color="var(--brand-primary)" /></span>
+                                <div class="trayecto-texto">
+                                    <b>@l.Nombre</b>
+                                    <span class="azul">@l.TipoTexto</span>
+                                    <small>@l.Direccion</small>
+                                </div>
+                                <button type="button" class="btn-icono" title="@(T["Ver en el mapa"])" @onclick='() => Estado.Navegar("planificar", l)'><Icon Nombre="IcoMap" Tam="18" /></button>
+                                <button type="button" class="btn-icono" title="@(T["Compartir"])" @onclick="() => CompartirLugar(l)"><Icon Nombre="IcoShare" Tam="18" /></button>
+                                <button type="button" class="btn-icono" title="@(T["Eliminar"])" @onclick="() => Estado.QuitarLugar(l)"><Icon Nombre="IcoTrash" Tam="18" /></button>
+                            </div>
+                        }
+                        @if (Estado.Lugares.Count == 0 && !_agregandoLugar)
+                        {
+                            <p class="vacio">@T["Aún no tienes lugares guardados."]</p>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@* Modal: editar nombre *@
+@if (_modalNombre)
+{
+    <div class="modal-fondo">
+        <div class="modal modal-nombre">
+            <h2>@T["Editar nombre de usuario"]</h2>
+            <p>@T["Así te verá la comunidad en tus publicaciones."]</p>
+            <CampoTexto @bind-Text="_nuevoNombre" Hint="@(T["Tu nombre"])" MaxLength="40" OnTecla="TeclaNombre" />
+            @if (_errorNombre) { <p class="error-texto">@(_mensajeNombre)</p> }
+            <div class="modal-acciones">
+                <button type="button" class="btn btn-contorno" @onclick="() => _modalNombre = false">@T["Cancelar"]</button>
+                <button type="button" class="btn btn-primario" disabled="@_guardando" @onclick="GuardarNombre">@T["Guardar"]</button>
+            </div>
+        </div>
+    </div>
+}
+
+<Dialogo @bind-Visible="_confirmar" Mensaje="@($"¿Quitar \"{_porEliminar?.Alias}\" de tus rutas guardadas?")"
+         TextoAceptar="Sí" TextoCancelar="No" OnAceptar="Eliminar" />
+
+<Dialogo @bind-Visible="_confirmarBorrar" Mensaje="¿Borrar todo tu historial de viajes?" TextoAceptar="Sí, borrar" TextoCancelar="No"
+         OnAceptar="Estado.BorrarHistorial" />
+
+<CompartirDialogo @bind-Visible="_compartir" Titulo="@_tituloCompartir" Codigo="@_codigo" />
+
+@code {
+    private record TipoLugar(string Clave, string Icono, string Texto);
+
+    private static readonly TipoLugar[] TiposLugar =
+    {
+        new("casa", "IcoHome", "Casa"),
+        new("escuela", "IcoSchool", "Escuela"),
+        new("trabajo", "IcoBriefcase", "Trabajo"),
+        new("otro", "IcoFlag", "Otro")
+    };
+
+    private string _foto;
+    private string _errorFoto;
+    private bool _modalNombre, _errorNombre;
+    private string _mensajeNombre = "Escribe un nombre de al menos 2 letras.";
+    private bool _guardando;
+    private string _nuevoNombre = "";
+    private bool _confirmar, _confirmarBorrar;
+    private Trayecto _porEliminar;
+
+    private string _pestana = "historial";
+    private string _filtro = "todas";
+
+    private string _codigoImportar = "", _mensajeImportar;
+    private bool _compartir;
+    private string _tituloCompartir = "", _codigo = "";
+
+    private bool _agregandoLugar;
+    private string _nombreLugar = "", _tipoLugar = "casa", _direccionLugar = "", _errorLugar;
+    private Sugerencia _elegidaLugar;
+    private List<Sugerencia> _resultados = new();
+    private CancellationTokenSource _espera;
+
+    private record Opcion(string Clave, string Texto);
+    private static readonly Opcion[] Periodos = { new("todo", "Todo"), new("hoy", "Hoy"), new("semana", "7 días"), new("mes", "30 días") };
+    private static readonly Opcion[] OrdenesGuardadas = { new("nombre", "Nombre A-Z"), new("tiempo", "Más rápidas") };
+
+    private string _busquedaHistorial = "", _periodo = "todo";
+    private bool _soloGuardados, _antiguosPrimero;
+    private string _busquedaGuardadas = "", _ordenGuardadas = "nombre";
+
+    private bool HayBusquedaGuardadas => _busquedaGuardadas.Trim().Length > 0;
+
+    private IEnumerable<ViajeHistorial> HistorialFiltrado
+    {
+        get
+        {
+            string q = _busquedaHistorial.Trim();
+            DateTime desde = _periodo switch
+            {
+                "hoy" => DateTime.Today,
+                "semana" => DateTime.Now.AddDays(-7),
+                "mes" => DateTime.Now.AddDays(-30),
+                _ => DateTime.MinValue
+            };
+            var lista = Estado.Historial.Where(v => v.Fecha >= desde && (!_soloGuardados || v.EstaGuardado) &&
+                (q.Length == 0 || Formato.Coincide(v.Titulo, q) || Formato.Coincide(v.Camiones, q)));
+            return _antiguosPrimero ? lista.OrderBy(v => v.Fecha) : lista.OrderByDescending(v => v.Fecha);
+        }
+    }
+
+    private IEnumerable<Ruta> RutasGuardadas
+    {
+        get
+        {
+            string q = _busquedaGuardadas.Trim();
+            var lista = Estado.Rutas.Where(r => r.Guardada).DistinctBy(r => r.Numero)
+                .Where(r => q.Length == 0 || Formato.Coincide(r.Nombre, q) || Formato.Coincide(r.Lineas, q));
+            return _ordenGuardadas == "tiempo" ? lista.OrderBy(r => r.Minutos) : lista.OrderBy(r => r.Nombre);
+        }
+    }
+
+    // Los viajes repetidos (mismo origen, destino y camiones) se muestran una sola vez
+    private IEnumerable<Trayecto> TrayectosGuardados
+    {
+        get
+        {
+            string q = _busquedaGuardadas.Trim();
+            var lista = Estado.Trayectos.DistinctBy(EstadoApp.ClaveTrayecto)
+                .Where(t => q.Length == 0 || Formato.Coincide(t.Alias, q) || Formato.Coincide(t.Recorrido, q) || Formato.Coincide(t.Lineas, q));
+            return _ordenGuardadas == "tiempo" ? lista.OrderBy(t => t.Minutos) : lista.OrderBy(t => t.Alias);
+        }
+    }
+
+    private bool HayVacioGuardadas =>
+        !(_filtro != "personalizadas" && RutasGuardadas.Any()) && !(_filtro != "individuales" && TrayectosGuardados.Any());
+
+    protected override async Task OnInitializedAsync()
+    {
+        Estado.Cambio += Refrescar;
+
+        // Foto guardada en la base de datos
+        try
+        {
+            var id = Estado.Usuario?.Id ?? 0;
+            if (id > 0)
+            {
+                var usuario = await Usuarios.ObtenerAsync(id);
+                if (usuario != null && !string.IsNullOrEmpty(usuario.Foto))
+                {
+                    _foto = usuario.Foto;
+                    Estado.Usuario.Foto = usuario.Foto;
+                    Estado.Notificar();
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // sin conexión: se muestran las iniciales
+        }
+    }
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    private void EditarNombre()
+    {
+        _nuevoNombre = Estado.Nombre;
+        _errorNombre = false;
+        _modalNombre = true;
+    }
+
+    // Guarda en MySQL antes de actualizar la pantalla
+    private async Task GuardarNombre()
+    {
+        string nombre = _nuevoNombre.Trim();
+        if (nombre.Length < 2)
+        {
+            _mensajeNombre = "Escribe un nombre de al menos 2 letras.";
+            _errorNombre = true;
+            return;
+        }
+
+        _guardando = true;
+        try
+        {
+            var id = Estado.Usuario?.Id ?? 0;
+            if (id > 0)
+            {
+                bool ok = await Usuarios.ActualizarNombreAsync(id, nombre);
+                if (!ok)
+                {
+                    _mensajeNombre = "No se pudo guardar el nombre. Intenta de nuevo.";
+                    _errorNombre = true;
+                    return;
+                }
+                Estado.Usuario.Nombre = nombre;
+            }
+
+            Estado.Nombre = nombre;
+            _errorNombre = false;
+            _modalNombre = false;
+            Estado.Notificar();
+        }
+        catch (Exception ex)
+        {
+            _mensajeNombre = "Error: " + ex.Message;
+            _errorNombre = true;
+        }
+        finally
+        {
+            _guardando = false;
+        }
+    }
+
+    private async Task TeclaNombre(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await GuardarNombre();
+        else if (e.Key == "Escape") _modalNombre = false;
+    }
+
+    private async Task CambiarFoto(InputFileChangeEventArgs e)
+    {
+        _errorFoto = null;
+        try
+        {
+            var archivo = e.File;
+            using var ms = new MemoryStream();
+            await archivo.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024).CopyToAsync(ms);
+            string nueva = $"data:{archivo.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+
+            var id = Estado.Usuario?.Id ?? 0;
+            if (id > 0)
+            {
+                bool ok = await Usuarios.ActualizarFotoAsync(id, nueva);
+                if (!ok)
+                {
+                    _errorFoto = "No se pudo guardar la foto. Intenta de nuevo.";
+                    return;
+                }
+                Estado.Usuario.Foto = nueva;
+            }
+
+            _foto = nueva;
+            Estado.Notificar();
+        }
+        catch (Exception ex)
+        {
+            _errorFoto = "Error: " + ex.Message;
+        }
+    }
+
+    // Historial y viajes guardados: verlos en el mapa
+    private void VerHistorial(ViajeHistorial v) => Estado.Navegar("planificar", Estado.RutaDeViaje(v));
+
+    private void VerTrayecto(Trayecto t) => Estado.Navegar("planificar", Estado.RutaDeViaje(t));
+
+    private void PedirEliminar(Trayecto t)
+    {
+        _porEliminar = t;
+        _confirmar = true;
+    }
+
+    private void Eliminar()
+    {
+        if (_porEliminar != null) Estado.QuitarTrayecto(_porEliminar);
+        _porEliminar = null;
+    }
+
+    // Compartir e importar
+    private void AbrirCompartir(string titulo, Compartido contenido)
+    {
+        _tituloCompartir = titulo;
+        _codigo = CodigoCompartir.Crear(contenido);
+        _compartir = true;
+    }
+
+    private void CompartirRuta(Ruta r) =>
+        AbrirCompartir("Ruta " + r.Nombre, new Compartido { Tipo = "ruta", RutaId = r.Numero, RutaNombre = r.Nombre });
+
+    private void CompartirTrayecto(Trayecto t) =>
+        AbrirCompartir("Viaje " + t.Alias + " (" + t.Recorrido + ")", new Compartido { Tipo = "viaje", Viaje = t });
+
+    private void CompartirLugar(LugarGuardado l) =>
+        AbrirCompartir(l.Nombre + " (" + l.TipoTexto + ")", new Compartido { Tipo = "lugar", Lugar = l });
+
+    private void Importar()
+    {
+        _mensajeImportar = Estado.ImportarCodigo(_codigoImportar);
+        if (!string.IsNullOrEmpty(_mensajeImportar) && _mensajeImportar.StartsWith("Se ")) _codigoImportar = "";
+    }
+
+    // Agregar un lugar
+    private async Task BuscarDireccion(string texto)
+    {
+        _direccionLugar = texto;
+        _elegidaLugar = null;
+        _espera?.Cancel();
+        _espera = new CancellationTokenSource();
+        var token = _espera.Token;
+        try
+        {
+            await Task.Delay(450, token);
+            if (texto.Trim().Length < 3) { _resultados = new(); return; }
+            var lista = await Trazos.BuscarLugaresAsync(texto.Trim());
+            if (!token.IsCancellationRequested) _resultados = lista ?? new();
+        }
+        catch (TaskCanceledException) { }
+        catch (Exception) { _resultados = new(); }
+    }
+
+    private void ElegirDireccion(Sugerencia s)
+    {
+        _elegidaLugar = s;
+        _direccionLugar = s.Nombre;
+        _resultados = new();
+        if (_nombreLugar.Trim().Length == 0) _nombreLugar = s.Nombre;
+    }
+
+    // Abre el mapa de Planificar para tocar el lugar; al elegirlo vuelve el formulario para ponerle nombre y guardarlo
+    private void ElegirEnMapa() => Estado.Navegar("planificar", new SolicitudLugar { Nombre = _nombreLugar.Trim(), Tipo = _tipoLugar });
+
+    private bool _buscandoUbicacion;
+
+    // Usa donde estás ahora como el lugar
+    private async Task UsarMiUbicacion()
+    {
+        _buscandoUbicacion = true;
+        _errorLugar = null;
+        try
+        {
+            var pos = await Ubicacion.ObtenerAsync();
+            if (pos == null) { _errorLugar = "No pudimos obtener tu ubicación. Revisa que el servicio de ubicación esté activo."; return; }
+            string calle = await Estado.CalleDeAsync(pos[0], pos[1]);
+            _elegidaLugar = new Sugerencia { Nombre = string.IsNullOrWhiteSpace(calle) ? "Mi ubicación actual" : calle, Lat = pos[0], Lng = pos[1] };
+            _direccionLugar = _elegidaLugar.Nombre;
+            _resultados = new();
+        }
+        finally
+        {
+            _buscandoUbicacion = false;
+        }
+    }
+
+    private void GuardarLugar()
+    {
+        if (_nombreLugar.Trim().Length == 0) { _errorLugar = "Ponle un nombre al lugar."; return; }
+        if (_elegidaLugar == null) { _errorLugar = "Busca y elige la dirección del lugar."; return; }
+
+        Estado.AgregarLugar(_nombreLugar, _tipoLugar, _elegidaLugar.Nombre, _elegidaLugar.Lat, _elegidaLugar.Lng);
+        _agregandoLugar = false;
+        _nombreLugar = _direccionLugar = "";
+        _elegidaLugar = null;
+        _errorLugar = null;
+    }
+
+    public void Dispose()
+    {
+        Estado.Cambio -= Refrescar;
+        _espera?.Cancel();
+    }
+}

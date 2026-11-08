@@ -1,0 +1,659 @@
+@implements IAsyncDisposable
+@implements IDisposable
+@inject IJSRuntime JS
+@inject EstadoApp Estado
+@inject ServicioTrazos Trazos
+@inject IServicioUbicacion Ubicacion
+@inject ComunidadService Comunidad
+
+@* Mapa Leaflet. El banner, la tarjeta de ruta, los controles y la leyenda son HTML encima del mapa; el dibujo lo controla MapaLeaflet (C#) *@
+<div class="mapa-contenedor">
+    <div id="@_id" class="mapa-leaflet"></div>
+
+    @if (_banner != null)
+    {
+        <div class="glass mapa-banner">
+            @switch (_banner.Modo)
+            {
+                case "viaje":
+                    <div class="banner-circ"><Icon Nombre="IcoNavigation" Tam="18" Color="var(--brand-primary)" /></div>
+                    <div class="banner-viaje"><b>@_banner.Texto</b><small>@_banner.Subtexto</small></div>
+                    break;
+                case "ruta":
+                    <i class="banner-punto" style="background:@(_tarjeta?.Color ?? "var(--brand-primary)")"></i>
+                    <span>@_banner.Texto</span>
+                    @if (_banner.ConQuitar)
+                    {
+                        <a class="banner-quitar" @onclick="Quitar">@T["✕ Quitar"]</a>
+                    }
+                    break;
+                default:
+                    <Icon Nombre="IcoPin" Tam="16" Color="var(--brand-primary)" />
+                    <span>@_banner.Texto</span>
+                    break;
+            }
+        </div>
+    }
+
+    @* Controles a la derecha, como en las apps de navegación: centrar en mí, reportar y leyenda *@
+    <div class="mapa-controles">
+        <Ayuda Titulo="Controles del mapa" Derecha="true"
+               Texto="Mira el mapa: la cruz te lleva a tu ubicación, el megáfono reporta un problema (ponchadura, tráfico, se quedó tirado…) y las capas abren la leyenda con el significado de pines y líneas." />
+        <button type="button" class="mapa-control" title="@(T["Centrar el mapa en mi ubicación"])" @onclick="CentrarEnMi">
+            <Icon Nombre="IcoCrosshair" Tam="20" />
+        </button>
+        <button type="button" class="mapa-control" title="@(T["Reportar un problema en la ruta"])" @onclick="AbrirReporte">
+            <Icon Nombre="IcoMegaphone" Tam="20" />
+        </button>
+        <button type="button" class="mapa-control @(_leyendaAbierta ? "activo" : "")" title="@(T["Leyenda del mapa"])" @onclick="() => _leyendaAbierta = !_leyendaAbierta">
+            <Icon Nombre="IcoLayers" Tam="20" />
+        </button>
+    </div>
+
+    @if (_tarjeta != null && _tarjeta.EsViaje)
+    {
+        @* Tarjeta del viaje: tiempo, costo y paso a paso *@
+        <div class="glass mapa-tarjeta tarjeta-viaje">
+            <div class="viaje-cabecera">
+                <div class="viaje-chips">
+                    @foreach (var paso in _tarjeta.Pasos().Where(p => p.EsBus))
+                    {
+                        <span class="chip-ruta" style="--c:@paso.Color"><span class="simbolo-ruta" aria-hidden="true">@paso.Simbolo</span><Icon Nombre="IcoBus" Tam="12" /> @paso.Titulo.Replace("Toma ", "")</span>
+                    }
+                </div>
+                <div class="viaje-cifras">
+                    <div><b>@_tarjeta.MinutosTexto</b><small>@T["Duración"]</small></div>
+                    <div><b>@_tarjeta.TarifaTexto</b><small>@T["Costo"]</small></div>
+                    <div><b>@DateTime.Now.AddMinutes(_tarjeta.Minutos).ToString("H:mm")</b><small>@T["Llegada"]</small></div>
+                </div>
+            </div>
+            <button type="button" class="ver-pasos" @onclick="() => _pasosAbiertos = !_pasosAbiertos">
+                @(_pasosAbiertos ? "Ocultar pasos" : "Ver pasos") <Icon Nombre="@(_pasosAbiertos ? "IcoChevronDown" : "IcoChevronRight")" Tam="14" />
+            </button>
+            @if (_pasosAbiertos)
+            {
+                <ol class="pasos">
+                    @foreach (var paso in _tarjeta.Pasos())
+                    {
+                        var p = paso;
+                        <li style="--c:@p.Color" @onclick="() => CentrarEn(p.Lat, p.Lng)" tabindex="0" role="button" @onkeydown="@(async (KeyboardEventArgs e) => { if (Teclado.EsActivacion(e)) await CentrarEn(p.Lat, p.Lng); })">
+                            <span class="paso-icono"><Icon Nombre="@p.Icono" Tam="14" /></span>
+                            <div>
+                                <b>@p.Titulo</b><small>@p.Detalle</small>
+                                @if (p.Instrucciones != null)
+                                {
+                                    @foreach (var texto in p.Instrucciones)
+                                    {
+                                        <span class="instruccion">@texto</span>
+                                    }
+                                }
+                            </div>
+                        </li>
+                    }
+                </ol>
+            }
+            @if (OnPlanificar.HasDelegate)
+            {
+                <a class="tarjeta-boton" @onclick="Planificar">@T["Volver a planificar este viaje →"]</a>
+            }
+        </div>
+    }
+    else if (_tarjeta != null)
+    {
+        var avisos = Estado.AvisosDe(_tarjeta);
+        <div class="glass mapa-tarjeta">
+            <div class="tarjeta-cabecera">
+                <div class="tarjeta-numero" style="background:@_tarjeta.Color">@_tarjeta.NumeroTexto<span class="simbolo-ruta" aria-hidden="true">@_tarjeta.Simbolo</span></div>
+                <div class="tarjeta-titulo"><b>@_tarjeta.Nombre</b><small>@_tarjeta.Subtitulo</small></div>
+                <a class="tarjeta-guardar @(_tarjeta.Guardada ? "" : "off")" @onclick="Guardar">
+                    <Icon Nombre="IcoBookmark" Tam="13" Relleno="@(_tarjeta.Guardada ? "currentColor" : null)" /> @(_tarjeta.Guardada ? "Guardada" : "Guardar")
+                </a>
+            </div>
+            @if (avisos.Count > 0)
+            {
+                <a class="alerta-ruta" @onclick='() => Estado.Navegar("comunidad")'>
+                    <Icon Nombre="IcoAlert" Tam="15" />
+                    <span><b>@(avisos.Count == 1 ? "1 aviso reciente" : avisos.Count + " avisos recientes")</b> · @avisos[0].Titulo</span>
+                </a>
+            }
+            @if (_tarjeta.TieneVariantes)
+            {
+                <div class="tarjeta-variantes">
+                    <small>@T["Variante"]</small>
+                    @for (int i = 0; i < _tarjeta.Variantes.Count; i++)
+                    {
+                        int indice = i;
+                        <button type="button" class="chip-radio @(_tarjeta.VarianteActual == indice ? "activo" : "")"
+                                @onclick="() => CambiarVariante(indice)">
+                            @_tarjeta.Variantes[indice].Variante
+                        </button>
+                    }
+                </div>
+            }
+            @if (_tarjeta.Oficial != null)
+            {
+                <div class="tarjeta-plano">@_tarjeta.Oficial.Nombre · @_tarjeta.Oficial.Paradas.Count paradas</div>
+            }
+            <div class="tarjeta-datos">
+                <div><b>@(_tarjeta.FrecuenciaMin) min</b><small>@T["Frecuencia"]</small></div>
+                <div><b>@_tarjeta.TarifaTexto</b><small>@T["Tarifa"]</small></div>
+                <div><b>@(_tarjeta.Paradas) paradas</b><small>@T["Recorrido"]</small></div>
+                <div><b>@_tarjeta.MinutosTexto</b><small>@T["Trayecto"]</small></div>
+            </div>
+            <button type="button" class="ver-pasos" @onclick="() => _detallesAbiertos = !_detallesAbiertos">
+                @(_detallesAbiertos ? "Menos detalles" : "Más detalles de la ruta") <Icon Nombre="@(_detallesAbiertos ? "IcoChevronDown" : "IcoChevronRight")" Tam="14" />
+            </button>
+            @if (_detallesAbiertos)
+            {
+                <dl class="detalles-ruta">
+                    <div><dt>@T["Servicio"]</dt><dd>@_tarjeta.ModoTexto@(_tarjeta.Desvio ? " · con desvío temporal" : "")</dd></div>
+                    <div><dt>@T["Horario"]</dt><dd>@_tarjeta.Horario</dd></div>
+                    <div><dt>@T["Pasa cada"]</dt><dd>@(_tarjeta.FrecuenciaMin) min aprox.</dd></div>
+                    <div><dt>@T["Tarifa"]</dt><dd>@_tarjeta.TarifaTexto</dd></div>
+                    <div><dt>@T["Recorrido"]</dt><dd>@DescripcionRecorrido(_tarjeta)</dd></div>
+                    @if (_tarjeta.Oficial != null && _tarjeta.Oficial.Paradas.Count > 0)
+                    {
+                        <div><dt>@T["Primera parada"]</dt><dd>@Formato.NombreParada(_tarjeta.Oficial.Paradas[0].Nombre)</dd></div>
+                    }
+                    @if (_tarjeta.TieneVariantes)
+                    {
+                        <div><dt>@T["Variantes"]</dt><dd>@string.Join(" · ", _tarjeta.Variantes.Select(v => v.Variante)) (elige arriba cuál ver)</dd></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_tarjeta.Descripcion))
+                    {
+                        <div><dt>@T["Notas"]</dt><dd>@_tarjeta.Descripcion</dd></div>
+                    }
+                </dl>
+            }
+            <a class="tarjeta-boton" @onclick="Planificar">@T["Planificar viaje con esta ruta →"]</a>
+        </div>
+    }
+
+    @if (_leyendaAbierta)
+    {
+        <div class="glass mapa-leyenda">
+            <div class="leyenda-titulo">@T["LEYENDA"] <button type="button" class="leyenda-cerrar" title="@(T["Ocultar leyenda"])" @onclick="() => _leyendaAbierta = false">✕</button></div>
+            <div class="leyenda-item"><span class="leg-icono mk-pin-o"><Icon Nombre="IcoNavigation" Tam="11" /></span>@T["Salida"]</div>
+            <div class="leyenda-item"><span class="leg-icono mk-pin-d"><Icon Nombre="IcoFlag" Tam="11" /></span>@T["Destino"]</div>
+            <div class="leyenda-item"><span class="leg-icono leg-num">1</span>@T["Parada intermedia"]</div>
+            <div class="leyenda-item"><span class="leg-icono leg-parada"><Icon Nombre="IcoBus" Tam="11" /></span>@T["Parada del camión"]</div>
+            <div class="leyenda-item"><span class="leg-linea"></span>@T["Camión"]</div>
+            <div class="leyenda-item"><span class="leg-linea punteada"></span>@T["A pie"]</div>
+            <div class="leyenda-item"><span class="leg-icono leg-yo"><i></i></span>@T["Tu ubicación"]</div>
+            <div class="leyenda-item solo-dalton"><span class="leg-icono leg-parada">▲</span>@T["Cada ruta tiene su símbolo y su tipo de línea"]</div>
+        </div>
+    }
+</div>
+
+@* REPORTAR UN PROBLEMA (como en Waze) *@
+@if (_reporte)
+{
+    <div class="modal-fondo" @onclick="() => _reporte = false">
+        <div class="modal modal-reporte" @onclick:stopPropagation="true">
+            <div class="modal-cabecera">
+                <div>
+                    <h2>@T["Reportar en la ruta"]</h2>
+                    <p>@T["Avisa a los demás: aparecerá como aviso en la comunidad."]</p>
+                </div>
+                <button type="button" class="btn-icono suave" @onclick="() => _reporte = false"><Icon Nombre="IcoX" Tam="16" /></button>
+            </div>
+
+            <div class="etiqueta-form">@T["¿Qué está pasando?"]</div>
+            <div class="reporte-tipos">
+                @foreach (var t in EstadoApp.ProblemasComunes)
+                {
+                    var tipo = t;
+                    <button type="button" class="reporte-tipo @(_tipoReporte == tipo.Clave ? "sel" : "")" @onclick="() => _tipoReporte = tipo.Clave">
+                        <Icon Nombre="@tipo.Icono" Tam="20" /><span>@T[tipo.Texto]</span>
+                    </button>
+                }
+            </div>
+
+            <div class="etiqueta-form">@T["Ruta afectada"] <small>@T["(opcional)"]</small></div>
+            <div class="select-ruta">
+                <Icon Nombre="IcoBus" Tam="18" Color="var(--brand-primary)" />
+                <select @bind="_rutaReporte">
+                    <option value="0">@T["Sin ruta específica"]</option>
+                    @foreach (var r in Estado.Rutas)
+                    {
+                        <option value="@r.Numero">@r.Nombre</option>
+                    }
+                </select>
+            </div>
+
+            <div class="etiqueta-form">@T["Detalles"] <small>@T["(opcional)"]</small></div>
+            <textarea class="textarea" rows="3" placeholder="@(T["Por ejemplo: en Av. Universidad y Calle 20, hay mucho tráfico."])" @bind="_detalleReporte" @bind:event="oninput"></textarea>
+
+            @if (TipoReporte.Movilidad)
+            {
+                <p class="nota-modal nota-ubicacion"><Icon Nombre="IcoLocate" Tam="14" /> @T["Este reporte incluye tu ubicación actual y se marcará en el mapa para que otras personas lo vean."]</p>
+            }
+
+            @if (_mensajeReporte != null)
+            {
+                <p class="@(_reporteEnviado ? "aviso-texto" : "error-texto")">@T[_mensajeReporte]</p>
+            }
+            <div class="modal-acciones">
+                <button type="button" class="btn btn-contorno" @onclick="() => _reporte = false">@(_reporteEnviado ? "Cerrar" : "Cancelar")</button>
+                @if (!_reporteEnviado)
+                {
+                    <button type="button" class="btn btn-primario" disabled="@_enviandoReporte" @onclick="EnviarReporte"><Icon Nombre="IcoSend" Tam="16" /> @T["Enviar reporte"]</button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback OnQuitar { get; set; }
+    [Parameter] public EventCallback OnPlanificar { get; set; }
+    [Parameter] public EventCallback OnGuardar { get; set; }
+    /// <summary>Se llama con [lat, lng] cuando el usuario toca el mapa y la selección está activa.</summary>
+    [Parameter] public EventCallback<double[]> OnClicMapa { get; set; }
+
+    private class Banner
+    {
+        public string Modo = "texto";
+        public string Texto = "";
+        public string Subtexto = "";
+        public bool ConQuitar;
+    }
+
+    private readonly string _id = "mapa-" + Guid.NewGuid().ToString("N");
+    private readonly TaskCompletionSource<bool> _listo = new();
+    private MapaLeaflet _mapa;
+    private bool _destruido;
+    private Banner _banner;
+    private Ruta _tarjeta;
+    private int _versionRuta;
+    private bool _leyendaAbierta;   // cerrada por defecto: el mapa se ve limpio; el botón de capas la abre
+    private bool _pasosAbiertos, _detallesAbiertos;
+
+    // "Circuito de ida y vuelta · 38.1 km · 88 paradas"
+    private static string DescripcionRecorrido(Ruta r)
+    {
+        bool circuito = r.Trazo != null && r.Trazo.Count > 1 &&
+            Math.Abs(r.Trazo[0][0] - r.Trazo[^1][0]) < 0.001 && Math.Abs(r.Trazo[0][1] - r.Trazo[^1][1]) < 0.001;
+        return (circuito ? "Circuito de ida y vuelta" : "Recorrido de ida") + " · " +
+               Formato.Distancia(r.Kilometros * 1000) + " · " + r.Paradas + " paradas";
+    }
+    private readonly Dictionary<string, int> _versionUbic = new();
+
+    // Reporte tipo Waze
+    private bool _reporte, _enviandoReporte, _reporteEnviado;
+    private string _tipoReporte = "trafico", _detalleReporte = "", _mensajeReporte;
+    private int _rutaReporte;
+    private EstadoApp.ProblemaComun TipoReporte => EstadoApp.ProblemasComunes.First(t => t.Clave == _tipoReporte);
+
+    private DotNetObjectReference<Mapa> _referencia;
+
+    [JSInvokable]
+    public Task AlHacerClic(double lat, double lng) => OnClicMapa.InvokeAsync(new[] { lat, lng });
+
+    public Task ActivarSeleccionAsync(bool activo) => EnMapa(m => m.ActivarSeleccion(activo));
+
+    protected override void OnInitialized()
+    {
+        _referencia = DotNetObjectReference.Create(this);
+        _mapa = new MapaLeaflet(JS, _id);
+        Estado.BarraLateralCambio += AlCambiarBarraLateral;
+        Estado.Cambio += AlCambiarEstado;
+    }
+
+    // Marcas de los reportes con ubicación: se dibujan de nuevo solo cuando cambia la lista
+    private string _firmaReportes;
+
+    private void AlCambiarEstado() => _ = InvokeAsync(ActualizarReportesAsync);
+
+    private async Task ActualizarReportesAsync()
+    {
+        var reportes = Estado.ReportesEnMapa();
+        string firma = string.Join(",", reportes.Select(r => r.Id));
+        if (firma == _firmaReportes) return;
+        _firmaReportes = firma;
+        var marcas = reportes.Select(r => new ReporteMapa(r.Lat.Value, r.Lng.Value, r.Titulo, r.Cuerpo, r.Tiempo)).ToList();
+        await EnMapa(m => m.MostrarReportes(marcas));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            await _mapa.Iniciar(_referencia);
+            _listo.TrySetResult(true);
+            _ = Estado.CargarPublicacionesAsync();
+            await ActualizarReportesAsync();
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or TaskCanceledException)
+        {
+            _listo.TrySetResult(false);
+        }
+    }
+
+    private async Task<bool> Listo() => !_destruido && await _listo.Task && !_destruido;
+
+    private async Task EnMapa(Func<MapaLeaflet, Task> accion)
+    {
+        if (!await Listo()) return;
+        try { await accion(_mapa); }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException) { }
+    }
+
+    private async void AlCambiarBarraLateral()
+    {
+        await Task.Delay(300);
+        await InvokeAsync(() => EnMapa(m => m.InvalidarTamano()));
+    }
+
+    private Task Quitar() => OnQuitar.InvokeAsync();
+    private Task Planificar() => OnPlanificar.InvokeAsync();
+    private Task Guardar() => OnGuardar.InvokeAsync();
+
+    // Banner superior izquierdo
+    public void BannerTexto(string texto) { _banner = new Banner { Modo = "texto", Texto = texto }; StateHasChanged(); }
+
+    public void BannerViaje(string titulo, string subtitulo)
+    {
+        _banner = new Banner { Modo = "viaje", Texto = titulo, Subtexto = subtitulo };
+        StateHasChanged();
+    }
+
+    public void BannerRuta(string texto, bool conQuitar)
+    {
+        _banner = new Banner { Modo = "ruta", Texto = texto, ConQuitar = conQuitar };
+        StateHasChanged();
+    }
+
+    public void OcultarBanner() { _banner = null; StateHasChanged(); }
+
+    // Tarjeta inferior de la ruta o del viaje seleccionado
+    public void MostrarTarjeta(Ruta r) { _tarjeta = r; StateHasChanged(); }
+    public void OcultarTarjeta() { _tarjeta = null; StateHasChanged(); }
+
+    private async Task CambiarVariante(int indice)
+    {
+        var r = _tarjeta;
+        if (r == null || r.VarianteActual == indice) return;
+        r.UsarVariante(indice);
+        StateHasChanged();
+        await DibujarRuta(r);
+    }
+
+    private Task CentrarEn(double lat, double lng) => EnMapa(m => m.Centrar(lat, lng));
+    public Task CentrarEnAsync(double lat, double lng) => CentrarEn(lat, lng);
+
+    public Task LimpiarRuta()
+    {
+        _versionRuta++;   // cancela cualquier dibujo pendiente
+        return EnMapa(m => m.LimpiarRuta());
+    }
+
+    /// <summary>
+    /// Dibuja la ruta pedida. Si el usuario elige otra mientras tanto, el dibujo viejo se descarta (no se encolan).
+    /// Una ruta que solo une sus paradas con rectas se ajusta a las calles.
+    /// </summary>
+    public async Task DibujarRuta(Ruta r)
+    {
+        int version = ++_versionRuta;
+        if (r.EsViaje) { await DibujarViaje(r, version); return; }
+        if (r.Trazo == null || r.Trazo.Count < 2) return;
+
+        await DibujarLinea(r, r.Trazo, true);
+
+        if (r.TrazoEnCalles)
+        {
+            // Recorrido guardado: solo se corrigen los tramos largos que cortan esquinas
+            if (r.Reparado) return;
+            var (reparada, completo) = await Trazos.ReparaTramosRectosAsync(r.Trazo);
+            if (completo)
+            {
+                r.Reparado = true;
+                if (r.Oficial != null) r.Oficial.Reparado = true;
+            }
+            if (reparada == null) return;
+
+            r.Trazo = reparada;
+            if (r.Oficial != null) r.Oficial.Trazo = reparada.Select(p => new[] { p[0], p[1] }).ToList();
+            if (version != _versionRuta) return;
+            await DibujarLinea(r, reparada, false);
+            return;
+        }
+
+        var ajustada = await Trazos.AjustarACallesAsync(r.Trazo);
+        if (ajustada == null) return;   // sin internet: se queda la línea recta entre paradas
+
+        // Se guarda en la ruta (y en la ruta oficial, que se comparte en toda la app) para no pedirlo otra vez
+        r.Trazo = ajustada;
+        r.TrazoEnCalles = true;
+        if (r.Oficial != null)
+        {
+            r.Oficial.Trazo = ajustada.Select(p => new[] { p[0], p[1] }).ToList();
+            r.Oficial.TrazoEnCalles = true;
+        }
+        if (version != _versionRuta) return;
+        await DibujarLinea(r, ajustada, false);
+    }
+
+    // Con ruta de la base de datos se muestran todas sus paradas (con nombre, al acercar el zoom)
+    private Task DibujarLinea(Ruta r, List<double[]> pts, bool encuadrar)
+    {
+        // Las paradas de la base de datos a veces quedan desfasadas del recorrido: se dibujan sobre la línea
+        // (la parada más cercana del trazo). Si una queda a más de 200 m, no es de este recorrido y no se dibuja.
+        var paradas = new List<Marcador>();
+        if (r.Oficial != null)
+            foreach (var p in r.Oficial.Paradas)
+            {
+                var q = Geo.ProyectarEnLinea(pts, p.Latitud, p.Longitud, out double metros);
+                if (q != null && metros <= 200) paradas.Add(new Marcador(q[0], q[1], Formato.NombreParada(p.Nombre)));
+            }
+
+        var ini = pts[0];
+        var fin = pts[pts.Count - 1];
+        bool dalton = Estado.Ajustes.Datos.Daltonismo;   // sin colores: cada ruta con su símbolo y su tipo de línea
+        return EnMapa(m => m.DibujarRuta(pts, paradas,
+            new Marcador(ini[0], ini[1], r.OrigenNombre),
+            new Marcador(fin[0], fin[1], r.DestinoNombre), r.Color, encuadrar,
+            dalton ? r.Simbolo : null, dalton ? r.Patron : null));
+    }
+
+    private async Task DibujarViaje(Ruta r, int version)
+    {
+        var tramos = r.Tramos;
+        if (tramos == null || tramos.Count == 0) return;
+
+        await DibujarTramos(r);
+
+        // Los tramos que solo unen puntos con rectas (a pie, o camión sin trazo propio) se ajustan a las calles
+        var pendientes = tramos.Where(t => (t.AjustarACalles || t.Reparar) && !t.Ajustado).ToList();
+        if (pendientes.Count == 0) return;
+
+        var resultados = await Task.WhenAll(pendientes.Select(async t =>
+        {
+            if (!t.EsBus)
+            {
+                // A pie: la ruta por banquetas y las instrucciones (calles y giros)
+                var (caminata, pasos) = await Trazos.CaminataAsync(t.Puntos[0], t.Puntos[t.Puntos.Count - 1]);
+                if (pasos != null && pasos.Count > 0) t.Instrucciones = pasos;
+                return (t, linea: caminata);
+            }
+            return (t, linea: t.Reparar
+                ? (await Trazos.ReparaTramosRectosAsync(t.Puntos)).Linea
+                : await Trazos.AjustarACallesAsync(t.Puntos, false));
+        }));
+        bool alguno = false;
+        foreach (var (t, linea) in resultados)
+        {
+            t.Ajustado = true;
+            if (linea == null) continue;
+            var ini = t.Puntos[0];
+            var fin = t.Puntos[t.Puntos.Count - 1];
+            if (!t.EsBus)   // a pie: que el recorrido empiece y termine en el punto exacto
+            {
+                linea.Insert(0, ini);
+                linea.Add(fin);
+            }
+            t.Puntos = linea;
+            alguno = true;
+        }
+        if (alguno && version == _versionRuta) await DibujarTramos(r, false);
+        await InvokeAsync(StateHasChanged);   // ya llegaron las instrucciones para caminar
+    }
+
+    private Task DibujarTramos(Ruta r, bool encuadrar = true)
+    {
+        var tramos = r.Tramos;
+        var o = tramos[0].Puntos[0];
+        var ult = tramos[tramos.Count - 1].Puntos;
+        var d = ult[ult.Count - 1];
+
+        var paradas = new List<Marcador>();
+        foreach (var tr in tramos.Where(t => t.EsBus))
+        {
+            var a = tr.Puntos[0];
+            var b = tr.Puntos[tr.Puntos.Count - 1];
+            string simbolo = Estado.Ajustes.Datos.Daltonismo ? tr.Simbolo : null;
+            if (tr.TextoInicio != null) paradas.Add(new Marcador(a[0], a[1], tr.TextoInicio, simbolo));
+            if (tr.TextoFin != null) paradas.Add(new Marcador(b[0], b[1], tr.TextoFin, simbolo));
+        }
+        var escalas = (r.Escalas ?? new List<Sugerencia>()).Select(e => new Marcador(e.Lat, e.Lng, e.Nombre)).ToList();
+        string origen = string.IsNullOrWhiteSpace(r.OrigenNombre) ? Estado.Origen : r.OrigenNombre;
+        string destino = string.IsNullOrWhiteSpace(r.DestinoNombre) ? Estado.Destino : r.DestinoNombre;
+
+        return EnMapa(m => m.DibujarViaje(
+            tramos.Select(t => new TramoMapa(t.EsBus, t.Puntos, t.Color, Estado.Ajustes.Datos.Daltonismo ? t.Patron : null)).ToList(),
+            paradas,
+            new Marcador(o[0], o[1], origen),
+            new Marcador(d[0], d[1], destino),
+            escalas));
+    }
+
+    // Ubicaciones escritas por el usuario
+    public async Task<List<Sugerencia>> BuscarSugerenciasAsync(string tipo, string texto)
+    {
+        _versionUbic.TryGetValue(tipo, out int version);
+        _versionUbic[tipo] = ++version;
+
+        texto = (texto ?? "").Trim();
+        if (texto.Length < 2)
+        {
+            await LimpiarSugerencias();
+            return new List<Sugerencia>();
+        }
+
+        try
+        {
+            var lista = await Trazos.BuscarLugaresAsync(texto);
+            if (_versionUbic[tipo] != version) return null;
+
+            await EnMapa(m => m.MostrarSugerencias(lista));
+            return lista;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    public async Task ElegirUbicacion(string tipo, string nombre, double lat, double lng, string etiqueta = "")
+    {
+        await LimpiarSugerencias();
+        await EnMapa(m => m.PonerUbicacion(tipo, lat, lng, nombre, etiqueta));
+    }
+
+    public Task QuitarUbicacion(string tipo) => EnMapa(m => m.QuitarUbicacion(tipo));
+
+    public Task LimpiarSugerencias() => EnMapa(m => m.MostrarSugerencias(null));
+
+    // "Mi ubicación actual"
+    public double[] MiPosicion => Estado.MiPosicion;
+
+    public async Task<bool> MostrarMiUbicacionAsync()
+    {
+        if (!await Listo()) return false;
+        var pos = Estado.MiPosicion;
+        if (pos == null)
+        {
+            pos = await Ubicacion.ObtenerAsync();
+            Estado.MiPosicion = pos;
+        }
+        if (pos == null) return false;
+
+        await EnMapa(m => m.PonerUbicacion("origen", pos[0], pos[1], EstadoApp.MiUbicacion, ""));
+        return true;
+    }
+
+    /// <summary>Pide la ubicación otra vez (el usuario se movió) y dibuja el punto azul "Estás aquí".</summary>
+    public async Task<double[]> ActualizarPosicionAsync(bool centrar)
+    {
+        if (!await Listo()) return null;
+        var pos = await Ubicacion.ObtenerAsync();
+        if (pos == null) return null;
+        Estado.MiPosicion = pos;
+        await EnMapa(m => m.PonerPosicion(pos[0], pos[1], centrar));
+        return pos;
+    }
+
+    private async Task CentrarEnMi()
+    {
+        var pos = await ActualizarPosicionAsync(true);
+        if (pos == null) BannerTexto("No pudimos obtener tu ubicación. Revisa que el servicio de ubicación esté activo.");
+    }
+
+    // Paradas y puntos de referencia (Overpass / OpenStreetMap)
+    public async Task CargarParadasAsync(double latO, double lngO, double latD, double lngD)
+    {
+        var puntos = await Trazos.ParadasEntreAsync(latO, lngO, latD, lngD);
+        await EnMapa(m => m.CargarPuntos(puntos.Select(p => new PuntoReferencia(p.Lat, p.Lng, p.Nombre, p.Tipo)).ToList()));
+    }
+
+    // Reportar un problema
+    private void AbrirReporte()
+    {
+        if (!Estado.RequiereCuenta("Inicia sesión para reportar problemas y ayudar a otras personas a viajar mejor.")) return;
+        _rutaReporte = _tarjeta != null && !_tarjeta.EsViaje ? _tarjeta.Numero : 0;
+        _tipoReporte = "trafico";
+        _detalleReporte = "";
+        _mensajeReporte = null;
+        _reporteEnviado = false;
+        _reporte = true;
+    }
+
+    private async Task EnviarReporte()
+    {
+        var tipo = TipoReporte;
+        var ruta = _rutaReporte > 0 ? Estado.BuscarRuta(_rutaReporte) : null;
+        string titulo = tipo.Texto + (ruta != null ? " en " + ruta.Nombre : "");
+        string detalle = string.IsNullOrWhiteSpace(_detalleReporte) ? "Reportado desde el mapa." : _detalleReporte.Trim();
+
+        _enviandoReporte = true;
+        try
+        {
+            double[] ubicacion = tipo.Movilidad ? await Estado.UbicacionDeReporteAsync() : null;
+            var (ok, error) = await Estado.PublicarAvisoAsync(titulo, detalle, ruta, tipo.Dias, ubicacion);
+            _reporteEnviado = ok;
+            _mensajeReporte = !ok ? error
+                : tipo.Movilidad && ubicacion == null ? T["Tu reporte se envió, pero no pudimos tomar tu ubicación: no aparecerá marcado en el mapa."]
+                : tipo.Movilidad ? T["¡Gracias! Tu reporte quedó marcado en el mapa y se quitará solo cuando caduque."]
+                : T["¡Gracias! Tu reporte ya es visible para la comunidad y se quitará solo cuando caduque."];
+        }
+        finally
+        {
+            _enviandoReporte = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        Estado.BarraLateralCambio -= AlCambiarBarraLateral;
+        Estado.Cambio -= AlCambiarEstado;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _destruido = true;
+        _listo.TrySetResult(false);
+        await _mapa.DisposeAsync();
+        _referencia?.Dispose();
+    }
+}

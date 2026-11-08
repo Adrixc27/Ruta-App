@@ -1,0 +1,145 @@
+namespace RutaApp.Interfaz.Estilos;
+
+/// <summary>Sidebar y pantallas de la app (Planificar, Comparar, Rutas).</summary>
+public static class CssShell
+{
+    public const string Reglas = """
+        .app-shell { display: flex; height: 100vh; background: var(--bg-panel); }
+        .sidebar {
+            width: 260px; flex: none; background: var(--bg-sidebar); border-right: 1px solid var(--border-default);
+            padding: 24px; display: flex; flex-direction: column; transition: width .22s ease-in-out; overflow: hidden;
+        }
+        .sidebar.colapsado { width: 100px; }
+        .sidebar-etiqueta, .marca-texto, .nav-btn span { transition: opacity .15s ease-in-out; }
+        .sidebar.colapsado .sidebar-etiqueta, .sidebar.colapsado .marca-texto, .sidebar.colapsado .nav-btn span { opacity: 0; }
+        .sidebar.colapsado .nav-btn span { flex: 0; width: 0; overflow: hidden; }
+        .sidebar-marca { min-height: 40px; }
+        .sidebar-menu { margin-top: 32px; flex: 1; }
+        .sidebar-etiqueta { font-size: 11px; font-weight: 700; color: var(--text-secondary); margin: 0 0 8px 16px; }
+        .nav-btn {
+            position: relative; display: flex; align-items: center; gap: 16px; width: 100%; padding: 12px 16px; margin-bottom: 8px;
+            border: 0; border-radius: 12px; background: transparent; color: var(--text-secondary);
+            font-size: 15px; font-weight: 600; cursor: pointer; text-align: left; white-space: nowrap;
+        }
+        .nav-btn:hover { background: var(--bg-panel); }
+        .nav-btn.activo { background: var(--brand-primary); color: #fff; font-weight: 700; }
+        .nav-btn span { flex: 1; }
+        .nav-badge {
+            font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 10px;
+            background: var(--brand-tint); color: var(--brand-primary);
+        }
+        .nav-btn.activo .nav-badge { background: #fff; }
+        .sidebar.colapsado .nav-badge { position: absolute; top: 2px; left: 30px; }
+        .sidebar-pie .nav-btn { padding-top: 10px; padding-bottom: 10px; font-size: 14px; margin-bottom: 0; }
+        .sidebar-sesion { margin-top: 12px; padding-top: 16px; border-top: 1px solid var(--border-default); }
+        .sidebar-sesion .nav-btn { padding-top: 8px; padding-bottom: 8px; }
+        .contenido { flex: 1; min-width: 0; position: relative; overflow: hidden; background: var(--bg-panel); }
+
+        /* Pantalla dividida: panel a la izquierda y mapa a la derecha */
+        .split { display: grid; height: 100%; }
+        .split-380 { grid-template-columns: 380px 1fr; }
+        .split-400 { grid-template-columns: 400px 1fr; }
+        .panel-lateral { background: var(--bg-panel); border-right: 1px solid var(--border-default); min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+        .panel-scroll { padding: 24px; overflow-y: auto; flex: 1; }
+        .panel-comparar, .panel-rutas { padding: 24px; }
+        .bloque { margin-top: 24px; }
+        .titulo-panel { font-size: 20px; font-weight: 900; }
+        .titulo-panel.grande { font-size: 22px; }
+        .sub-panel { color: var(--text-secondary); font-size: 14px; margin-top: 6px; }
+        .nota-panel { color: var(--text-secondary); font-size: 12px; margin-bottom: 12px; }
+
+        /* Stepper */
+        .stepper { display: flex; align-items: center; }
+        .stepper .paso { display: flex; align-items: center; gap: 6px; }
+        .stepper .circulo {
+            width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-default); background: #fff;
+            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--text-secondary);
+        }
+        .stepper .paso.activo .circulo { background: var(--brand-primary); border-color: var(--brand-primary); color: #fff; }
+        .stepper .paso.hecho .circulo { border-color: var(--brand-primary); color: var(--brand-primary); }
+        .stepper .etiqueta { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+        .stepper .paso.activo .etiqueta { font-weight: 700; color: var(--text-primary); }
+        .stepper .conector { flex: 1; height: 2px; border-radius: 1px; margin: 0 8px; background: var(--border-default); }
+        .stepper .conector.hecho { background: var(--brand-primary); }
+
+        /* Planificar */
+        .campo-wrap { position: relative; margin-bottom: 12px; }
+        .campo-wrap.escala { display: flex; align-items: center; gap: 6px; }
+        .campo-wrap.escala .campo { flex: 1; }
+        .sugerencias {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 8px; z-index: 50; max-height: 300px; overflow-y: auto;
+            background: var(--bg-card); border: 1px solid var(--border-default); border-radius: 10px; box-shadow: 0 2px 12px rgba(27, 54, 93, .18);
+        }
+        .sugerencia { display: flex; gap: 10px; padding: 8px 12px; cursor: pointer; }
+        .sugerencia:hover { background: var(--brand-tint); }
+        .sug-num { width: 22px; height: 22px; border-radius: 50%; background: var(--text-primary); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none; margin-top: 2px; }
+        .sugerencia div { min-width: 0; }
+        .sugerencia b, .sugerencia small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sugerencia b { font-size: 14px; font-weight: 600; }
+        .sugerencia small { font-size: 12px; color: var(--text-secondary); }
+        .viaje-historial { display: flex; gap: 12px; align-items: flex-start; background: var(--bg-card); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+        .viaje-historial:hover { background: var(--brand-tint); }
+        .viaje-historial .icono { margin-top: 2px; }
+        .viaje-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .viaje-texto b { font-size: 14px; font-weight: 600; }
+        .viaje-texto span { font-size: 12px; font-weight: 600; }
+        .viaje-texto small { font-size: 12px; color: var(--text-secondary); }
+        .viaje-historial .btn-icono { padding: 4px; }
+
+        /* Comparar */
+        .volver { padding-left: 0; }
+        .resumen-viaje { display: flex; align-items: center; gap: 12px; padding: 15px; margin-top: 24px; border-radius: 14px; }
+        .resumen-puntos { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+        .resumen-puntos i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+        .resumen-puntos span { width: 2px; height: 14px; background: var(--border-default); }
+        .resumen-textos { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .resumen-textos b { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .resumen-textos small { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+        .resumen-textos b.destino { margin-top: 8px; }
+        .lista-opciones { flex: 1; overflow-y: auto; margin-top: 16px; min-height: 0; }
+        .opcion-ruta { background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 14px; padding: 16px; margin-bottom: 12px; cursor: pointer; }
+        .opcion-ruta.sel { border: 2px solid var(--brand-primary); padding: 15px; }
+        .opcion-cabecera { display: flex; align-items: center; gap: 8px; }
+        .opcion-nombre { flex: 1; font-size: 16px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .etiqueta-opcion { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: var(--bg-panel); color: var(--text-secondary); }
+        .etiqueta-opcion.recomendado { background: var(--brand-tint); color: var(--brand-primary); }
+        .opcion-cabecera .btn-icono { padding: 4px; }
+        .opcion-datos { display: flex; align-items: center; gap: 5px; margin-top: 12px; font-size: 13px; }
+        .opcion-datos b { margin-right: 9px; }
+        .opcion-datos span { color: var(--text-secondary); }
+        .opcion-datos small { color: var(--text-secondary); font-size: 12px; margin-left: 7px; }
+        .opcion-linea { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+        .chip-linea { background: var(--brand-tint); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; flex: none; }
+        .opcion-linea small { font-size: 12px; color: var(--text-secondary); }
+
+        /* Rutas */
+        .pestanas { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 5px; border-radius: 12px; margin-top: 16px; }
+        .seg {
+            display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; border: 0; border-radius: 9px;
+            background: transparent; color: var(--text-secondary); font-size: 14px; font-weight: 600; cursor: pointer;
+        }
+        .seg.activo { background: var(--brand-primary); color: #fff; font-weight: 700; }
+        .contador { font-style: normal; font-size: 12px; font-weight: 700; padding: 1px 7px; border-radius: 8px; background: var(--brand-tint); color: var(--brand-primary); }
+        .seg.activo .contador { background: #fff; }
+        .busqueda-panel { margin-top: 16px; }
+        .chips { display: flex; gap: 8px; margin-top: 16px; }
+        .chip-radio { padding: 6px 13px; border-radius: 999px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; }
+        .chip-radio:hover { border-color: var(--brand-primary); }
+        .chip-radio.activo { background: var(--brand-tint); border-color: var(--brand-primary); color: var(--brand-primary); font-weight: 700; }
+        .lista-rutas { flex: 1; overflow-y: auto; margin-top: 16px; min-height: 0; }
+        .ruta-item { display: flex; align-items: center; gap: 12px; background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; }
+        .ruta-item.sel { background: #fff; border: 2px solid var(--brand-primary); padding: 11px 13px; }
+        .ruta-numero { width: 40px; height: 40px; border-radius: 10px; background: var(--brand-tint); color: var(--brand-primary); font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex: none; }
+        .ruta-item.sel .ruta-numero { background: var(--brand-primary); color: #fff; }
+        .ruta-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+        .ruta-nombre { display: flex; align-items: center; gap: 8px; }
+        .ruta-nombre b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .etiqueta-variantes { background: var(--brand-tint); color: var(--brand-primary); font-size: 10px; font-weight: 700; border-radius: 5px; padding: 1px 6px; }
+        .etiqueta-desvio { background: var(--warning-tint); color: var(--warning); font-size: 10px; font-weight: 700; border-radius: 5px; padding: 1px 6px; }
+        .ruta-texto small { font-size: 12px; color: var(--text-secondary); }
+        .en-mapa { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--brand-primary); }
+        .invitacion { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 17px; margin-top: 8px; border-radius: 14px; }
+        .invitacion small { font-size: 12px; color: var(--text-secondary); }
+        .nota-pie { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: 12px; }
+        """;
+}
