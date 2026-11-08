@@ -1,0 +1,24 @@
+@implements IDisposable
+@inject IJSRuntime JS
+@inject EstadoApp Estado
+
+@* Sin pantalla: aplica a toda la app las opciones de accesibilidad (daltonismo, guía visual, sin animaciones). *@
+
+@code {
+    protected override void OnInitialized() => Estado.Ajustes.Cambio += Cambiaron;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await AplicarAsync();
+    }
+
+    private void Cambiaron() => _ = InvokeAsync(AplicarAsync);
+
+    private async Task AplicarAsync()
+    {
+        try { await JS.InvokeVoidAsync("rutaA11y.aplicar", Estado.Ajustes.Datos); }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or TaskCanceledException) { }
+    }
+
+    public void Dispose() => Estado.Ajustes.Cambio -= Cambiaron;
+}

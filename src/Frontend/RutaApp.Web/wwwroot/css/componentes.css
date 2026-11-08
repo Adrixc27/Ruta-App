@@ -1,0 +1,77 @@
+/* ═══════════════ BOTONES ═══════════════ */
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 20px; border-radius: 12px; border: 1px solid transparent;
+    font-size: 15px; font-weight: 700; cursor: pointer; text-align: center; transition: opacity .15s, background .15s;
+}
+.btn:disabled { opacity: .5; cursor: default; }
+.btn-primario { background: var(--brand-primary); color: #fff; }
+.btn-primario:hover:not(:disabled) { opacity: .9; }
+.btn-primario:active:not(:disabled) { opacity: .78; }
+.btn-contorno { background: var(--bg-white); color: var(--text-primary); border-color: var(--border-default); font-size: 14px; padding: 12px 20px; }
+.btn-contorno:hover:not(:disabled) { background: var(--bg-panel); }
+.btn-contorno.azul { color: var(--brand-primary); }
+.btn-suave { background: var(--bg-panel); color: var(--text-primary); border-color: var(--border-default); font-size: 13px; font-weight: 600; padding: 11px 16px; }
+.btn-suave:hover { background: var(--bg-white); }
+.btn-sinborde { background: var(--bg-white); color: var(--brand-primary); border: 0; }
+.btn-sinborde:hover { background: var(--bg-panel); }
+.btn-chico { font-size: 14px; padding: 9px 14px; }
+.btn-grande { font-size: 16px; padding: 17px 24px; }
+.btn-ancho { width: 100%; }
+.btn-buscar { font-size: 16px; padding: 16px; margin-top: 24px; }
+.btn-ghost, .btn-ghost-oscuro {
+    background: transparent; border: 0; border-radius: 8px; cursor: pointer; padding: 6px 8px;
+    color: var(--brand-primary); font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-ghost:hover { background: var(--brand-tint); }
+.btn-ghost-oscuro { color: var(--text-primary); font-weight: 600; font-size: 15px; padding: 8px 14px; margin-right: 12px; }
+.btn-ghost-oscuro:hover { background: var(--brand-tint); }
+.btn-ghost.subrayado { text-decoration: underline; }
+.btn-ghost.centrado { display: flex; margin: 18px auto 0; font-size: 14px; }
+.btn-mini { font-size: 12px; padding: 2px 6px; }
+.btn-icono {
+    display: inline-flex; align-items: center; justify-content: center; padding: 8px; border: 0; border-radius: 8px;
+    background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btn-icono:hover { background: var(--bg-panel); }
+.btn-icono.suave { background: var(--brand-tint); color: var(--brand-primary); }
+.btn-icono.suave:hover { background: #c6dcfb; }
+
+.card { background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 16px; }
+.label-upper { color: var(--text-secondary); font-size: 13px; font-weight: 700; margin: 28px 0 4px; }
+
+.error-texto { color: var(--danger); font-size: 12px; margin: 10px 0; }
+.aviso-texto { color: var(--text-secondary); font-size: 12px; margin: 10px 0; }
+
+/* ═══════════════ CAMPOS ═══════════════ */
+.campo {
+    display: flex; align-items: center; gap: 12px; background: var(--bg-white);
+    border: 1px solid var(--border-default); padding: 0 14px; width: 100%;
+}
+.campo.enfocado { border-color: var(--brand-primary); box-shadow: 0 0 0 1px var(--brand-primary); }
+.campo input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 14px; color: var(--text-primary); padding: 10px 0; }
+.campo input::placeholder { color: var(--text-secondary); opacity: .75; }
+.campo-punto { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.campo .btn-icono { padding: 6px; margin-right: -8px; }
+
+.textarea, .area-texto textarea {
+    width: 100%; border: 1px solid var(--border-default); border-radius: 12px; background: var(--bg-white);
+    padding: 12px 14px; font: inherit; font-size: 14px; color: var(--text-primary); resize: vertical; outline: none;
+}
+.textarea:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 1px var(--brand-primary); }
+
+/* ═══════════════ MARCA ═══════════════ */
+.marca { display: flex; align-items: center; gap: 12px; }
+.marca-logo { width: 40px; height: 40px; border-radius: 10px; background: var(--brand-primary); color: #fff; font-size: 20px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex: none; }
+.marca-logo-blanco { background: #fff; color: var(--brand-primary); }
+.marca-clara .marca-logo { background: #fff; color: var(--brand-primary); }
+.marca-texto { display: flex; flex-direction: column; line-height: 1.1; }
+.marca-texto b { font-size: 22px; font-weight: 900; }
+.marca-texto small { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+.marca-clara .marca-texto { color: #fff; }
+.marca-clara .marca-texto small { color: rgba(255, 255, 255, .85); }
+.marca-azul b, .marca-azul small { color: var(--brand-primary); }
+.marca-azul b { font-size: 20px; }
+.marca-azul small { font-size: 10px; opacity: .85; }
+.marca-clickable { cursor: pointer; }
+
