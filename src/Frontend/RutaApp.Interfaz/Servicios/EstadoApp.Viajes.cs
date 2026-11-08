@@ -21,10 +21,10 @@ public partial class EstadoApp
         if (habiaRepetidos) GuardarDatos();
     }
 
-    /// <summary>Dos viajes son el mismo si tienen igual origen, destino y camiones.</summary>
+    // Dos viajes son el mismo si tienen igual origen, destino y camiones.
     public static string ClaveTrayecto(Trayecto t) => (t.Origen + ">" + t.Destino + "|" + t.Lineas).Trim().ToLowerInvariant();
 
-    /// <summary>Agrega el viaje a los guardados o devuelve el que ya estaba con la misma clave.</summary>
+    // Agrega el viaje a los guardados o devuelve el que ya estaba con la misma clave.
     private Trayecto GuardarSinRepetir(Trayecto t, out bool yaEstaba)
     {
         var existente = Trayectos.FirstOrDefault(x => ClaveTrayecto(x) == ClaveTrayecto(t));
@@ -34,7 +34,7 @@ public partial class EstadoApp
         return t;
     }
 
-    /// <summary>Limpia los viajes repetidos que se hayan guardado antes. Devuelve true si quitó alguno.</summary>
+    // Limpia los viajes repetidos que se hayan guardado antes. Devuelve true si quitó alguno.
     private bool QuitarTrayectosRepetidos()
     {
         var vistos = new Dictionary<string, Trayecto>();
@@ -62,8 +62,7 @@ public partial class EstadoApp
         _ = _datos.GuardarAsync(Usuario.Id, instantanea);
     }
 
-    // Viajes guardados (personalizados)
-    /// <summary>Guarda el viaje del historial, o lo quita de los guardados si ya lo estaba.</summary>
+    // Guarda el viaje del historial, o lo quita de los guardados si ya lo estaba.
     public void AlternarGuardadoHistorial(ViajeHistorial v)
     {
         if (!RequiereCuenta("Inicia sesión para guardar tus viajes.")) return;
@@ -94,10 +93,8 @@ public partial class EstadoApp
 
     private readonly List<Ruta> _viajesGuardados = new();
 
-    /// <summary>
-    /// Guarda o quita una opción elegida en Comparar: una ruta normal se guarda como siempre y una opción de viaje,
-    /// como viaje personalizado en el perfil.
-    /// </summary>
+    // Guarda o quita una opción elegida en Comparar: una ruta normal se guarda como siempre y una opción de viaje,
+    // como viaje personalizado en el perfil.
     public void AlternarFavoritoViaje(Ruta r)
     {
         if (!r.EsViaje) { AlternarGuardada(r); return; }
@@ -123,7 +120,7 @@ public partial class EstadoApp
         GuardarDatos();
     }
 
-    /// <summary>El viaje de una opción de Comparar como Trayecto (para guardarlo o compartirlo), sin guardarlo todavía.</summary>
+    // El viaje de una opción de Comparar como Trayecto (para guardarlo o compartirlo), sin guardarlo todavía.
     public Trayecto TrayectoDeOpcion(Ruta r) => new Trayecto
     {
         Alias = Destino,
@@ -135,7 +132,7 @@ public partial class EstadoApp
         Tramos = CopiarTramos(r.Tramos), Escalas = (r.Escalas ?? Escalas).ToList()
     };
 
-    /// <summary>Quita un viaje guardado del perfil y deja de verse como guardado en el historial y en Comparar.</summary>
+    // Quita un viaje guardado del perfil.
     public void QuitarTrayecto(Trayecto t)
     {
         Trayectos.Remove(t);
@@ -143,7 +140,7 @@ public partial class EstadoApp
         GuardarDatos();
     }
 
-    // Si el usuario quita un viaje desde Perfil, deja de verse como guardado en el historial y en Comparar
+    // Quita la marca de guardado del historial y de Comparar si su viaje ya no está en el perfil.
     private void SincronizarGuardados()
     {
         foreach (var v in Historial)
@@ -161,8 +158,7 @@ public partial class EstadoApp
             TextoFin = t.TextoFin, Linea = t.Linea, Color = t.Color, Minutos = t.Minutos, AjustarACalles = t.AjustarACalles && !t.Ajustado, Reparar = t.Reparar && !t.Ajustado, Ajustado = t.Ajustado
         }).ToList();
 
-    // Viajes en el mapa
-    /// <summary>Arma una Ruta de tipo viaje (para dibujarla en el mapa) a partir de un viaje del historial o guardado.</summary>
+    // Arma una Ruta de tipo viaje (para dibujarla en el mapa) a partir de un viaje del historial o guardado.
     public Ruta RutaDeViaje(IEnumerable<Tramo> tramos, List<Sugerencia> escalas, string origen, string destino,
                             int minutos, decimal tarifa, string lineas)
     {
@@ -196,11 +192,8 @@ public partial class EstadoApp
     public Ruta RutaDeViaje(Trayecto t) =>
         RutaDeViaje(t.Tramos, t.Escalas, t.Origen, t.Destino, t.Minutos, t.Tarifa, t.Lineas);
 
-    // Historial de viajes
-    /// <summary>
-    /// Anota en el historial el viaje que acaba de empezar el usuario. Si salió de "Mi ubicación actual", busca en segundo plano
-    /// la calle donde estaba. Los invitados no tienen historial: devuelve null si no se anotó.
-    /// </summary>
+    // Anota en el historial el viaje que acaba de empezar el usuario. Si salió de "Mi ubicación actual", busca en segundo plano
+    // la calle donde estaba. Los invitados no tienen historial: devuelve null si no se anotó.
     public ViajeHistorial RegistrarViaje(Ruta r)
     {
         if (!ConCuenta) return null;
@@ -270,8 +263,7 @@ public partial class EstadoApp
         GuardarDatos();
     }
 
-    // Importar lo que compartió otra persona
-    /// <summary>Lee un código (RUTA1:...) y lo agrega al perfil. Devuelve el mensaje para mostrar.</summary>
+    // Lee un código (RUTA1:...) y lo agrega al perfil. Devuelve el mensaje para mostrar.
     public string ImportarCodigo(string texto)
     {
         var c = CodigoCompartir.Leer(texto);
@@ -303,10 +295,10 @@ public partial class EstadoApp
         return "Ese código no se pudo leer.";
     }
 
-    /// <summary>Busca direcciones y lugares por nombre (para guardar un lugar escribiendo su dirección).</summary>
+    // Busca direcciones y lugares por nombre (para guardar un lugar escribiendo su dirección).
     public Task<List<Sugerencia>> BuscarLugaresAsync(string texto) => _trazos.BuscarLugaresAsync(texto);
 
-    /// <summary>Nombre de la calle de un punto del mapa (para ponerle nombre a un lugar elegido tocando el mapa).</summary>
+    // Nombre de la calle de un punto del mapa (para ponerle nombre a un lugar elegido tocando el mapa).
     public Task<string> CalleDeAsync(double lat, double lng) => _trazos.CalleDeAsync(lat, lng);
 
     public static string Iniciales(string nombre)

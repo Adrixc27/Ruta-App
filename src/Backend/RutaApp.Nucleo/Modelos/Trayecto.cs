@@ -2,10 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace RutaApp.Nucleo.Modelos;
 
-/// <summary>
-/// Un viaje guardado por el usuario (Perfil → Rutas guardadas → Personalizadas). Conserva el recorrido para poder
-/// volver a verlo en el mapa y compartirlo.
-/// </summary>
+// Un viaje guardado por el usuario (Perfil → Rutas guardadas → Personalizadas). Conserva el recorrido para poder
+// volver a verlo en el mapa y compartirlo.
 public class Trayecto
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");

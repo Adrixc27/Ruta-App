@@ -3,8 +3,8 @@ using Windows.Devices.Geolocation;
 
 namespace RutaApp.Escritorio;
 
-/// Ubicación del equipo con el servicio de ubicación de Windows. Si está desactivado o no da permiso,
-/// se usa la ubicación aproximada por IP
+// Ubicación del equipo con el servicio de ubicación de Windows. Si está desactivado o no da permiso,
+// se usa la ubicación aproximada por IP
 public class UbicacionWindows : IServicioUbicacion
 {
     private readonly ServicioUbicacionIp _porIp;

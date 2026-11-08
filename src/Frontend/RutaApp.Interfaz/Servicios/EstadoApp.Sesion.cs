@@ -9,10 +9,10 @@ public partial class EstadoApp
     public bool Invitado { get; set; }
     public Usuario Usuario { get; set; }
 
-    /// <summary>true cuando hay una cuenta con sesión iniciada (los invitados no guardan nada).</summary>
+    // true cuando hay una cuenta con sesión iniciada (los invitados no guardan nada).
     public bool ConCuenta => !Invitado && Usuario != null && Usuario.Id > 0;
 
-    /// <summary>Pantalla a la que se va al entrar (las visitas desde la landing van directo a Planificar).</summary>
+    // Pantalla a la que se va al entrar (las visitas desde la landing van directo a Planificar).
     public string DestinoTrasIngreso { get; set; } = "planificar";
 
     public void IniciarSesion(Usuario usuario)
@@ -33,10 +33,10 @@ public partial class EstadoApp
         HaIngresado = true;
     }
 
-    /// <summary>Se dispara cuando se pide ver otra vez la animación de entrada estando ya en la landing.</summary>
+    // Se dispara cuando se pide ver otra vez la animación de entrada estando ya en la landing.
     public event Action IntroSolicitada;
 
-    /// <summary>Lleva a la landing page. Con animación (al tocar el logo) se vuelve a reproducir la animación de entrada.</summary>
+    // Lleva a la landing page. Con animación (al tocar el logo) se vuelve a reproducir la animación de entrada.
     public void IrALanding(bool conAnimacion = false)
     {
         if (conAnimacion)
@@ -47,12 +47,10 @@ public partial class EstadoApp
         _nav.NavigateTo("/");
     }
 
-    /// <summary>true cuando la animación de entrada (el camión que revela "RUTA") ya se vio en esta sesión.</summary>
+    // true cuando la animación de entrada (el camión que revela "RUTA") ya se vio en esta sesión.
     public bool IntroVista { get; set; }
 
-    /// <summary>
-    /// Tras iniciar sesión, registrarse o entrar como invitado: carga las rutas, los datos del usuario y abre la primera pantalla.
-    /// </summary>
+    // Tras iniciar sesión, registrarse o entrar como invitado: carga las rutas, los datos del usuario y abre la primera pantalla.
     public async Task CompletarIngresoAsync()
     {
         await PrepararCuentaAsync(ConCuenta ? "Preparando tu cuenta…" : "Cargando rutas…");
@@ -79,7 +77,7 @@ public partial class EstadoApp
     // "Recordarme": la sesión sigue abierta aunque cierres y abras la app
     private bool _restauracionIntentada;
 
-    /// <summary>Guarda (o quita) el recordatorio de la sesión de este usuario.</summary>
+    // Guarda (o quita) el recordatorio de la sesión de este usuario.
     public void RecordarSesion(bool recordar)
     {
         if (!ConCuenta) return;
@@ -87,7 +85,7 @@ public partial class EstadoApp
         _ajustes.Guardar();
     }
 
-    /// <summary>Si el usuario pidió "Recordarme", vuelve a abrir su sesión al iniciar la app. Devuelve true si hay sesión.</summary>
+    // Si el usuario pidió "Recordarme", vuelve a abrir su sesión al iniciar la app. Devuelve true si hay sesión.
     public async Task<bool> RestaurarSesionAsync()
     {
         if (HaIngresado) return ConCuenta;
@@ -154,8 +152,7 @@ public partial class EstadoApp
         _nav.NavigateTo("/");
     }
 
-    // Borrar la cuenta
-    /// <summary>Borra la cuenta y todo lo suyo (base de datos y datos de este equipo). Devuelve el error, o null si salió bien.</summary>
+    // Borra la cuenta y todo lo suyo (base de datos y datos de este equipo). Devuelve el error, o null si salió bien.
     public async Task<string> BorrarCuentaAsync()
     {
         if (!ConCuenta) return "No hay una cuenta con sesión iniciada.";
@@ -197,11 +194,10 @@ public partial class EstadoApp
         Notificar();
     }
 
-    // Aviso "inicia sesión para guardar"
-    /// <summary>Mensaje que pide iniciar sesión (lo muestra el diseño de la app). null = no hay aviso.</summary>
+    // Mensaje que pide iniciar sesión (lo muestra el diseño de la app). null = no hay aviso.
     public string AvisoSesion { get; private set; }
 
-    /// <summary>Guardar rutas, viajes y lugares es solo para quien tiene cuenta. Devuelve true si se puede continuar.</summary>
+    // Guardar rutas, viajes y lugares es solo para quien tiene cuenta. Devuelve true si se puede continuar.
     public bool RequiereCuenta(string motivo)
     {
         if (ConCuenta) return true;

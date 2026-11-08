@@ -3,21 +3,19 @@ using System.Collections.Generic;
 
 namespace RutaApp.Motor
 {
-    /// <summary>
-    /// Red FICTICIA para probar el motor. Los nombres, tiempos y confiabilidades son inventados y no representan ninguna ruta real;
-    /// las coordenadas solo ubican la red en un lugar plausible para verla en el mapa.
-    ///
-    ///   P06
-    ///    |  R2 (norte-sur, ambos sentidos, confiabilidad desconocida)
-    ///   P01 --R1-- P02 --R1-- P03 --R1-- P04(no accesible) --R1-- P05      R1: este-oeste, ambos sentidos, 0.92
-    ///     \_____________R3 exprés (solo ida)__P09__________________/        R3: P01 -> P09 -> P05, solo ida, 0.85
-    ///                       |  P09 está a ~70 m de P03 (transbordo caminando)
-    ///                      P07
-    ///                       |
-    ///                      P08 --R4 (solo ida, desconocida)--> P10(no accesible) --> P11 (sin salida)
-    ///
-    ///   P12: parada sin ninguna ruta (destino inaccesible).
-    /// </summary>
+    // Red FICTICIA para probar el motor. Los nombres, tiempos y confiabilidades son inventados y no representan ninguna ruta real;
+    // las coordenadas solo ubican la red en un lugar plausible para verla en el mapa.
+    //
+    //   P06
+    //    |  R2 (norte-sur, ambos sentidos, confiabilidad desconocida)
+    //   P01 --R1-- P02 --R1-- P03 --R1-- P04(no accesible) --R1-- P05      R1: este-oeste, ambos sentidos, 0.92
+    //     \_____________R3 exprés (solo ida)__P09__________________/        R3: P01 -> P09 -> P05, solo ida, 0.85
+    //                       |  P09 está a ~70 m de P03 (transbordo caminando)
+    //                      P07
+    //                       |
+    //                      P08 --R4 (solo ida, desconocida)--> P10(no accesible) --> P11 (sin salida)
+    //
+    //   P12: parada sin ninguna ruta (destino inaccesible).
     public static class DatosPrueba
     {
         public static DatosTransporte Crear()
@@ -60,7 +58,7 @@ namespace RutaApp.Motor
             return datos;
         }
 
-        /// <summary>Punto a unos metros de una parada de prueba (desplazamiento en grados; 0.001° ≈ 110 m de latitud).</summary>
+        // Punto a unos metros de una parada de prueba (desplazamiento en grados; 0.001° ≈ 110 m de latitud).
         public static Coordenada CercaDe(string idParada, double desplazamientoLatitud = 0.0008, double desplazamientoLongitud = 0)
         {
             foreach (var p in Crear().Paradas)

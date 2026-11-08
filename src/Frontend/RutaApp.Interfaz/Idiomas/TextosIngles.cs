@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Idiomas;
 
-/// <summary>Traducciones al inglés: la clave es el texto en español tal como aparece en la interfaz.</summary>
+// Traducciones al inglés: la clave es el texto en español tal como aparece en la interfaz.
 public static class TextosIngles
 {
     public static readonly Dictionary<string, string> Textos = Reunir(InglesPantallas.Pares, InglesAjustes.Pares, InglesMensajes.Pares);

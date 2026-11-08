@@ -4,7 +4,7 @@ namespace RutaApp.Datos;
 
 public static class RegistroDatos
 {
-    /// <summary>Registra los servicios que leen y escriben en MySQL.</summary>
+    // Registra los servicios que leen y escriben en MySQL.
     public static IServiceCollection AgregarDatos(this IServiceCollection servicios)
     {
         servicios.AddSingleton<RutaService>();

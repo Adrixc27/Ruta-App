@@ -2,11 +2,8 @@ using System.Globalization;
 
 namespace RutaApp.Nucleo.Servicios;
 
-/// <summary>
-/// Arma opciones de viaje con el camino más corto sobre la red de paradas: caminar a una parada, viajar por el recorrido de
-/// una ruta, bajar y transbordar a otra; combina 2 o más camiones. Solo usa rutas reales: si el origen o el destino
-/// queda lejos de toda la red no inventa ninguna.
-/// </summary>
+// Arma opciones de viaje con el camino más corto sobre la red de paradas: camina a una parada, viaja por una ruta, baja
+// y transborda (2 o más camiones). Solo usa rutas reales: si el origen o el destino queda lejos de la red, no inventa ninguna.
 public static class Planificador
 {
     private const double MetrosPorMinCaminando = 80;      // ~4.8 km/h
@@ -109,7 +106,7 @@ public static class Planificador
         return resultado;
     }
 
-    /// <summary>Pone las etiquetas Recomendado / Más rápido / Económico / Menos caminata a una lista de opciones.</summary>
+    // Pone las etiquetas Recomendado / Más rápido / Económico / Menos caminata a una lista de opciones.
     public static void Etiquetar(List<Ruta> lista)
     {
         if (lista.Count == 0) return;
@@ -122,7 +119,6 @@ public static class Planificador
         poner(lista.OrderBy(c => c.CaminataMetros).First(), "Menos caminata");
     }
 
-    // Preparar el recorrido de una ruta
     private static Linea Construir(Ruta r, Func<double[], double[]> aM)
     {
         var bruto = r.Trazo != null && r.Trazo.Count >= 2
@@ -334,7 +330,6 @@ public static class Planificador
         return res;
     }
 
-    // Camino más corto (Dijkstra)
     private static Opcion Buscar(List<Nodo> nodos, HashSet<Linea> vetadas, double[] O, double[] D,
                                  double[] origen, double[] destino, HashSet<int> inicioOk, HashSet<int> finOk)
     {

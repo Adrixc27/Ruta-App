@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Idiomas;
 
-/// <summary>Traducciones de Configuración: ajustes, soporte, ayuda, textos legales y Sobre Nosotros.</summary>
+// Traducciones de Configuración: ajustes, soporte, ayuda, textos legales y Sobre Nosotros.
 internal static class InglesAjustes
 {
     public static readonly (string Español, string Ingles)[] Pares =

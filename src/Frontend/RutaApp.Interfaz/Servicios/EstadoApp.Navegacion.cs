@@ -3,10 +3,10 @@ namespace RutaApp.Interfaz.Servicios;
 // Navegación entre pantallas y búsqueda actual (Planificar → Comparar).
 public partial class EstadoApp
 {
-    /// <summary>Parámetro de la última navegación (por ejemplo una Ruta para abrirla en el mapa). Se consume una vez.</summary>
+    // Parámetro de la última navegación (por ejemplo una Ruta para abrirla en el mapa). Se consume una vez.
     public object ParametroNavegacion { get; private set; }
 
-    /// <summary>Claves: planificar, comparar, rutas, comunidad, perfil, config y ajuste (parametro = nombre del ajuste).</summary>
+    // Claves: planificar, comparar, rutas, comunidad, perfil, config y ajuste (parametro = nombre del ajuste).
     public void Navegar(string clave, object parametro = null)
     {
         ParametroNavegacion = parametro;
@@ -42,7 +42,7 @@ public partial class EstadoApp
 
     public bool HayCoordenadas => !double.IsNaN(OrigenLat) && !double.IsNaN(DestinoLat);
 
-    /// <summary>Olvida la búsqueda actual (destino, paradas y coordenadas), por ejemplo al empezar el viaje.</summary>
+    // Olvida la búsqueda actual (destino, paradas y coordenadas), por ejemplo al empezar el viaje.
     public void NuevaBusqueda()
     {
         Destino = "";
@@ -51,6 +51,6 @@ public partial class EstadoApp
         DestinoLat = double.NaN;
     }
 
-    /// <summary>Última ubicación del equipo obtenida (null si aún no se pide o no se pudo).</summary>
+    // Última ubicación del equipo obtenida (null si aún no se pide o no se pudo).
     public double[] MiPosicion { get; set; }
 }

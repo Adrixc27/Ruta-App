@@ -1,6 +1,6 @@
 namespace RutaApp.Nucleo.Modelos;
 
-/// <summary>Un lugar encontrado por el buscador (o una parada intermedia del viaje).</summary>
+// Un lugar encontrado por el buscador (o una parada intermedia del viaje).
 public class Sugerencia
 {
     public string Numero { get; set; } = "";

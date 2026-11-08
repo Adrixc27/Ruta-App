@@ -5,11 +5,8 @@ using System.Linq;
 
 namespace RutaApp.Motor
 {
-    /// <summary>
-    /// Punto de entrada del motor de rutas: valida la consulta, encuentra paradas cercanas, busca alternativas
-    /// (Dijkstra + A* + multicriterio), quita duplicados y dominadas, puntúa según las preferencias y explica el resultado.
-    /// Es independiente de la interfaz; el ResultadoBusqueda se puede mostrar en la interfaz o serializar para Leaflet.
-    /// </summary>
+    // Punto de entrada del motor: valida la consulta, busca paradas cercanas y alternativas (Dijkstra + A* + multicriterio),
+    // quita duplicados y dominadas, puntúa y explica. Es independiente de la interfaz: el ResultadoBusqueda se puede serializar para Leaflet.
     public class ServicioTransporte
     {
         private const double DistanciaMinimaViajeM = 50;
@@ -19,10 +16,10 @@ namespace RutaApp.Motor
         private string _claveGrafo;
         private GrafoTransporte _grafo;
 
-        /// <summary>Advertencias de los datos cargados (paradas sin servicio, rutas sin confiabilidad...).</summary>
+        // Advertencias de los datos cargados (paradas sin servicio, rutas sin confiabilidad...).
         public IReadOnlyList<string> AdvertenciasDatos { get; private set; }
 
-        /// <summary>Lanza InvalidDataException si los datos no son válidos.</summary>
+        // Lanza InvalidDataException si los datos no son válidos.
         public ServicioTransporte(DatosTransporte datos)
         {
             ServicioDatosTransporte.ConstruirGrafo(datos);   // valida (lanza si hay errores)

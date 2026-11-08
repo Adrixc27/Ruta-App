@@ -185,7 +185,7 @@
     }
 </div>
 
-@* REPORTAR UN PROBLEMA (como en Waze) *@
+@* Reportar un problema, como en Waze *@
 @if (_reporte)
 {
     <div class="modal-fondo" @onclick="() => _reporte = false">
@@ -248,7 +248,7 @@
     [Parameter] public EventCallback OnQuitar { get; set; }
     [Parameter] public EventCallback OnPlanificar { get; set; }
     [Parameter] public EventCallback OnGuardar { get; set; }
-    /// <summary>Se llama con [lat, lng] cuando el usuario toca el mapa y la selección está activa.</summary>
+    // Se llama con [lat, lng] cuando el usuario toca el mapa y la selección está activa.
     [Parameter] public EventCallback<double[]> OnClicMapa { get; set; }
 
     private class Banner
@@ -389,10 +389,8 @@
         return EnMapa(m => m.LimpiarRuta());
     }
 
-    /// <summary>
-    /// Dibuja la ruta pedida. Si el usuario elige otra mientras tanto, el dibujo viejo se descarta (no se encolan).
-    /// Una ruta que solo une sus paradas con rectas se ajusta a las calles.
-    /// </summary>
+    // Dibuja la ruta pedida. Si el usuario elige otra mientras tanto, el dibujo viejo se descarta (no se encolan).
+    // Una ruta que solo une sus paradas con rectas se ajusta a las calles.
     public async Task DibujarRuta(Ruta r)
     {
         int version = ++_versionRuta;
@@ -583,7 +581,7 @@
         return true;
     }
 
-    /// <summary>Pide la ubicación otra vez (el usuario se movió) y dibuja el punto azul "Estás aquí".</summary>
+    // Pide la ubicación otra vez (el usuario se movió) y dibuja el punto azul "Estás aquí".
     public async Task<double[]> ActualizarPosicionAsync(bool centrar)
     {
         if (!await Listo()) return null;
@@ -607,7 +605,6 @@
         await EnMapa(m => m.CargarPuntos(puntos.Select(p => new PuntoReferencia(p.Lat, p.Lng, p.Nombre, p.Tipo)).ToList()));
     }
 
-    // Reportar un problema
     private void AbrirReporte()
     {
         if (!Estado.RequiereCuenta("Inicia sesión para reportar problemas y ayudar a otras personas a viajar mejor.")) return;

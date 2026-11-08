@@ -45,7 +45,7 @@ namespace RutaApp.Motor
         public string Nombre { get; set; } = "";
         public double Latitud { get; set; }
         public double Longitud { get; set; }
-        /// <summary>True si la parada permite abordar/descender con accesibilidad (rampa, andén, etc.).</summary>
+        // True si la parada permite abordar/descender con accesibilidad (rampa, andén, etc.).
         public bool Accesible { get; set; }
 
         [JsonIgnore]
@@ -56,11 +56,11 @@ namespace RutaApp.Motor
 
     public enum SentidoRecorrido
     {
-        /// <summary>Solo se recorre en el orden de IdsParadas.</summary>
+        // Solo se recorre en el orden de IdsParadas.
         Unidireccional,
-        /// <summary>Se recorre en ambos sentidos (ida y vuelta por las mismas paradas).</summary>
+        // Se recorre en ambos sentidos (ida y vuelta por las mismas paradas).
         Bidireccional,
-        /// <summary>Se recorre en el orden de IdsParadas y la última parada vuelve a la primera.</summary>
+        // Se recorre en el orden de IdsParadas y la última parada vuelve a la primera.
         Circular
     }
 
@@ -68,16 +68,14 @@ namespace RutaApp.Motor
     {
         public string Id { get; set; } = "";
         public string Nombre { get; set; } = "";
-        /// <summary>Ids de las paradas en orden de recorrido (sin repetir; en una ruta circular no se repite la primera al final).</summary>
+        // Ids de las paradas en orden de recorrido (sin repetir; en una ruta circular no se repite la primera al final).
         public List<string> IdsParadas { get; set; } = new List<string>();
         public SentidoRecorrido Sentido { get; set; } = SentidoRecorrido.Unidireccional;
-        /// <summary>Confiabilidad entre 0 y 1 (p. ej. proporción de salidas puntuales). null = sin datos suficientes.</summary>
+        // Confiabilidad entre 0 y 1 (p. ej. proporción de salidas puntuales). null = sin datos suficientes.
         public double? Confiabilidad { get; set; }
     }
 
-    /// <summary>
-    /// Tramo dirigido entre dos paradas. Con IdRuta = autobús; con IdRuta = null es un tramo caminando (transbordo a pie).
-    /// </summary>
+    // Tramo dirigido entre dos paradas. Con IdRuta = autobús; con IdRuta = null es un tramo caminando (transbordo a pie).
     public class Conexion
     {
         public string IdOrigen { get; set; } = "";
@@ -97,7 +95,7 @@ namespace RutaApp.Motor
 
     public enum Prioridad { Equilibrado, MasRapida, MenosTransbordos, MenosCaminata, MasConfiable }
 
-    /// <summary>Prioridades, pesos de evaluación y límites de la búsqueda. Todo es configurable.</summary>
+    // Prioridades, pesos de evaluación y límites de la búsqueda. Todo es configurable.
     public class Preferencias
     {
         // Pesos relativos de cada criterio (no negativos; se normalizan para que sumen 1).
@@ -106,25 +104,23 @@ namespace RutaApp.Motor
         public double PesoCaminata { get; set; } = 1;
         public double PesoConfiabilidad { get; set; } = 1;
 
-        // Límites de la búsqueda
         public int MaxTransbordos { get; set; } = 3;
         public double RadioBusquedaMetros { get; set; } = 800;
         public int MaxParadasCandidatas { get; set; } = 3;
         public int MaxAlternativasPorPar { get; set; } = 15;
         public int MaxExpansiones { get; set; } = 20000;
-        /// <summary>Se descartan recorridos que tarden más que (tiempo del más rápido × este factor).</summary>
+        // Se descartan recorridos que tarden más que (tiempo del más rápido × este factor).
         public double FactorTiempoMaximo { get; set; } = 2;
         public bool SoloParadasAccesibles { get; set; }
 
-        // Caminata
         public double VelocidadCaminataKmh { get; set; } = 4.5;
-        /// <summary>Distancia caminando estimada = línea recta × este factor (las calles no son rectas). Es una estimación, no una ruta peatonal real.</summary>
+        // Distancia caminando estimada = línea recta × este factor (las calles no son rectas). Es una estimación, no una ruta peatonal real.
         public double FactorRodeoCaminata { get; set; } = 1.3;
         public double RadioTransbordoMetros { get; set; } = 300;
-        /// <summary>Penalización (en minutos) que usa la búsqueda para preferir menos transbordos. No se suma al tiempo reportado.</summary>
+        // Penalización (en minutos) que usa la búsqueda para preferir menos transbordos. No se suma al tiempo reportado.
         public double PenalizacionTransbordoMin { get; set; } = 5;
 
-        /// <summary>Crea preferencias con el criterio elegido como prioridad principal.</summary>
+        // Crea preferencias con el criterio elegido como prioridad principal.
         public static Preferencias Para(Prioridad prioridad)
         {
             var p = new Preferencias();
@@ -145,7 +141,7 @@ namespace RutaApp.Motor
 
         public double VelocidadCaminataMetrosPorMin { get { return VelocidadCaminataKmh * 1000.0 / 60.0; } }
 
-        /// <summary>Devuelve los problemas encontrados (lista vacía si son válidas).</summary>
+        // Devuelve los problemas encontrados (lista vacía si son válidas).
         public List<string> Validar()
         {
             var e = new List<string>();
@@ -178,15 +174,13 @@ namespace RutaApp.Motor
         public double DistanciaM { get; set; }
     }
 
-    /// <summary>
-    /// Camino entre dos paradas (más, opcionalmente, la caminata desde el origen y hasta el destino reales).
-    /// Las métricas se calculan en una sola pasada sobre las conexiones, así que ningún tramo se cuenta dos veces.
-    /// </summary>
+    // Camino entre dos paradas (más, opcionalmente, la caminata desde el origen y hasta el destino reales).
+    // Las métricas se calculan en una sola pasada sobre las conexiones, así que ningún tramo se cuenta dos veces.
     public class Recorrido
     {
         public List<Parada> Paradas { get; private set; }
         public List<Conexion> Conexiones { get; private set; }
-        /// <summary>Autobuses usados, en orden y sin repetir seguidos.</summary>
+        // Autobuses usados, en orden y sin repetir seguidos.
         public List<RutaAutobus> Autobuses { get; private set; }
         public List<TramoRecorrido> Tramos { get; private set; }
 
@@ -204,15 +198,15 @@ namespace RutaApp.Motor
         public double DistanciaCaminataM { get; private set; }
         public double DistanciaTotalM { get { return DistanciaAutobusM + DistanciaCaminataM; } }
         public int Transbordos { get; private set; }
-        /// <summary>Producto de las confiabilidades de los autobuses usados (0-1). null si falta el dato en algún autobús.</summary>
+        // Producto de las confiabilidades de los autobuses usados (0-1). null si falta el dato en algún autobús.
         public double? Confiabilidad { get; private set; }
-        /// <summary>True si todas las paradas donde se aborda, desciende o se camina entre autobuses son accesibles.</summary>
+        // True si todas las paradas donde se aborda, desciende o se camina entre autobuses son accesibles.
         public bool TodasParadasAccesibles { get; private set; }
 
         public Parada ParadaInicial { get { return Paradas[0]; } }
         public Parada ParadaFinal { get { return Paradas[Paradas.Count - 1]; } }
 
-        /// <summary>Puntos [origen, paradas..., destino] en orden, listos para dibujar una polilínea en Leaflet.</summary>
+        // Puntos [origen, paradas..., destino] en orden, listos para dibujar una polilínea en Leaflet.
         public List<Coordenada> Trazo
         {
             get
@@ -225,7 +219,7 @@ namespace RutaApp.Motor
             }
         }
 
-        /// <summary>Identifica el recorrido por sus tramos de autobús: (ruta, parada de subida, parada de bajada).</summary>
+        // Identifica el recorrido por sus tramos de autobús: (ruta, parada de subida, parada de bajada).
         public string Firma
         {
             get
@@ -235,16 +229,14 @@ namespace RutaApp.Motor
             }
         }
 
-        /// <summary>Identifica solo la secuencia de líneas usadas (ignora en qué parada se sube o baja).</summary>
+        // Identifica solo la secuencia de líneas usadas (ignora en qué parada se sube o baja).
         public string FirmaDeRutas
         {
             get { return string.Join(">", Autobuses.Select(a => a.Id)); }
         }
 
-        /// <summary>
-        /// Arma el recorrido a partir de conexiones consecutivas. Lanza ArgumentException si hay huecos,
-        /// tramos repetidos, paradas repetidas (ciclos) o referencias a datos que no existen.
-        /// </summary>
+        // Arma el recorrido a partir de conexiones consecutivas. Lanza ArgumentException si hay huecos,
+        // tramos repetidos, paradas repetidas (ciclos) o referencias a datos que no existen.
         public static Recorrido Crear(IList<Conexion> conexiones, IDictionary<string, Parada> paradas, IDictionary<string, RutaAutobus> rutas)
         {
             if (conexiones == null || conexiones.Count == 0) throw new ArgumentException("Un recorrido necesita al menos una conexión.");
@@ -331,7 +323,7 @@ namespace RutaApp.Motor
             return r;
         }
 
-        /// <summary>Agrega la caminata entre el origen real y la primera parada, y entre la última parada y el destino real.</summary>
+        // Agrega la caminata entre el origen real y la primera parada, y entre la última parada y el destino real.
         public void AsignarAccesos(Coordenada origen, double accesoM, double accesoMin, Coordenada destino, double egresoM, double egresoMin)
         {
             // Se restan los accesos anteriores para no duplicar caminata si se asigna dos veces.
@@ -348,9 +340,9 @@ namespace RutaApp.Motor
     {
         public int Posicion { get; set; }
         public Recorrido Recorrido { get; set; }
-        /// <summary>0-100, mayor es mejor. Es relativa a las alternativas de esta búsqueda (criterios normalizados entre ellas).</summary>
+        // 0-100, mayor es mejor. Es relativa a las alternativas de esta búsqueda (criterios normalizados entre ellas).
         public double Puntuacion { get; set; }
-        /// <summary>Costo ponderado 0-1 (menor es mejor) del que sale la puntuación.</summary>
+        // Costo ponderado 0-1 (menor es mejor) del que sale la puntuación.
         public double Costo { get; set; }
         public List<string> Ventajas { get; set; } = new List<string>();
         public List<string> Desventajas { get; set; } = new List<string>();
@@ -371,7 +363,7 @@ namespace RutaApp.Motor
         SinAlternativas
     }
 
-    /// <summary>Respuesta completa de una búsqueda: lista para mostrarse o serializarse hacia Leaflet.</summary>
+    // Respuesta completa de una búsqueda: lista para mostrarse o serializarse hacia Leaflet.
     public class ResultadoBusqueda
     {
         public bool Exito { get { return Error == TipoError.Ninguno && Recomendaciones.Count > 0; } }

@@ -1,6 +1,6 @@
 namespace RutaApp.Nucleo.Modelos;
 
-/// <summary>Un tramo del viaje: caminando (punteado) o en camión (línea azul).</summary>
+// Un tramo del viaje: caminando (punteado) o en camión (línea azul).
 public class Tramo
 {
     public bool EsBus { get; set; }

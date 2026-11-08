@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Botones y botones de icono.</summary>
+// Botones y botones de icono.
 public static class CssBotones
 {
     public const string Reglas = """

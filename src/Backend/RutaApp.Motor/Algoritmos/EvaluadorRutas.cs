@@ -5,17 +5,12 @@ using System.Linq;
 
 namespace RutaApp.Motor
 {
-    /// <summary>
-    /// Puntúa recorridos según las Preferencias: normaliza cada criterio entre las alternativas (0 = la mejor, 1 = la peor),
-    /// pondera con los pesos y explica por qué una opción es mejor o peor que las demás.
-    /// </summary>
+    // Puntúa recorridos según las Preferencias: normaliza cada criterio entre las alternativas (0 = mejor, 1 = peor)
+    // y pondera con los pesos.
     public static class EvaluadorRutas
     {
-        /// <summary>
-        /// Calcula Costo (0-1, menor es mejor) y Puntuacion (0-100) de cada candidato. No ordena: eso lo hace ClasificadorRutas.
-        /// La confiabilidad solo participa si TODOS los candidatos tienen el dato; si falta en alguno se omite
-        /// (no se inventan valores) y se agrega una advertencia.
-        /// </summary>
+        // Calcula Costo (0-1) y Puntuacion (0-100) de cada candidato; no ordena (eso lo hace ClasificadorRutas).
+        // La confiabilidad solo cuenta si todos los candidatos la tienen; si falta en alguno se omite y se advierte.
         public static List<RutaRecomendada> Evaluar(IList<Recorrido> candidatos, Preferencias preferencias, IList<string> advertencias = null)
         {
             if (candidatos == null) throw new ArgumentNullException("candidatos");
@@ -60,7 +55,7 @@ namespace RutaApp.Motor
             return lista;
         }
 
-        /// <summary>Normalización mínimo-máximo; si todos son iguales el criterio no distingue y vale 0 para todos.</summary>
+        // Normalización mínimo-máximo; si todos son iguales el criterio no distingue y vale 0 para todos.
         private static double[] Normalizar(IList<double> valores)
         {
             double min = valores.Min(), max = valores.Max();
@@ -70,7 +65,7 @@ namespace RutaApp.Motor
             return resultado;
         }
 
-        /// <summary>Llena Ventajas, Desventajas y Explicacion comparando cada opción con las demás de la lista.</summary>
+        // Llena Ventajas, Desventajas y Explicacion comparando cada opción con las demás de la lista.
         public static void Explicar(IList<RutaRecomendada> alternativas)
         {
             if (alternativas == null) throw new ArgumentNullException("alternativas");
@@ -121,7 +116,7 @@ namespace RutaApp.Motor
             }
         }
 
-        /// <summary>Descripción corta: "Línea 1 (Terminal Norte → Plaza) → camina 120 m → Línea 2 (...)".</summary>
+        // Descripción corta: "Línea 1 (Terminal Norte → Plaza) → camina 120 m → Línea 2 (...)".
         public static string Resumir(Recorrido r)
         {
             var partes = new List<string>();
@@ -162,14 +157,11 @@ namespace RutaApp.Motor
         }
     }
 
-    /// <summary>Ordena alternativas y elimina las repetidas.</summary>
+    // Ordena alternativas y elimina las repetidas.
     public static class ClasificadorRutas
     {
-        /// <summary>
-        /// Quita recorridos repetidos conservando el más rápido de cada grupo. Por defecto son iguales si usan los mismos
-        /// tramos de autobús (misma ruta, misma parada de subida y bajada); con porSecuenciaDeRutas también se
-        /// consideran iguales los que usan las mismas líneas en el mismo orden aunque suban o bajen en otra parada.
-        /// </summary>
+        // Quita repetidos conservando el más rápido de cada grupo. Son iguales si usan los mismos tramos de autobús;
+        // con porSecuenciaDeRutas también si usan las mismas líneas en el mismo orden, aunque suban o bajen en otra parada.
         public static List<Recorrido> EliminarDuplicados(IEnumerable<Recorrido> recorridos, bool porSecuenciaDeRutas = false)
         {
             if (recorridos == null) throw new ArgumentNullException("recorridos");
@@ -186,7 +178,7 @@ namespace RutaApp.Motor
             return orden.Select(k => mejores[k]).ToList();
         }
 
-        /// <summary>Igual que el anterior pero para alternativas ya puntuadas: conserva la de mayor puntuación de cada grupo.</summary>
+        // Igual que el anterior pero para alternativas ya puntuadas: conserva la de mayor puntuación de cada grupo.
         public static List<RutaRecomendada> EliminarDuplicados(IEnumerable<RutaRecomendada> alternativas, bool porSecuenciaDeRutas = false)
         {
             if (alternativas == null) throw new ArgumentNullException("alternativas");
@@ -203,7 +195,7 @@ namespace RutaApp.Motor
             return orden.Select(k => mejores[k]).ToList();
         }
 
-        /// <summary>Ordena de mejor a peor (puntuación, luego tiempo, transbordos, caminata y firma) y numera la Posicion desde 1.</summary>
+        // Ordena de mejor a peor (puntuación, luego tiempo, transbordos, caminata y firma) y numera la Posicion desde 1.
         public static List<RutaRecomendada> Ordenar(IEnumerable<RutaRecomendada> alternativas)
         {
             if (alternativas == null) throw new ArgumentNullException("alternativas");

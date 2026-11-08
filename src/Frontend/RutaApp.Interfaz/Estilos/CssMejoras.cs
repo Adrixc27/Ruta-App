@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Acentos de color, carga, barra de ubicación, marcadores, viaje en curso, perfil y lugares.</summary>
+// Acentos de color, carga, barra de ubicación, marcadores, viaje en curso, perfil y lugares.
 public static class CssMejoras
 {
     public const string Reglas = """

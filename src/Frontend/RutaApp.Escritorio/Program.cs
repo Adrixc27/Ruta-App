@@ -8,7 +8,7 @@ using RutaApp.Interfaz.Servicios;
 
 namespace RutaApp.Escritorio;
 
-/// Punto de entrada de la app de escritorio. No hay XAML: la ventana se arma en C# y la interfaz es Blazor
+// Punto de entrada de la app de escritorio. No hay XAML: la ventana se arma en C# y la interfaz es Blazor
 public static class Program
 {
     [STAThread]

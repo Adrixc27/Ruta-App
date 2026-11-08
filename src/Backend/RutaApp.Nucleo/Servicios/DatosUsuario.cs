@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace RutaApp.Nucleo.Servicios;
 
-/// <summary>Lo que se guarda de cada usuario en este equipo: su historial de viajes, viajes guardados y lugares.</summary>
+// Lo que se guarda de cada usuario en este equipo: su historial de viajes, viajes guardados y lugares.
 public class DatosGuardados
 {
     public List<ViajeHistorial> Historial { get; set; } = new();
@@ -10,10 +10,8 @@ public class DatosGuardados
     public List<LugarGuardado> Lugares { get; set; } = new();
 }
 
-/// <summary>
-/// Guarda en un archivo por usuario (LocalApplicationData\RutaApp\usuarios\{id}.json) el historial de viajes,
-/// los viajes guardados y los lugares (casa, escuela...). No toca la base de datos: así funciona sin cambiar su estructura.
-/// </summary>
+// Guarda en un archivo por usuario (LocalApplicationData\RutaApp\usuarios\{id}.json) el historial de viajes,
+// los viajes guardados y los lugares (casa, escuela...). No toca la base de datos: así funciona sin cambiar su estructura.
 public class DatosUsuarioService
 {
     private readonly string _carpeta;
@@ -46,7 +44,7 @@ public class DatosUsuarioService
         finally { _cerrojo.Release(); }
     }
 
-    /// <summary>Borra los datos guardados de un usuario en este equipo (al borrar su cuenta).</summary>
+    // Borra los datos guardados de un usuario en este equipo (al borrar su cuenta).
     public async Task BorrarAsync(int idUsuario)
     {
         await _cerrojo.WaitAsync();

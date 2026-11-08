@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Components.Shared;
 
-/// <summary>Iconos vectoriales (estilo Feather/Lucide, viewbox 24x24).</summary>
+// Iconos vectoriales (estilo Feather/Lucide, viewbox 24x24).
 public static class Iconos
 {
     public static readonly Dictionary<string, string> Rutas = new()

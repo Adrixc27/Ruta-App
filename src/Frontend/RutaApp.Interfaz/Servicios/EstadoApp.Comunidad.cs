@@ -8,7 +8,7 @@ public partial class EstadoApp
     private bool _publicacionesCargadas;
     public bool ErrorPublicaciones { get; private set; }
 
-    /// <summary>Carga las publicaciones reales (las ve cualquiera, también un invitado). Con forzar vuelve a pedirlas.</summary>
+    // Carga las publicaciones reales (las ve cualquiera, también un invitado). Con forzar vuelve a pedirlas.
     public async Task CargarPublicacionesAsync(bool forzar = false)
     {
         if (_publicacionesCargadas && !forzar) return;
@@ -35,14 +35,12 @@ public partial class EstadoApp
 
     private static readonly System.Text.RegularExpressions.Regex RegexVence = new(@"\s*\[\[vence:([0-9T:\-]+)\]\]\s*$");
 
-    /// <summary>Agrega al texto la fecha en que la publicación deja de verse (dias = 0: no caduca).</summary>
+    // Agrega al texto la fecha en que la publicación deja de verse (dias = 0: no caduca).
     public static string AgregarCaducidad(string cuerpo, int dias) =>
         dias <= 0 ? cuerpo : cuerpo + "\n[[vence:" + DateTime.Now.AddDays(dias).ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture) + "]]";
 
-    /// <summary>
-    /// Problemas comunes para avisar (sirven al reportar desde el mapa y al publicar un aviso). Dias es cuánto sigue
-    /// siendo útil el aviso; Movilidad indica que el camión tiene un problema y el reporte lleva la ubicación de quien avisa.
-    /// </summary>
+    // Problemas comunes para avisar (sirven al reportar desde el mapa y al publicar un aviso). Dias es cuánto sigue
+    // siendo útil el aviso; Movilidad indica que el camión tiene un problema y el reporte lleva la ubicación de quien avisa.
     public record ProblemaComun(string Clave, string Icono, string Texto, int Dias, bool Movilidad = false);
 
     public static readonly ProblemaComun[] ProblemasComunes =
@@ -58,7 +56,7 @@ public partial class EstadoApp
         new("otro", "IcoInfo", "Otro problema", 1)
     };
 
-    /// <summary>Cuánto dura una publicación lo decide la app: un aviso según su problema, una pregunta 7 días y una propuesta 30.</summary>
+    // Cuánto dura una publicación lo decide la app: un aviso según su problema, una pregunta 7 días y una propuesta 30.
     public static int DiasDeVida(string tipo, string titulo = null)
     {
         if (tipo == "aviso")
@@ -69,7 +67,7 @@ public partial class EstadoApp
         return tipo == "pregunta" ? 7 : 30;
     }
 
-    /// <summary>Ubicación actual del equipo para marcar un reporte en el mapa; null si no se pudo obtener.</summary>
+    // Ubicación actual del equipo para marcar un reporte en el mapa; null si no se pudo obtener.
     public async Task<double[]> UbicacionDeReporteAsync()
     {
         try
@@ -90,10 +88,8 @@ public partial class EstadoApp
         ubicacion == null ? cuerpo
         : cuerpo + "\n[[ubic:" + ubicacion[0].ToString("0.00000", CultureInfo.InvariantCulture) + "," + ubicacion[1].ToString("0.00000", CultureInfo.InvariantCulture) + "]]";
 
-    /// <summary>
-    /// Publica un aviso (reporte de problema) que caduca solo. Con ubicación, el aviso se marca en el mapa.
-    /// Devuelve (true, null) o (false, error).
-    /// </summary>
+    // Publica un aviso (reporte de problema) que caduca solo. Con ubicación, el aviso se marca en el mapa.
+    // Devuelve (true, null) o (false, error).
     public async Task<(bool Ok, string Error)> PublicarAvisoAsync(string titulo, string detalle, Ruta ruta, int dias, double[] ubicacion = null)
     {
         if (!RequiereCuenta("Inicia sesión para reportar problemas y ayudar a otras personas a viajar mejor.")) return (false, null);
@@ -120,7 +116,7 @@ public partial class EstadoApp
         }
     }
 
-    /// <summary>Agrega una publicación recién creada sin volver a pedir todas.</summary>
+    // Agrega una publicación recién creada sin volver a pedir todas.
     public void AgregarPublicacion(Publicacion p)
     {
         Publicaciones.Add(p);
@@ -168,11 +164,11 @@ public partial class EstadoApp
         return p;
     }
 
-    /// <summary>Reportes con ubicación que todavía no caducan: son los que se marcan en el mapa.</summary>
+    // Reportes con ubicación que todavía no caducan: son los que se marcan en el mapa.
     public List<Publicacion> ReportesEnMapa() =>
         Publicaciones.Where(p => p.Tipo == "aviso" && p.TieneUbicacion && (p.Vence == null || p.Vence > DateTime.Now)).ToList();
 
-    /// <summary>Avisos de la comunidad de los últimos días sobre una ruta (se muestran como alertas en el mapa).</summary>
+    // Avisos de la comunidad de los últimos días sobre una ruta (se muestran como alertas en el mapa).
     public List<Publicacion> AvisosDe(Ruta ruta, int dias = 7) =>
         ruta == null ? new List<Publicacion>() :
         Publicaciones.Where(p => p.Tipo == "aviso" && p.RutaNumero == ruta.Numero && (DateTime.Now - p.Fecha).TotalDays <= dias).ToList();

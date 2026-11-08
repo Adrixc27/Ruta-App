@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Degradados, capas y sombras azuladas, y responsivo básico.</summary>
+// Degradados, capas y sombras azuladas, y responsivo básico.
 public static class CssTonosAzul
 {
     public const string Reglas = """

@@ -4,13 +4,13 @@ namespace RutaApp.Nucleo.Modelos;
 
 public static class Formato
 {
-    /// <summary>true = mostrar millas y pies (se cambia en Configuración → Unidades de distancia).</summary>
+    // true = mostrar millas y pies (se cambia en Configuración → Unidades de distancia).
     public static bool UsaMillas { get; set; }
 
-    /// <summary>true = textos como "5 min ago" en lugar de "hace 5 min" (se cambia en Configuración → Idioma).</summary>
+    // true = textos como "5 min ago" en lugar de "hace 5 min" (se cambia en Configuración → Idioma).
     public static bool Ingles { get; set; }
 
-    /// <summary>"350 m" / "1.2 km", o "1,150 ft" / "0.7 mi" si se eligió millas.</summary>
+    // "350 m" / "1.2 km", o "1,150 ft" / "0.7 mi" si se eligió millas.
     public static string Distancia(double metros)
     {
         var inv = CultureInfo.InvariantCulture;
@@ -22,7 +22,7 @@ public static class Formato
         return metros >= 1000 ? (metros / 1000).ToString("0.#", inv) + " km" : Math.Round(metros).ToString("0", inv) + " m";
     }
 
-    /// <summary>Convierte los "(120 m)" de un texto de instrucciones a la unidad elegida.</summary>
+    // Convierte los "(120 m)" de un texto de instrucciones a la unidad elegida.
     public static string ConvertirTexto(string texto)
     {
         if (!UsaMillas || texto == null) return texto;
@@ -32,15 +32,15 @@ public static class Formato
 
     private static readonly CompareInfo Comparador = new CultureInfo("es-MX").CompareInfo;
 
-    /// <summary>Nombre de la parada sin el ", Chihuahua, Chihuahua" del final.</summary>
+    // Nombre de la parada sin el ", Chihuahua, Chihuahua" del final.
     public static string NombreParada(string nombre) =>
         string.IsNullOrWhiteSpace(nombre) ? "" : nombre.Replace(", Chihuahua, Chihuahua", "").Trim();
 
-    /// <summary>¿El texto contiene lo buscado? Sin importar mayúsculas ni acentos.</summary>
+    // ¿El texto contiene lo buscado? Sin importar mayúsculas ni acentos.
     public static bool Coincide(string texto, string buscado) =>
         !string.IsNullOrEmpty(texto) && Comparador.IndexOf(texto, buscado, CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0;
 
-    /// <summary>"ahora", "hace 5 min", "hace 3 h", "ayer", "hace 4 d" o la fecha si pasó más de una semana.</summary>
+    // "ahora", "hace 5 min", "hace 3 h", "ayer", "hace 4 d" o la fecha si pasó más de una semana.
     public static string Hace(DateTime fecha)
     {
         var t = DateTime.Now - fecha;

@@ -4,10 +4,8 @@ using System.Linq;
 
 namespace RutaApp.Motor
 {
-    /// <summary>
-    /// Reúne alternativas con ventajas distintas (la más rápida, la de menos transbordos, la de menos caminata,
-    /// la más confiable y la que combina tus pesos) y descarta las dominadas en el sentido de Pareto.
-    /// </summary>
+    // Reúne alternativas con ventajas distintas (la más rápida, la de menos transbordos, la de menos caminata,
+    // la más confiable y la que combina tus pesos) y descarta las dominadas en el sentido de Pareto.
     public class BuscadorMulticriterio
     {
         private const double Tolerancia = 1e-6;
@@ -23,7 +21,7 @@ namespace RutaApp.Motor
             _buscador = new BuscadorRutas(grafo);
         }
 
-        /// <summary>Alternativas no dominadas entre dos paradas (sin duplicados). Lista vacía si no hay camino.</summary>
+        // Alternativas no dominadas entre dos paradas (sin duplicados). Lista vacía si no hay camino.
         public List<Recorrido> Buscar(string idOrigen, string idDestino, Preferencias preferencias)
         {
             if (preferencias == null) throw new ArgumentNullException("preferencias");
@@ -43,8 +41,8 @@ namespace RutaApp.Motor
         }
 
 
-        /// ¿"a" domina a "b"? Sí si en tiempo, transbordos y caminata es igual o mejor y estrictamente mejor en al menos uno.
-        /// La confiabilidad solo se compara cuando se conoce en ambos (un dato desconocido no se trata como bueno ni como malo).
+        // ¿"a" domina a "b"? Sí si en tiempo, transbordos y caminata es igual o mejor y estrictamente mejor en al menos uno.
+        // La confiabilidad solo se compara cuando se conoce en ambos (un dato desconocido no se trata como bueno ni como malo).
 
         public static bool Domina(Recorrido a, Recorrido b)
         {
@@ -65,7 +63,7 @@ namespace RutaApp.Motor
             return mejorEnAlguno;
         }
 
-        /// <summary>Frente de Pareto: conserva solo los recorridos que ningún otro domina.</summary>
+        // Frente de Pareto: conserva solo los recorridos que ningún otro domina.
         public static List<Recorrido> FiltrarNoDominados(IEnumerable<Recorrido> recorridos)
         {
             if (recorridos == null) throw new ArgumentNullException("recorridos");

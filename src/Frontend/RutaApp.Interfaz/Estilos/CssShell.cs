@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Sidebar y pantallas de la app (Planificar, Comparar, Rutas).</summary>
+// Sidebar y pantallas de la app (Planificar, Comparar, Rutas).
 public static class CssShell
 {
     public const string Reglas = """

@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Landing, sobre nosotros, inicio de sesión y registro.</summary>
+// Landing, sobre nosotros, inicio de sesión y registro.
 public static class CssPaginasPublicas
 {
     public const string Reglas = """

@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace RutaApp.Nucleo.Servicios;
 
-/// <summary>Lo que viaja dentro de un código para compartir: un lugar, un viaje personalizado o una ruta del catálogo.</summary>
+// Lo que viaja dentro de un código para compartir: un lugar, un viaje personalizado o una ruta del catálogo.
 public class Compartido
 {
     public string Tipo { get; set; } = "";          // lugar | viaje | ruta
@@ -14,10 +14,8 @@ public class Compartido
     public string RutaNombre { get; set; } = "";
 }
 
-/// <summary>
-/// Códigos de texto ("RUTA1:...") para compartir paradas, lugares, rutas del catálogo o viajes personalizados.
-/// El código se pega en un mensaje, en la comunidad o en "Importar código" del perfil de otra persona.
-/// </summary>
+// Códigos de texto ("RUTA1:...") para compartir paradas, lugares, rutas del catálogo o viajes personalizados.
+// El código se pega en un mensaje, en la comunidad o en "Importar código" del perfil de otra persona.
 public static class CodigoCompartir
 {
     public const string Prefijo = "RUTA1:";
@@ -33,7 +31,7 @@ public static class CodigoCompartir
         return Prefijo + Convert.ToBase64String(salida.ToArray()).Replace('+', '-').Replace('/', '_').TrimEnd('=');
     }
 
-    /// <summary>Lee un código (o un texto que lo contiene). Devuelve null si no es un código válido.</summary>
+    // Lee un código (o un texto que lo contiene). Devuelve null si no es un código válido.
     public static Compartido Leer(string texto)
     {
         if (string.IsNullOrWhiteSpace(texto)) return null;

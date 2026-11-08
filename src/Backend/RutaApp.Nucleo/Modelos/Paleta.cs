@@ -1,6 +1,6 @@
 namespace RutaApp.Nucleo.Modelos;
 
-/// <summary>Colores de las rutas (y de los acentos de la interfaz): una paleta variada, no solo azules.</summary>
+// Colores de las rutas (y de los acentos de la interfaz): una paleta variada, no solo azules.
 public static class Paleta
 {
     public static readonly string[] Rutas =

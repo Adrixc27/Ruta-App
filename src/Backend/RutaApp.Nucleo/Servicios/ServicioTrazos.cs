@@ -3,10 +3,8 @@ using System.Globalization;
 
 namespace RutaApp.Nucleo.Servicios;
 
-/// <summary>
-/// Recorridos por calles (OSRM), nombre de calle (Nominatim), paradas cercanas (Overpass) y búsqueda de lugares.
-/// Es un servicio único para toda la app: los recorridos ya pedidos quedan en caché.
-/// </summary>
+// Recorridos por calles (OSRM), nombre de calle (Nominatim), paradas cercanas (Overpass) y búsqueda de lugares.
+// Es un servicio único para toda la app: los recorridos ya pedidos quedan en caché.
 public class ServicioTrazos
 {
     private readonly IHttpClientFactory _fabrica;
@@ -29,7 +27,7 @@ public class ServicioTrazos
             w[1].ToString("R", CultureInfo.InvariantCulture) + "," + w[0].ToString("R", CultureInfo.InvariantCulture)));
     }
 
-    /// <summary>Recorrido por calles entre puntos "lng,lat;lng,lat;..." (OSRM). null si no hay internet. aPie = por banquetas y andadores.</summary>
+    // Recorrido por calles entre puntos "lng,lat;lng,lat;..." (OSRM). null si no hay internet. aPie = por banquetas y andadores.
     public async Task<List<double[]>> TrazoOsrmAsync(string coordenadas, bool aPie = false)
     {
         string clave = (aPie ? "pie|" : "") + coordenadas;
@@ -57,9 +55,7 @@ public class ServicioTrazos
         }
     }
 
-    /// <summary>
-    /// Cómo caminar de A a B por banquetas: la línea y las instrucciones paso a paso. Devuelve (null, null) si no hay internet.
-    /// </summary>
+    // Cómo caminar de A a B por banquetas: la línea y las instrucciones paso a paso. Devuelve (null, null) si no hay internet.
     public async Task<(List<double[]> Linea, List<string> Pasos)> CaminataAsync(double[] a, double[] b)
     {
         string coords = ClaveOsrm(new[] { a, b });
@@ -128,10 +124,8 @@ public class ServicioTrazos
         return verbo + por + " (" + redondeo + " m)";
     }
 
-    /// <summary>
-    /// Ajusta a las calles una línea que une puntos en recta (las paradas de una ruta): toma puntos cada ~350 m y los pide a OSRM
-    /// en grupos de 25. Devuelve null si no hay internet y la línea original se queda.
-    /// </summary>
+    // Ajusta a las calles una línea que une puntos en recta (las paradas de una ruta): toma puntos cada ~350 m y los pide a OSRM
+    // en grupos de 25. Devuelve null si no hay internet y la línea original se queda.
     public async Task<List<double[]>> AjustarACallesAsync(List<double[]> puntos, bool aPie = false)
     {
         if (puntos == null || puntos.Count < 2) return null;
@@ -164,11 +158,8 @@ public class ServicioTrazos
         return resultado.Count >= 2 ? resultado : null;
     }
 
-    /// <summary>
-    /// Corrige un recorrido guardado cuyos tramos largos cortan esquinas: cada tramo recto se compara con la ruta por calles (OSRM)
-    /// y solo se reemplaza si la calle da una vuelta notable. Devuelve (recorrido nuevo o null, completo); completo = false
-    /// si algún tramo no se pudo consultar y conviene reintentar.
-    /// </summary>
+    // Corrige un recorrido guardado cuyos tramos largos cortan esquinas: compara cada tramo recto con la ruta por calles (OSRM)
+    // y lo reemplaza solo si la calle da una vuelta notable. Devuelve (recorrido o null, completo); completo = false si conviene reintentar.
     public async Task<(List<double[]> Linea, bool Completo)> ReparaTramosRectosAsync(List<double[]> pts, double minimoMetros = 400)
     {
         if (pts == null || pts.Count < 2) return (null, true);
@@ -231,7 +222,7 @@ public class ServicioTrazos
         return corto;
     }
 
-    /// <summary>Nombre de la calle en esas coordenadas (OpenStreetMap / Nominatim), o null si no hay internet o no se encontró.</summary>
+    // Nombre de la calle en esas coordenadas (OpenStreetMap / Nominatim), o null si no hay internet o no se encontró.
     public async Task<string> CalleDeAsync(double lat, double lng)
     {
         try

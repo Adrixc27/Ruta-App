@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Idiomas;
 
-/// <summary>Traducciones de avisos breves, mensajes de sesión y listas definidas en código (problemas comunes, tipos).</summary>
+// Traducciones de avisos breves, mensajes de sesión y listas definidas en código (problemas comunes, tipos).
 internal static class InglesMensajes
 {
     public static readonly (string Español, string Ingles)[] Pares =

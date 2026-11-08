@@ -23,7 +23,7 @@ public class Ruta
     public bool Reparado { get; set; }                   // true = ya se corrigieron los tramos del recorrido que cortaban esquinas
     public bool TrazoEnCalles { get; set; } = true;      // false = el recorrido une las paradas en línea recta y hay que ajustarlo a las calles
 
-    /// <summary>Color propio de la ruta (lista, tarjeta y línea en el mapa), tomado de la paleta según su número.</summary>
+    // Color propio de la ruta (lista, tarjeta y línea en el mapa), tomado de la paleta según su número.
     public string Color => Paleta.DeRuta(Numero);
     public string Simbolo => Paleta.Simbolo(Numero);     // identifica la ruta sin depender del color
     public string Patron => Paleta.Patron(Numero);       // trazo de la ruta en el mapa (modo daltonismo)
@@ -59,7 +59,7 @@ public class Ruta
     public bool TieneVariantes => Variantes != null && Variantes.Count > 1;
     public RutaOficial Oficial => Variantes != null && Variantes.Count > 0 ? Variantes[VarianteActual] : null;
 
-    /// <summary>Cambia a la variante indicada: recorrido, paradas, origen y destino.</summary>
+    // Cambia a la variante indicada: recorrido, paradas, origen y destino.
     public void UsarVariante(int indice)
     {
         if (Variantes == null || indice < 0 || indice >= Variantes.Count) return;
@@ -86,7 +86,7 @@ public class Ruta
         }
     }
 
-    /// <summary>Instrucciones del viaje paso a paso (camina, toma tal ruta...), armadas con sus tramos.</summary>
+    // Instrucciones del viaje paso a paso (camina, toma tal ruta...), armadas con sus tramos.
     public List<PasoViaje> Pasos()
     {
         var lista = new List<PasoViaje>();
@@ -119,7 +119,7 @@ public class Ruta
         return lista;
     }
 
-    /// <summary>Largo del recorrido completo (ida y vuelta) en kilómetros.</summary>
+    // Largo del recorrido completo (ida y vuelta) en kilómetros.
     public double Kilometros
     {
         get

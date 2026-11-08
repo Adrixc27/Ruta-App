@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Diálogos y ventanas modales.</summary>
+// Diálogos y ventanas modales.
 public static class CssModales
 {
     public const string Reglas = """

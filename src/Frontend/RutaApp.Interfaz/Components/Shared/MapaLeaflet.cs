@@ -3,22 +3,20 @@ using Microsoft.JSInterop;
 
 namespace RutaApp.Interfaz.Components.Shared;
 
-/// <summary>Un punto con nombre en el mapa (origen, destino, parada o escala).</summary>
+// Un punto con nombre en el mapa (origen, destino, parada o escala).
 public record Marcador(double Lat, double Lng, string Nombre, string Simbolo = null);
 
-/// <summary>Un tramo del viaje: en camión (línea de color) o caminando (punteado).</summary>
+// Un tramo del viaje: en camión (línea de color) o caminando (punteado).
 public record TramoMapa(bool EsBus, List<double[]> Puntos, string Color = null, string Patron = null);
 
-/// <summary>Un problema reportado por la comunidad, marcado donde estaba el camión.</summary>
+// Un problema reportado por la comunidad, marcado donde estaba el camión.
 public record ReporteMapa(double Lat, double Lng, string Titulo, string Detalle, string Cuando);
 
-/// <summary>Un punto de referencia cargado de OpenStreetMap (parada, farmacia, hospital...).</summary>
+// Un punto de referencia cargado de OpenStreetMap (parada, farmacia, hospital...).
 public record PuntoReferencia(double Lat, double Lng, string Nombre, string Tipo);
 
-/// <summary>
-/// Controla un mapa Leaflet desde C#. Todo lo que hay que dibujar viaja en UNA llamada a wwwroot/mapa.js, no una por marcador:
-/// con rutas largas es mucho más rápido y el mapa no se traba.
-/// </summary>
+// Controla un mapa Leaflet desde C#. Todo lo que hay que dibujar viaja en UNA llamada a wwwroot/mapa.js, no una por marcador:
+// con rutas largas es mucho más rápido y el mapa no se traba.
 public sealed class MapaLeaflet : IAsyncDisposable
 {
     private readonly IJSRuntime _js;
@@ -58,7 +56,7 @@ public sealed class MapaLeaflet : IAsyncDisposable
         public double opacidad { get; set; } = 1;
     }
 
-    /// <summary>Trazo con borde blanco (dos líneas, la blanca debajo) o sin él. Un patrón vacío es línea continua.</summary>
+    // Trazo con borde blanco (dos líneas, la blanca debajo) o sin él. Un patrón vacío es línea continua.
     private static IEnumerable<L> Linea(List<double[]> pts, string color, int peso, string patron, bool borde, double opacidad = 1)
     {
         if (borde) yield return new L { pts = pts, color = "#ffffff", peso = peso + 4, opacidad = 0.95 };
@@ -135,15 +133,15 @@ public sealed class MapaLeaflet : IAsyncDisposable
         _iniciado = true;
     }
 
-    /// <summary>Activa o desactiva que un clic en el mapa se avise a C# (para elegir un lugar tocando el mapa).</summary>
+    // Activa o desactiva que un clic en el mapa se avise a C# (para elegir un lugar tocando el mapa).
     public Task ActivarSeleccion(bool activo) => Llamar("seleccion", activo).AsTask();
 
-    /// <summary>Hay que llamarlo cuando cambia el tamaño del contenedor (por ejemplo al contraer el sidebar).</summary>
+    // Hay que llamarlo cuando cambia el tamaño del contenedor (por ejemplo al contraer el sidebar).
     public Task InvalidarTamano() => Llamar("invalidar").AsTask();
 
     public Task LimpiarRuta() => Llamar("limpiarRuta").AsTask();
 
-    /// <summary>Línea de la ruta con sus paradas (se ven al acercar el zoom), origen y destino.</summary>
+    // Línea de la ruta con sus paradas (se ven al acercar el zoom), origen y destino.
     public Task DibujarRuta(List<double[]> linea, List<Marcador> paradas, Marcador origen, Marcador destino, string color, bool encuadrar = true,
                             string simbolo = null, string patron = null)
     {
@@ -161,7 +159,7 @@ public sealed class MapaLeaflet : IAsyncDisposable
         }).AsTask();
     }
 
-    /// <summary>Opción de viaje: tramos caminando (punteado) y en camión (color de cada ruta) con sus paradas y escalas.</summary>
+    // Opción de viaje: tramos caminando (punteado) y en camión (color de cada ruta) con sus paradas y escalas.
     public Task DibujarViaje(List<TramoMapa> tramos, List<Marcador> paradas, Marcador origen, Marcador destino, List<Marcador> escalas)
     {
         var lineas = tramos.SelectMany(t => t.EsBus
@@ -211,7 +209,7 @@ public sealed class MapaLeaflet : IAsyncDisposable
         return Llamar("puntos", marcas).AsTask();
     }
 
-    /// <summary>Marcas de los problemas reportados con ubicación (siempre visibles, sin importar el zoom).</summary>
+    // Marcas de los problemas reportados con ubicación (siempre visibles, sin importar el zoom).
     public Task MostrarReportes(List<ReporteMapa> reportes)
     {
         var marcas = reportes.Select(r => new M

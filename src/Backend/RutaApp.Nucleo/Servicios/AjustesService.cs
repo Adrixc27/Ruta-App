@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace RutaApp.Nucleo.Servicios;
 
-/// <summary>Preferencias de este equipo: unidades, accesibilidad y la sesión recordada.</summary>
+// Preferencias de este equipo: unidades, accesibilidad y la sesión recordada.
 public class AjustesData
 {
     public string Unidades { get; set; } = "km";          // km | mi
@@ -13,14 +13,14 @@ public class AjustesData
     public int? SesionUsuarioId { get; set; }             // usuario que pidió "Recordarme"
 }
 
-/// <summary>Guarda y avisa los cambios de los ajustes (LocalApplicationData\RutaApp\ajustes.json). Un solo juego por equipo.</summary>
+// Guarda y avisa los cambios de los ajustes (LocalApplicationData\RutaApp\ajustes.json). Un solo juego por equipo.
 public class AjustesService
 {
     private readonly string _archivo;
 
     public AjustesData Datos { get; private set; } = new();
 
-    /// <summary>Se dispara al guardar: la interfaz vuelve a aplicar la accesibilidad y las unidades.</summary>
+    // Se dispara al guardar: la interfaz vuelve a aplicar la accesibilidad y las unidades.
     public event Action Cambio;
 
     public AjustesService()

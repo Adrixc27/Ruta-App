@@ -2,9 +2,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace RutaApp.Interfaz.Servicios;
 
-/// <summary>
-/// Estado compartido entre pantallas. Es un servicio "scoped": cada sesión tiene el suyo.
-/// </summary>
+// Estado compartido entre pantallas. Es un servicio "scoped": cada sesión tiene el suyo.
 public partial class EstadoApp
 {
     private readonly NavigationManager _nav;
@@ -32,15 +30,15 @@ public partial class EstadoApp
         _datos = datos;
     }
 
-    /// <summary>Los componentes se suscriben para volver a pintarse cuando algo del estado cambia.</summary>
+    // Los componentes se suscriben para volver a pintarse cuando algo del estado cambia.
     public event Action Cambio;
     public void Notificar() => Cambio?.Invoke();
 
-    /// <summary>Se dispara al contraer o expandir el sidebar: los mapas cambian de ancho y deben recalcular su tamaño.</summary>
+    // Se dispara al contraer o expandir el sidebar: los mapas cambian de ancho y deben recalcular su tamaño.
     public event Action BarraLateralCambio;
     public void NotificarBarraLateral() => BarraLateralCambio?.Invoke();
 
-    /// <summary>Preferencias de este equipo (unidades, accesibilidad).</summary>
+    // Preferencias de este equipo (unidades, accesibilidad).
     public AjustesService Ajustes => _ajustes;
 
     // Avisos breves ("Ruta guardada", "Lugar guardado"…)
