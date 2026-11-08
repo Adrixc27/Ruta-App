@@ -46,6 +46,22 @@ public class DatosUsuarioService
         finally { _cerrojo.Release(); }
     }
 
+    /// <summary>Borra los datos guardados de un usuario en este equipo (al borrar su cuenta).</summary>
+    public async Task BorrarAsync(int idUsuario)
+    {
+        await _cerrojo.WaitAsync();
+        try
+        {
+            string ruta = Archivo(idUsuario);
+            if (File.Exists(ruta)) File.Delete(ruta);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning("No se pudieron borrar los datos del usuario: {Mensaje}", ex.Message);
+        }
+        finally { _cerrojo.Release(); }
+    }
+
     public async Task GuardarAsync(int idUsuario, DatosGuardados datos)
     {
         await _cerrojo.WaitAsync();

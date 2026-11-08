@@ -139,6 +139,7 @@ namespace RutaApp.Blazor
              //Se borra lo que depende del usuario, porque si no, no deja 
                 string[] dependientes =
                 {
+                "DELETE FROM favorite_route WHERE id_user = @id",
                 "DELETE FROM trip_result WHERE id_trip IN (SELECT id_trip FROM trip WHERE id_user = @id)",
                 "DELETE FROM trip WHERE id_user = @id",
                 "DELETE FROM favorite WHERE id_user = @id",

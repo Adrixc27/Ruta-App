@@ -27,6 +27,8 @@ public class Ruta
 
     /// <summary>Color propio de la ruta (lista, tarjeta y línea en el mapa), tomado de la paleta según su número.</summary>
     public string Color => Paleta.DeRuta(Numero);
+    public string Simbolo => Paleta.Simbolo(Numero);     // identifica la ruta sin depender del color
+    public string Patron => Paleta.Patron(Numero);       // trazo de la ruta en el mapa (modo daltonismo)
 
     public string OrigenNombre { get; set; } = "";
     public string DestinoNombre { get; set; } = "";
@@ -98,13 +100,41 @@ public class Ruta
             var ini = t.Puntos[0];
             bool ultimo = i == Tramos.Count - 1;
             if (!t.EsBus)
+            {
+                // A dónde se camina: la parada donde se sube (o el destino) y cuántos metros son
+                string hacia = ultimo ? "tu destino"
+                    : (i + 1 < Tramos.Count && !string.IsNullOrWhiteSpace(Tramos[i + 1].ParadaInicio) ? Tramos[i + 1].ParadaInicio : "la parada");
+                string distancia = t.Metros > 0 ? Formato.Distancia(t.Metros) + " · " : "";
                 lista.Add(new PasoViaje("IcoWalk", "Camina " + Math.Max(1, t.Minutos) + " min",
-                    ultimo ? "hasta tu destino" : (i == 0 ? "hasta la parada" : "hasta la siguiente parada"), false, "#475569", ini[0], ini[1]));
+                    distancia + "hasta " + (ultimo || hacia == "la parada" ? hacia : "la parada " + hacia), false, "#475569", ini[0], ini[1],
+                    t.Instrucciones?.Select(x => Formato.ConvertirTexto(x == "Llegas al punto" ? (ultimo ? "Llegas a tu destino" : "Llegas a la parada") : x)).ToList()));
+            }
             else
+            {
+                string sube = string.IsNullOrWhiteSpace(t.ParadaInicio) ? "" : "Sube en " + t.ParadaInicio + " · ";
+                string baja = string.IsNullOrWhiteSpace(t.ParadaFin) ? "" : " · baja en " + t.ParadaFin;
+                string pasa = t.EsperaMin > 0 ? " · pasa cada " + t.EsperaMin + " min" : "";
                 lista.Add(new PasoViaje("IcoBus", "Toma " + (string.IsNullOrWhiteSpace(t.Linea) ? "el camión" : t.Linea),
-                    Math.Max(1, t.Minutos) + " min a bordo", true, t.Color ?? "#2563EB", ini[0], ini[1]));
+                    sube + Math.Max(1, t.Minutos) + " min a bordo" + baja + pasa, true, t.Color ?? "#2563EB", ini[0], ini[1], null, t.Simbolo));
+            }
         }
         return lista;
+    }
+
+    /// <summary>Largo del recorrido completo (ida y vuelta) en kilómetros.</summary>
+    public double Kilometros
+    {
+        get
+        {
+            if (Trazo == null || Trazo.Count < 2) return 0;
+            double m = 0, k = Math.Cos(Trazo[0][0] * Math.PI / 180);
+            for (int i = 1; i < Trazo.Count; i++)
+            {
+                double dx = (Trazo[i][1] - Trazo[i - 1][1]) * 111320 * k, dy = (Trazo[i][0] - Trazo[i - 1][0]) * 110574;
+                m += Math.Sqrt(dx * dx + dy * dy);
+            }
+            return m / 1000;
+        }
     }
 
     public string EtiquetaMayus => Etiqueta.ToUpperInvariant();
@@ -200,7 +230,10 @@ public class ViajeHistorial
 }
 
 /// <summary>Un paso del viaje: caminar o tomar un camión.</summary>
-public record PasoViaje(string Icono, string Titulo, string Detalle, bool EsBus, string Color, double Lat, double Lng);
+public record PasoViaje(string Icono, string Titulo, string Detalle, bool EsBus, string Color, double Lat, double Lng, List<string> Instrucciones = null, string Simbolo = null);
+
+/// <summary>Una parada encontrada por el buscador (de las rutas oficiales).</summary>
+public record ParadaBuscada(string Nombre, double Lat, double Lng, string RutaNombre, int RutaNumero);
 
 public class Etiqueta
 {
@@ -229,6 +262,19 @@ public class Publicacion
     public string IconoTipo => Tipo == "aviso" ? "IcoAlert" : (Tipo == "pregunta" ? "IcoHelp" : "IcoBulb");
     public string Cta => Tipo == "pregunta" ? "Responder" : "Ver en el mapa";
     public DateTime Fecha { get; set; } = DateTime.Now;
+    public DateTime? Vence { get; set; }  // null = no caduca
+
+    public string VenceTexto
+    {
+        get
+        {
+            if (Vence == null) return "";
+            var t = Vence.Value - DateTime.Now;
+            if (t.TotalHours < 1) return "Vence en menos de 1 h";
+            if (t.TotalHours < 24) return "Vence en " + (int)t.TotalHours + " h";
+            return "Vence en " + (int)Math.Ceiling(t.TotalDays) + " d";
+        }
+    }
     public int Id { get; set; }        // id_post en la base de datos 
     public int IdAutor { get; set; }   // id del usuario que publicó 
 }
@@ -244,6 +290,13 @@ public class Tramo
     public string Color { get; set; }         // color de esa ruta en el mapa
     public int Minutos { get; set; }          // duración del tramo
     public bool AjustarACalles { get; set; }  // el recorrido une paradas en línea recta: se ajusta a las calles al mostrarlo
+    public int Metros { get; set; }                       // distancia del tramo (a pie)
+    public List<string> Instrucciones { get; set; }       // cómo caminar (calles y giros), solo a pie
+    public string ParadaInicio { get; set; }              // parada (o zona) donde se sube, solo camión
+    public string ParadaFin { get; set; }                 // parada (o zona) donde se baja, solo camión
+    public string Simbolo { get; set; }                   // símbolo de la ruta (para quien no distingue colores)
+    public string Patron { get; set; }                    // trazo de la ruta en el mapa (guiones) para modo daltonismo
+    public int EsperaMin { get; set; }                    // cada cuántos minutos pasa el camión
     public bool Reparar { get; set; }         // recorrido guardado: se corrigen solo los tramos que cortan esquinas
     public bool Ajustado { get; set; }
 }
@@ -312,6 +365,39 @@ public class CategoriaAjustes
 
 public static class Formato
 {
+    /// <summary>true = mostrar millas y pies (se cambia en Configuración → Unidades de distancia).</summary>
+    public static bool UsaMillas { get; set; }
+
+    /// <summary>"350 m" / "1.2 km", o "1,150 ft" / "0.7 mi" si se eligió millas.</summary>
+    public static string Distancia(double metros)
+    {
+        var inv = CultureInfo.InvariantCulture;
+        if (UsaMillas)
+        {
+            double pies = metros * 3.28084;
+            return pies < 1000 ? (int)(Math.Round(pies / 10) * 10) + " ft" : (metros / 1609.344).ToString("0.#", inv) + " mi";
+        }
+        return metros >= 1000 ? (metros / 1000).ToString("0.#", inv) + " km" : Math.Round(metros).ToString("0", inv) + " m";
+    }
+
+    /// <summary>Convierte los "(120 m)" de un texto de instrucciones a la unidad elegida.</summary>
+    public static string ConvertirTexto(string texto)
+    {
+        if (!UsaMillas || texto == null) return texto;
+        return System.Text.RegularExpressions.Regex.Replace(texto, @"\((\d+) m\)",
+            m => "(" + Distancia(double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)) + ")");
+    }
+
+    private static readonly CompareInfo Comparador = new CultureInfo("es-MX").CompareInfo;
+
+    /// <summary>Nombre de la parada sin el ", Chihuahua, Chihuahua" del final.</summary>
+    public static string NombreParada(string nombre) =>
+        string.IsNullOrWhiteSpace(nombre) ? "" : nombre.Replace(", Chihuahua, Chihuahua", "").Trim();
+
+    /// <summary>¿El texto contiene lo buscado? Sin importar mayúsculas ni acentos.</summary>
+    public static bool Coincide(string texto, string buscado) =>
+        !string.IsNullOrEmpty(texto) && Comparador.IndexOf(texto, buscado, CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0;
+
     /// <summary>"ahora", "hace 5 min", "hace 3 h", "ayer", "hace 4 d" o la fecha si pasó más de una semana.</summary>
     public static string Hace(DateTime fecha)
     {
@@ -334,4 +420,11 @@ public static class Paleta
     };
 
     public static string DeRuta(int numero) => Rutas[Math.Abs(numero) % Rutas.Length];
+
+    // Para quien no distingue colores: cada ruta tiene también un símbolo y un trazo distinto en el mapa
+    private static readonly string[] Simbolos = { "●", "▲", "■", "◆", "★", "✚", "▼", "♠", "♥", "♣" };
+    private static readonly string[] Patrones = { "", "16,8", "28,8", "14,6,3,6", "34,10,6,10", "8,8", "22,6,6,6", "44,10", "10,5,10,5,2,5", "18,10" };
+
+    public static string Simbolo(int numero) => Simbolos[Math.Abs(numero) % Simbolos.Length];
+    public static string Patron(int numero) => Patrones[Math.Abs(numero) % Patrones.Length];
 }

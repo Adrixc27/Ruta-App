@@ -73,6 +73,7 @@ public static class CodigoCompartir
             Tramos = t.Tramos.Select(x => new Tramo
             {
                 EsBus = x.EsBus, TextoInicio = x.TextoInicio, TextoFin = x.TextoFin, Linea = x.Linea, Color = x.Color, Minutos = x.Minutos,
+                Simbolo = x.Simbolo, Patron = x.Patron, Metros = x.Metros, ParadaInicio = x.ParadaInicio, ParadaFin = x.ParadaFin, EsperaMin = x.EsperaMin,
                 AjustarACalles = true, Puntos = Adelgazar(x.Puntos)
             }).ToList()
         };

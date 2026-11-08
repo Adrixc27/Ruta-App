@@ -47,7 +47,7 @@ window.rutaMapa = (function () {
             color: l.color || '#2563EB',
             weight: l.peso || 5,
             opacity: l.opacidad == null ? 1 : l.opacidad,
-            dashArray: l.punteada ? '2,9' : null,
+            dashArray: l.dash ? l.dash : (l.punteada ? '2,9' : null),
             lineJoin: 'round',
             lineCap: 'round',
             interactive: false

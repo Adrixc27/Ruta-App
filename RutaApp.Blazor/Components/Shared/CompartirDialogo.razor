@@ -1,6 +1,6 @@
 @inject IJSRuntime JS
 
-@* Muestra el código para compartir una parada, una ruta o un viaje personalizado, con botón para copiarlo. *@
+@* Compartir en 3 pasos: copiar el código, enviarlo, y que la otra persona lo pegue en Planificar. *@
 @if (Visible)
 {
     <div class="modal-fondo" @onclick="Cerrar">
@@ -13,15 +13,21 @@
                 <button type="button" class="btn-icono suave" title="Cerrar" @onclick="Cerrar"><Icon Nombre="IcoX" Tam="16" /></button>
             </div>
 
-            <p class="compartir-ayuda">Copia este código y envíalo por mensaje. Quien lo reciba puede agregarlo desde <b>Mi perfil → Importar código</b>.</p>
-            <textarea class="textarea codigo" rows="4" readonly @onfocus="Seleccionar" id="@_idCodigo">@Codigo</textarea>
+            <ol class="compartir-pasos">
+                <li><span>1</span> Copia el código</li>
+                <li><span>2</span> Envíalo por mensaje</li>
+                <li><span>3</span> La otra persona lo pega en <b>Planificar → Pegar un código</b></li>
+            </ol>
+
+            <button type="button" class="btn btn-grande btn-ancho @(_copiado ? "btn-exito" : "btn-primario")" @onclick="Copiar">
+                <Icon Nombre="@(_copiado ? "IcoCheck" : "IcoCopy")" Tam="18" /> @(_copiado ? "¡Código copiado!" : "Copiar código")
+            </button>
+
+            <input id="@_idCodigo" class="codigo-linea" readonly value="@Codigo" @onfocus="Seleccionar" aria-label="Código para compartir" />
             @if (_mensaje != null)
             {
                 <p class="aviso-texto">@_mensaje</p>
             }
-            <div class="modal-acciones">
-                <button type="button" class="btn btn-primario" @onclick="Copiar"><Icon Nombre="IcoCopy" Tam="16" /> Copiar código</button>
-            </div>
         </div>
     </div>
 }
@@ -34,10 +40,11 @@
 
     private readonly string _idCodigo = "codigo-" + Guid.NewGuid().ToString("N");
     private string _mensaje;
+    private bool _copiado;
 
     protected override void OnParametersSet()
     {
-        if (!Visible) _mensaje = null;
+        if (!Visible) { _mensaje = null; _copiado = false; }
     }
 
     private async Task Cerrar()
@@ -57,12 +64,13 @@
         try
         {
             await JS.InvokeVoidAsync("navigator.clipboard.writeText", Codigo);
-            _mensaje = "¡Código copiado!";
+            _copiado = true;
+            _mensaje = null;
         }
         catch (Exception)
         {
             await Seleccionar();
-            _mensaje = "Selecciona el código y cópialo con Ctrl+C.";
+            _mensaje = "No se pudo copiar solo: el código ya está seleccionado, cópialo con Ctrl+C.";
         }
     }
 }

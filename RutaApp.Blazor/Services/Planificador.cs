@@ -442,7 +442,13 @@ public static class Planificador
             string textoInicio = t == 0 ? aqui + " · " + a.L.Corto
                 : "Transbordo · " + (a.Nombre != null ? "sube en " + a.Nombre : a.Zona ? "sube en esta zona" : "sube") + " · " + a.L.Corto;
             string textoFin = ultimo ? (b.Nombre != null ? "Baja en " + b.Nombre : b.Zona ? "Baja en esta zona" : "Baja aquí") : null;
-            o.Tramos.Add(Bus(a.L, a.Idx, b.Idx, textoInicio, textoFin));
+            var tramoBus = Bus(a.L, a.Idx, b.Idx, textoInicio, textoFin);
+            tramoBus.ParadaInicio = a.Nombre ?? (a.Zona ? "la zona señalada" : null);
+            tramoBus.ParadaFin = b.Nombre ?? (b.Zona ? "la zona señalada" : null);
+            tramoBus.EsperaMin = a.L.R.FrecuenciaMin;
+            tramoBus.Simbolo = a.L.R.Simbolo;
+            tramoBus.Patron = a.L.R.Patron;
+            o.Tramos.Add(tramoBus);
             o.Lineas.Add(a.L);
             partes.Add("Bus " + (int)Math.Round(Avance(a.L, a.Idx, b.Idx) / MetrosPorMinBus) + " min");
         }
@@ -484,7 +490,7 @@ public static class Planificador
     // Tramo a pie: se dibuja recto al principio y se ajusta a las banquetas al mostrarlo
     private static Tramo Camina(double[] desde, double[] hasta, double metros)
     {
-        return new Tramo { EsBus = false, Puntos = new List<double[]> { desde, hasta }, Minutos = Min(metros), AjustarACalles = true };
+        return new Tramo { EsBus = false, Puntos = new List<double[]> { desde, hasta }, Minutos = Min(metros), Metros = (int)Math.Round(metros / 10.0) * 10, AjustarACalles = true };
     }
 
     // ── Convertir la opción en una Ruta que Comparar sabe mostrar ─────────

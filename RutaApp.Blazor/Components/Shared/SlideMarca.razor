@@ -1,9 +1,10 @@
+@inject EstadoApp Estado
 @* Panel azul de marca (ilustración de la ruta + titular). Es la primera diapositiva del carrusel. *@
 <div class="slide-marca">
     <span class="burbuja burbuja-1"></span>
     <span class="burbuja burbuja-2"></span>
     <div class="slide-marca-contenido">
-        <a href="" class="marca marca-clara marca-clickable" title="Ir al inicio">
+        <a href="" class="marca marca-clara marca-clickable" title="Ver la animación de inicio" @onclick="() => Estado.IrALanding(true)" @onclick:preventDefault="true">
             <div class="marca-logo">R</div>
             <div class="marca-texto"><b>RUTA</b><small>TRANSPORTE PÚBLICO</small></div>
         </a>

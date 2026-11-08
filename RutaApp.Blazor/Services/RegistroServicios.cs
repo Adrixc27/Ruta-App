@@ -5,19 +5,10 @@ namespace RutaApp.Blazor.Services;
 public static class RegistroServicios
 {
     /// <summary>
-    /// Registra los servicios de la app. Las rutas y paradas se leen de MySQL (RutaService).
-    /// El parámetro urlApi se conserva por compatibilidad con la app anfitriona.
+    /// Registra los servicios de la app. Todo se lee y se guarda directo en MySQL local (ver Connection.cs): no hay API.
     /// </summary>
     public static IServiceCollection AgregarServiciosRuta(this IServiceCollection servicios)
     {
-        // API desactivada: se usa la conexión directa a MySQL.
-        // Si alguna clase todavía inyecta ServicioApi, descomenta este bloque hasta quitar ese uso.
-        // servicios.AddHttpClient<ServicioApi>(cliente =>
-        // {
-        //     cliente.BaseAddress = new Uri(urlApi);
-        //     cliente.Timeout = TimeSpan.FromSeconds(20);
-        // });
-
         // Servicios de OpenStreetMap (OSRM, Nominatim, Photon, Overpass): piden un User-Agent que identifique la app
         servicios.AddHttpClient("externo", cliente =>
         {
@@ -35,6 +26,7 @@ public static class RegistroServicios
         servicios.AddSingleton<FavoritoService>();
         servicios.AddSingleton<PreferenciaService>();
         servicios.AddSingleton<ComunidadService>();
+        servicios.AddSingleton<AjustesService>();                  // unidades, accesibilidad y sesión recordada
         servicios.AddSingleton<DatosUsuarioService>();             // historial, viajes y lugares guardados de cada usuario
         return servicios;
     }

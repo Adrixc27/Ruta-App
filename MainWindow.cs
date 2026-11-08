@@ -11,10 +11,12 @@ public class MainWindow : Window
     public MainWindow(IServiceProvider servicios)
     {
         Title = "R.U.T.A.";
-        Width = 1440;
-        Height = 900;
-        MinWidth = 380;
-        MinHeight = 560;
+        // El tamaño se adapta a la pantalla: nunca más grande que el área de trabajo (cabe en laptops de 1366x768)
+        var area = SystemParameters.WorkArea;
+        Width = Math.Min(1440, area.Width * 0.96);
+        Height = Math.Min(900, area.Height * 0.96);
+        MinWidth = Math.Min(380, area.Width);
+        MinHeight = Math.Min(560, area.Height);
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
         var web = new BlazorWebView

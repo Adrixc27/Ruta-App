@@ -1,63 +1,31 @@
-@* Ajustes → General: Unidades de distancia e Idioma (pantallas de diseño, sin funcionalidad todavía). *@
+@inject EstadoApp Estado
+
+@* Ajustes → General: unidades de distancia. Se aplican al momento en toda la app (rutas, caminatas, instrucciones). *@
 @switch (Clave)
 {
     case "unidades":
-        <MarcoDetalle Categoria="General" Titulo="Unidades de distancia" Subtitulo="Define cómo se muestran las distancias durante la planificación y navegación.">
+        <MarcoDetalle Categoria="General" Titulo="Unidades de distancia" Subtitulo="Elige cómo se muestran las distancias en rutas, caminatas e instrucciones.">
             <ChildContent>
                 <DosColumnas Lateral="356">
                     <Principal>
-                        <Tarjeta Titulo="Sistema de medida" Subtitulo="Esta preferencia afecta los resultados, mapas y avisos de caminata.">
-                            <OpcionRadio Titulo="Kilómetros" Descripcion="Metros para tramos cortos y kilómetros para trayectos largos." Insignia="Recomendado"
-                                         Seleccionada="@(_unidad == "km")" OnClick="@(() => _unidad = "km")" />
-                            <OpcionRadio Titulo="Millas" Descripcion="Pies para tramos cortos y millas para trayectos largos."
-                                         Seleccionada="@(_unidad == "mi")" OnClick="@(() => _unidad = "mi")" />
-                            <Aviso Icono="IcoRefresh" Titulo="Conversión automática">Las distancias históricas se convertirán sin modificar tus rutas guardadas.</Aviso>
+                        <Tarjeta Titulo="Sistema de medida" Subtitulo="El cambio se aplica al momento, no hay que guardar.">
+                            <OpcionRadio Titulo="Kilómetros" Descripcion="Metros para tramos cortos y kilómetros para trayectos largos." Insignia="@(!Millas ? "En uso" : null)"
+                                         Seleccionada="@(!Millas)" OnClick="@(() => Elegir("km"))" />
+                            <OpcionRadio Titulo="Millas" Descripcion="Pies para tramos cortos y millas para trayectos largos." Insignia="@(Millas ? "En uso" : null)"
+                                         Seleccionada="@(Millas)" OnClick="@(() => Elegir("mi"))" />
                         </Tarjeta>
                     </Principal>
                     <Secundario>
-                        <Tarjeta Titulo="Ejemplo de ruta" Subtitulo="@("Vista previa con " + (_unidad == "km" ? "kilómetros" : "millas") + " seleccionadas.")">
-                            <ParValor Etiqueta="Caminar hasta Estación Norte" Valor="@(_unidad == "km" ? "450 m · 6 min" : "1,476 ft · 6 min")" Recuadro="true" />
-                            <ParValor Etiqueta="Viajar en Metro L2" Valor="@(_unidad == "km" ? "7,4 km · 18 min" : "4,6 mi · 18 min")" Recuadro="true" />
-                            <ParValor Etiqueta="Caminar al destino" Valor="@(_unidad == "km" ? "280 m · 4 min" : "919 ft · 4 min")" Recuadro="true" />
+                        <Tarjeta Titulo="Vista previa" Subtitulo="Así se verán las distancias.">
+                            <ParValor Etiqueta="Caminar a la parada" Valor="@(Formato.Distancia(450) + " · 6 min")" Recuadro="true" />
+                            <ParValor Etiqueta="Viajar en camión" Valor="@(Formato.Distancia(7400) + " · 22 min")" Recuadro="true" />
+                            <ParValor Etiqueta="Caminar al destino" Valor="@(Formato.Distancia(280) + " · 4 min")" Recuadro="true" />
                             <div class="separador"></div>
-                            <div class="total-distancia"><b>Distancia total</b><h4>@(_unidad == "km" ? "8,1 km" : "5,0 mi")</h4></div>
+                            <div class="total-distancia"><b>Distancia total</b><h4>@Formato.Distancia(8130)</h4></div>
                         </Tarjeta>
                     </Secundario>
                 </DosColumnas>
             </ChildContent>
-            <Barra><BarraInferior Info="Los cambios se aplicarán a tus próximas rutas." TextoBoton="Guardar unidad" /></Barra>
-        </MarcoDetalle>
-        break;
-
-    case "idioma":
-        <MarcoDetalle Categoria="General" Titulo="Idioma de la aplicación" Subtitulo="Elige el idioma para menús, indicaciones y mensajes de RUTA.">
-            <ChildContent>
-                <DosColumnas Lateral="356">
-                    <Principal>
-                        <Tarjeta Titulo="Idioma de interfaz" Subtitulo="Tu idioma actual es Español. El cambio se aplicará en todos tus dispositivos.">
-                            <OpcionRadio Titulo="Español" Descripcion="Español (Latinoamérica)" Insignia="Actual"
-                                         Seleccionada="@(_idioma == "es")" OnClick="@(() => _idioma = "es")" />
-                            <OpcionRadio Titulo="English" Descripcion="English (United States)"
-                                         Seleccionada="@(_idioma == "en")" OnClick="@(() => _idioma = "en")" />
-                            <OpcionRadio Titulo="Português" Descripcion="Português (Brasil)"
-                                         Seleccionada="@(_idioma == "pt")" OnClick="@(() => _idioma = "pt")" />
-                            <Aviso Icono="IcoInfo" Titulo="Contenido regional">Los nombres de estaciones y calles se conservarán en su idioma oficial.</Aviso>
-                        </Tarjeta>
-                    </Principal>
-                    <Secundario>
-                        <Tarjeta Titulo="Vista previa" Subtitulo="Así verás los elementos principales de la aplicación.">
-                            <div class="proxima-ruta">
-                                <small>PRÓXIMA RUTA</small>
-                                <h4>Centro → Universidad</h4>
-                                <span>Sale en 8 min · 3 transbordos</span>
-                            </div>
-                            <p class="nota">Formato de fecha: 1 de octubre de 2026</p>
-                            <p class="nota">Hora: 18:45 · Distancia: kilómetros</p>
-                        </Tarjeta>
-                    </Secundario>
-                </DosColumnas>
-            </ChildContent>
-            <Barra><BarraInferior Info="La app se recargará al guardar el nuevo idioma." TextoBoton="Guardar idioma" /></Barra>
         </MarcoDetalle>
         break;
 }
@@ -65,6 +33,13 @@
 @code {
     [Parameter] public string Clave { get; set; }
 
-    private string _unidad = "km";
-    private string _idioma = "es";
+    private bool Millas => Estado.Ajustes.Datos.Unidades == "mi";
+
+    private void Elegir(string unidad)
+    {
+        if (Estado.Ajustes.Datos.Unidades == unidad) return;
+        Estado.Ajustes.Datos.Unidades = unidad;
+        Estado.Ajustes.Guardar();
+        Estado.MostrarAviso(unidad == "mi" ? "Distancias en millas" : "Distancias en kilómetros");
+    }
 }

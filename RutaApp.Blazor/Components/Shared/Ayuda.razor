@@ -1,0 +1,43 @@
+@implements IDisposable
+@inject EstadoApp Estado
+
+@* Botón "?" que explica qué hace una parte de la app. Solo aparece con la Guía visual activada (Configuración → Accesibilidad). *@
+@if (Estado.Ajustes.Datos.GuiaVisual)
+{
+    <span class="ayuda-wrap">
+        <button type="button" class="ayuda-btn" title="¿Qué es esto?" aria-label="@("Ayuda: " + Titulo)" aria-expanded="@_abierta"
+                @onclick="Alternar" @onkeydown="Tecla">?</button>
+        @if (_abierta)
+        {
+            <span class="ayuda-fondo" @onclick="Cerrar"></span>
+            <span role="tooltip" class="ayuda-globo anima-entra @(Derecha ? "derecha" : "")">
+                <b>@Titulo</b>
+                <span>@Texto</span>
+                <button type="button" class="btn-ghost btn-mini" @onclick="Cerrar">Entendido</button>
+            </span>
+        }
+    </span>
+}
+
+@code {
+    [Parameter] public string Titulo { get; set; } = "";
+    [Parameter] public string Texto { get; set; } = "";
+    /// <summary>true = el globo se abre hacia la izquierda (para botones pegados al borde derecho).</summary>
+    [Parameter] public bool Derecha { get; set; }
+
+    private bool _abierta;
+
+    protected override void OnInitialized() => Estado.Ajustes.Cambio += Refrescar;
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    private void Alternar() => _abierta = !_abierta;
+    private void Cerrar() => _abierta = false;
+
+    private void Tecla(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape") _abierta = false;
+    }
+
+    public void Dispose() => Estado.Ajustes.Cambio -= Refrescar;
+}

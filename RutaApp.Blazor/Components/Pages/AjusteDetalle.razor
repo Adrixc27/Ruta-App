@@ -3,7 +3,7 @@
 
 <PageTitle>@Nombre · R.U.T.A.</PageTitle>
 
-@* Pantalla de detalle de un ajuste (Configuración → ...). Solo diseño. *@
+@* Pantalla de detalle de un ajuste (Configuración → ...). *@
 @switch (Grupo)
 {
     case "general":
@@ -12,6 +12,12 @@
     case "accesibilidad":
         <AjustesAccesibilidad Clave="@Clave" />
         break;
+    case "cuenta":
+        <AjustesCuenta Clave="@Clave" />
+        break;
+    case "basedatos":
+        <AjustesBaseDatos Clave="@Clave" />
+        break;
     case "soporte":
         <AjustesSoporte Clave="@Clave" />
         break;
@@ -19,7 +25,7 @@
         <AjustesLegal Clave="@Clave" />
         break;
     default:
-        <MarcoDetalle Categoria="Configuración" Titulo="@Nombre" Subtitulo="Esta pantalla estará disponible próximamente.">
+        <MarcoDetalle Categoria="Configuración" Titulo="@Nombre" Subtitulo="No encontramos este ajuste.">
             <ChildContent><div></div></ChildContent>
         </MarcoDetalle>
         break;
@@ -38,12 +44,12 @@
         bool es(string clave) => ajuste.Contains(clave, StringComparison.OrdinalIgnoreCase);
 
         (Grupo, Clave) =
+            es("Conexión a la base") ? ("basedatos", "conexion") :
             es("Unidades") ? ("general", "unidades") :
-            es("Idioma") ? ("general", "idioma") :
-            es("accesibilidad") ? ("accesibilidad", "accesibilidad") :
+            es("Accesibilidad") ? ("accesibilidad", "accesibilidad") :
+            es("Mi cuenta") ? ("cuenta", "cuenta") :
             es("Reportar") ? ("soporte", "reportar") :
             es("Centro de ayuda") ? ("soporte", "ayuda") :
-            es("comentarios") ? ("soporte", "comentarios") :
             es("Términos") ? ("legal", "terminos") :
             es("privacidad") ? ("legal", "privacidad") :
             es("Sobre Nosotros") ? ("legal", "sobre") :

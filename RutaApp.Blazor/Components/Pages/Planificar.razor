@@ -9,7 +9,7 @@
     <div class="panel-lateral">
         <div class="panel-scroll">
             <div class="encabezado-seccion">
-                <h1 class="titulo-seccion">¿A dónde vas hoy?</h1>
+                <h1 class="titulo-seccion">¿A dónde vas hoy?<Ayuda Titulo="Planificar viaje" Texto="Escribe de dónde sales y a dónde vas (o toca «Elegir en el mapa»). También puedes buscar por el nombre de una parada. Después pulsa «Buscar y comparar rutas»." /></h1>
                 <p class="sub-panel">Planifica tu viaje en transporte público</p>
             </div>
 
@@ -59,7 +59,7 @@
 
             @* Mis lugares (debajo del botón de buscar): casa, escuela y otros puntos para llenar los campos con un toque *@
             <div class="bloque lugares-rapidos">
-                <div class="label-upper sin-margen">MIS LUGARES</div>
+                <div class="label-upper sin-margen">MIS LUGARES<Ayuda Titulo="Mis lugares" Texto="Guarda tu casa, escuela u otros puntos. Después, con un toque, los pones como origen o destino." /></div>
 
                 @if (_eligiendo != null)
                 {
@@ -101,8 +101,9 @@
                 }
                 else
                 {
-                    <div class="card guardar-lugar">
-                        <CampoTexto @bind-Text="_nombreLugar" Hint="Nombre (por ejemplo: Casa)" MaxLength="30" Alto="40" />
+                    <div class="card guardar-lugar anima-entra">
+                        <div class="paso-form"><span>1</span> ¿Cómo se llama?</div>
+                        <CampoTexto @bind-Text="_nombreLugar" Hint="Por ejemplo: Casa, Escuela, Trabajo" MaxLength="30" Alto="40" />
                         <div class="tipos-lugar">
                             @foreach (var t in TiposLugar)
                             {
@@ -112,28 +113,82 @@
                                 </button>
                             }
                         </div>
-                        <div class="lugar-elegido">
+
+                        <div class="paso-form"><span>2</span> ¿Dónde está?</div>
+                        <div class="lugar-opciones">
+                            <button type="button" class="btn btn-contorno btn-chico" disabled="@_buscandoUbicacion" @onclick="UsarMiUbicacionLugar">
+                                <Icon Nombre="IcoLocate" Tam="15" /> @(_buscandoUbicacion ? "Buscando…" : "Mi ubicación")
+                            </button>
+                            <button type="button" class="btn btn-contorno btn-chico" @onclick='() => EmpezarElegir("lugar")'>
+                                <Icon Nombre="IcoPin" Tam="15" /> Tocar en el mapa
+                            </button>
+                        </div>
+                        <div class="campo-wrap">
+                            <CampoTexto Text="@_direccionLugar" TextChanged="BuscarDireccionLugar" Icono="IcoSearch" Hint="o escribe una dirección o lugar…" Alto="40" />
+                            @if (_resultadosLugar.Count > 0)
+                            {
+                                <div class="sugerencias">
+                                    @foreach (var sug in _resultadosLugar)
+                                    {
+                                        var s = sug;
+                                        <div class="sugerencia" @onclick="() => ElegirDireccionLugar(s)">
+                                            <span class="sug-num"><Icon Nombre="IcoPin" Tam="12" /></span>
+                                            <div><b>@s.Nombre</b><small>@s.Detalle</small></div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <div class="lugar-elegido @(LugarParaGuardar != null ? "ok" : "")">
                             @if (LugarParaGuardar != null)
                             {
-                                <Icon Nombre="IcoPin" Tam="16" Color="var(--brand-primary)" /> <b>@LugarParaGuardar.Nombre</b>
+                                <Icon Nombre="IcoCheckCircle" Tam="16" Color="var(--success)" /> <span>Lugar elegido: <b>@LugarParaGuardar.Nombre</b></span>
                             }
                             else
                             {
-                                <span class="nota-panel">Elige el lugar: escribe una dirección en «¿A dónde vas?» o tócalo en el mapa.</span>
+                                <span class="nota-panel">Aún no eliges dónde está el lugar.</span>
                             }
                         </div>
-                        <button type="button" class="btn btn-contorno btn-chico" @onclick='() => EmpezarElegir("lugar")'><Icon Nombre="IcoPin" Tam="15" /> Elegir en el mapa</button>
                         @if (_errorLugar != null) { <p class="error-texto">@_errorLugar</p> }
                         <div class="modal-acciones">
                             <button type="button" class="btn btn-contorno btn-chico" @onclick="CancelarGuardarLugar">Cancelar</button>
-                            <button type="button" class="btn btn-primario btn-chico" @onclick="GuardarLugar">Guardar</button>
+                            <button type="button" class="btn btn-primario btn-chico" @onclick="GuardarLugar">Guardar lugar</button>
                         </div>
                     </div>
                 }
             </div>
 
+            @* ¿Te compartieron un viaje, un lugar o una ruta? Se pega el código y se abre en el mapa (no hace falta cuenta) *@
+            <div class="bloque codigo-bloque">
+                <div class="label-upper sin-margen">¿TE COMPARTIERON ALGO?<Ayuda Titulo="Pegar un código" Texto="Si alguien te envió un código (RUTA1:…), pégalo aquí y verás su viaje, lugar o ruta en el mapa." /></div>
+                @if (!_pegarCodigo)
+                {
+                    <button type="button" class="btn-ghost" @onclick="() => _pegarCodigo = true"><Icon Nombre="IcoShare" Tam="15" /> Pegar un código</button>
+                }
+                else
+                {
+                    <div class="card guardar-lugar anima-entra">
+                        <CampoTexto @bind-Text="_codigoTexto" Icono="IcoShare" Hint="Pega aquí el código (RUTA1:…)" Alto="40" />
+                        @if (_mensajeCodigo != null) { <p class="error-texto">@_mensajeCodigo</p> }
+                        <div class="modal-acciones">
+                            <button type="button" class="btn btn-contorno btn-chico" @onclick="() => { _pegarCodigo = false; _mensajeCodigo = null; }">Cancelar</button>
+                            <button type="button" class="btn btn-primario btn-chico" @onclick="AbrirCodigo">Abrir</button>
+                        </div>
+                    </div>
+                }
+                @if (_viajeCompartido)
+                {
+                    <div class="aviso-compartido anima-entra">
+                        <Icon Nombre="IcoInfo" Tam="16" />
+                        <span>Estás viendo un viaje que te compartieron.</span>
+                        <button type="button" class="btn-ghost btn-mini" @onclick="GuardarCompartido">Guardar en mi perfil</button>
+                    </div>
+                }
+            </div>
+
             @* Historial de viajes: las rutas en las que ya viajaste *@
-            <div class="label-upper">HISTORIAL DE VIAJES</div>
+            <div class="label-upper">HISTORIAL DE VIAJES<Ayuda Titulo="Historial" Texto="Los viajes que ya hiciste. Toca uno para verlo otra vez en el mapa, o guárdalo con el marcador." /></div>
             @if (!Estado.ConCuenta)
             {
                 <p class="nota-panel">Tu historial se guarda con tu cuenta. <a href="acceso" class="azul">Inicia sesión</a> para ver los viajes que hagas.</p>
@@ -209,6 +264,15 @@
 
     // Guardar el lugar elegido (casa, escuela...)
     private bool _guardandoLugar;
+    private string _direccionLugar = "";
+    private List<Sugerencia> _resultadosLugar = new();
+    private CancellationTokenSource _esperaLugar;
+    private bool _buscandoUbicacion;
+
+    // Código que te compartieron
+    private bool _pegarCodigo, _viajeCompartido;
+    private string _codigoTexto = "", _mensajeCodigo, _codigoAbierto = "";
+
     private string _nombreLugar = "", _tipoLugar = "casa", _errorLugar;
     private Sugerencia _lugarMapa;       // lugar tocado en el mapa para guardarlo
     private string _eligiendo;           // null, "lugar" o el campo para el que se está eligiendo un punto en el mapa
@@ -317,6 +381,7 @@
         if (_viajeMostrado == null) return;
         _viajeMostrado = null;
         _historialSel = null;
+        _viajeCompartido = false;
         await _mapa.LimpiarRuta();
         _mapa.OcultarTarjeta();
         _mapa.BannerTexto("Visualizando mapa amplio de Chihuahua, Chih.");
@@ -443,6 +508,8 @@
     private async Task CancelarGuardarLugar()
     {
         _guardandoLugar = false;
+        _direccionLugar = "";
+        _resultadosLugar = new();
         _lugarMapa = null;
         _errorLugar = null;
         await CancelarElegir();
@@ -460,7 +527,99 @@
         Estado.AgregarLugar(nombre, _tipoLugar, s.Nombre, s.Lat, s.Lng);
         _guardandoLugar = false;
         _lugarMapa = null;
+        _direccionLugar = "";
+        _resultadosLugar = new();
         await _mapa.QuitarUbicacion("lugar");
+    }
+
+    // Opción 1 para ubicar el lugar: donde estás ahora
+    private async Task UsarMiUbicacionLugar()
+    {
+        _buscandoUbicacion = true;
+        _errorLugar = null;
+        try
+        {
+            var pos = await _mapa.ActualizarPosicionAsync(true);
+            if (pos == null) { _errorLugar = "No pudimos obtener tu ubicación. Revisa que el servicio de ubicación esté activo."; return; }
+            string calle = await Estado.CalleDeAsync(pos[0], pos[1]);
+            _lugarMapa = new Sugerencia { Nombre = string.IsNullOrWhiteSpace(calle) ? "Mi ubicación actual" : calle, Lat = pos[0], Lng = pos[1] };
+            _direccionLugar = _lugarMapa.Nombre;
+            _resultadosLugar = new();
+        }
+        finally
+        {
+            _buscandoUbicacion = false;
+        }
+    }
+
+    // Opción 3: escribir una dirección y elegirla de la lista
+    private async Task BuscarDireccionLugar(string texto)
+    {
+        _direccionLugar = texto;
+        _lugarMapa = null;
+        _esperaLugar?.Cancel();
+        _esperaLugar = new CancellationTokenSource();
+        var token = _esperaLugar.Token;
+        try
+        {
+            await Task.Delay(450, token);
+            if (texto.Trim().Length < 3) { _resultadosLugar = new(); return; }
+            var lista = await Estado.BuscarLugaresAsync(texto.Trim());
+            if (!token.IsCancellationRequested) _resultadosLugar = lista ?? new();
+        }
+        catch (TaskCanceledException) { }
+        catch (Exception) { _resultadosLugar = new(); }
+    }
+
+    private async Task ElegirDireccionLugar(Sugerencia s)
+    {
+        _lugarMapa = s;
+        _direccionLugar = s.Nombre;
+        _resultadosLugar = new();
+        _errorLugar = null;
+        await _mapa.ElegirUbicacion("lugar", s.Nombre, s.Lat, s.Lng);
+    }
+
+    // ── Código que te compartieron ────────────────────────────────────────
+    private async Task AbrirCodigo()
+    {
+        var c = CodigoCompartir.Leer(_codigoTexto);
+        if (c == null)
+        {
+            _mensajeCodigo = "Ese código no es válido. Cópialo completo; empieza con \"" + CodigoCompartir.Prefijo + "\".";
+            return;
+        }
+        _mensajeCodigo = null;
+        _codigoAbierto = _codigoTexto;
+        _pegarCodigo = false;
+        _viajeCompartido = false;
+
+        switch (c.Tipo)
+        {
+            case "viaje" when c.Viaje != null:
+                _viajeCompartido = true;
+                await MostrarViajeAsync(Estado.RutaDeViaje(c.Viaje), "Viaje compartido");
+                break;
+            case "lugar" when c.Lugar != null:
+                await OcultarViajeMostradoAsync();
+                PonerTexto("destino", c.Lugar.Nombre);
+                _elegido["destino"] = new Sugerencia { Nombre = c.Lugar.Nombre, Detalle = c.Lugar.Direccion, Lat = c.Lugar.Lat, Lng = c.Lugar.Lng };
+                await _mapa.ElegirUbicacion("destino", c.Lugar.Nombre, c.Lugar.Lat, c.Lugar.Lng);
+                Estado.MostrarAviso("Lugar compartido puesto como destino");
+                break;
+            case "ruta":
+                var ruta = Estado.BuscarRuta(c.RutaId);
+                if (ruta == null) { _mensajeCodigo = "Esa ruta no está disponible ahora."; _pegarCodigo = true; }
+                else Estado.Navegar("rutas", ruta);
+                break;
+        }
+    }
+
+    // Guarda en el perfil lo que te compartieron (pide cuenta)
+    private void GuardarCompartido()
+    {
+        string mensaje = Estado.ImportarCodigo(_codigoAbierto);
+        if (!string.IsNullOrEmpty(mensaje)) Estado.MostrarAviso(mensaje);
     }
 
     // Muestra un lugar guardado en el mapa
@@ -569,6 +728,9 @@
         if (lista == null) return;   // el usuario siguió escribiendo, o falló la búsqueda
 
         var items = new List<Sugerencia>(lista);
+        // Paradas de camión que coinciden con lo escrito (buscar por paradas)
+        foreach (var parada in Estado.BuscarParadas(texto, 4).AsEnumerable().Reverse())
+            items.Insert(0, new Sugerencia { Numero = "P", Nombre = parada.Nombre, Detalle = "Parada · " + parada.RutaNombre, Lat = parada.Lat, Lng = parada.Lng });
         // Los lugares guardados que coinciden con lo escrito salen primero
         foreach (var l in Estado.Lugares.Where(l => l.Nombre.Contains(texto, StringComparison.CurrentCultureIgnoreCase)).Reverse())
             items.Insert(0, new Sugerencia { Numero = "★", Nombre = l.Nombre, Detalle = "Mi lugar · " + l.TipoTexto, Lat = l.Lat, Lng = l.Lng });
@@ -694,5 +856,6 @@
     {
         Estado.Cambio -= Refrescar;
         foreach (var cts in _esperas.Values) cts.Cancel();
+        _esperaLugar?.Cancel();
     }
 }

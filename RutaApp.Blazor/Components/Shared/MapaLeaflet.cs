@@ -4,10 +4,10 @@ using Microsoft.JSInterop;
 namespace RutaApp.Blazor.Components.Shared;
 
 /// <summary>Un punto con nombre en el mapa (origen, destino, parada o escala).</summary>
-public record Marcador(double Lat, double Lng, string Nombre);
+public record Marcador(double Lat, double Lng, string Nombre, string Simbolo = null);
 
 /// <summary>Un tramo del viaje: en camión (línea de color) o caminando (punteado).</summary>
-public record TramoMapa(bool EsBus, List<double[]> Puntos, string Color = null);
+public record TramoMapa(bool EsBus, List<double[]> Puntos, string Color = null, string Patron = null);
 
 /// <summary>Un punto de referencia cargado de OpenStreetMap (parada, farmacia, hospital...).</summary>
 public record PuntoReferencia(double Lat, double Lng, string Nombre, string Tipo);
@@ -53,6 +53,7 @@ public sealed class MapaLeaflet : IAsyncDisposable
         public string color { get; set; }
         public int peso { get; set; } = 6;
         public bool punteada { get; set; }
+        public string dash { get; set; }          // guiones propios de la ruta (modo daltonismo)
         public bool borde { get; set; }
         public double opacidad { get; set; } = 1;
     }
@@ -83,10 +84,11 @@ public sealed class MapaLeaflet : IAsyncDisposable
     };
 
     // Parada de camión: círculo blanco con el icono del camión, del color de la ruta
-    private static M Parada(double lat, double lng, string nombre, string color, bool grande, bool rotuloFijo) => new M
+    private static M Parada(double lat, double lng, string nombre, string color, bool grande, bool rotuloFijo, string simbolo = null) => new M
     {
         lat = lat, lng = lng, w = grande ? 28 : 20, h = grande ? 28 : 20, ax = grande ? 14 : 10, ay = grande ? 14 : 10, z = grande ? 450 : 300,
-        html = "<div class=\"mk-parada" + (grande ? " grande" : "") + (nombre != null && nombre.Contains("zona") ? " zona" : "") + "\" style=\"--c:" + (color ?? "#2563EB") + "\">" + Svg("IcoBus", grande ? 15 : 11) + "</div>",
+        html = "<div class=\"mk-parada" + (grande ? " grande" : "") + (nombre != null && nombre.Contains("zona") ? " zona" : "") + "\" style=\"--c:" + (color ?? "#2563EB") + "\">" +
+               (simbolo != null ? "<span class=\"mk-simbolo\">" + WebUtility.HtmlEncode(simbolo) + "</span>" : Svg("IcoBus", grande ? 15 : 11)) + "</div>",
         rotulo = string.IsNullOrWhiteSpace(nombre) ? null : nombre, dir = "top", off = new double[] { 0, grande ? -14 : -10 }, perm = rotuloFijo
     };
 
@@ -135,7 +137,8 @@ public sealed class MapaLeaflet : IAsyncDisposable
     public Task LimpiarRuta() => Llamar("limpiarRuta").AsTask();
 
     /// <summary>Línea de la ruta con sus paradas (se ven al acercar el zoom), origen y destino.</summary>
-    public Task DibujarRuta(List<double[]> linea, List<Marcador> paradas, Marcador origen, Marcador destino, string color, bool encuadrar = true)
+    public Task DibujarRuta(List<double[]> linea, List<Marcador> paradas, Marcador origen, Marcador destino, string color, bool encuadrar = true,
+                            string simbolo = null, string patron = null)
     {
         var marcadores = new List<M> { Origen(origen.Lat, origen.Lng, origen.Nombre) };
         // En un ciclo cerrado el destino es el mismo punto que el origen: no se dibuja dos veces
@@ -143,8 +146,8 @@ public sealed class MapaLeaflet : IAsyncDisposable
 
         return Llamar("dibujarRuta", new
         {
-            lineas = new[] { new L { pts = linea, color = color, borde = true, peso = 6 } },
-            paradas = paradas.Select(p => Parada(p.Lat, p.Lng, p.Nombre, color, false, false)).ToList(),
+            lineas = new[] { new L { pts = linea, color = color, borde = true, peso = 6, dash = string.IsNullOrEmpty(patron) ? null : patron } },
+            paradas = paradas.Select(p => Parada(p.Lat, p.Lng, p.Nombre, color, false, false, simbolo)).ToList(),
             marcadores,
             relleno = 110,
             encuadrar
@@ -155,13 +158,13 @@ public sealed class MapaLeaflet : IAsyncDisposable
     public Task DibujarViaje(List<TramoMapa> tramos, List<Marcador> paradas, Marcador origen, Marcador destino, List<Marcador> escalas)
     {
         var lineas = tramos.Select(t => t.EsBus
-            ? new L { pts = t.Puntos, color = t.Color ?? "#2563EB", borde = true, peso = 6 }
+            ? new L { pts = t.Puntos, color = t.Color ?? "#2563EB", borde = true, peso = 6, dash = string.IsNullOrEmpty(t.Patron) ? null : t.Patron }
             : new L { pts = t.Puntos, color = "#475569", punteada = true, peso = 5, opacidad = 0.95 }).ToList();
 
         var marcadores = new List<M>();
         for (int i = 0; i < escalas.Count; i++)
             marcadores.Add(Numerado(escalas[i].Lat, escalas[i].Lng, (i + 1).ToString(), escalas[i].Nombre, true));
-        marcadores.AddRange(paradas.Select(p => Parada(p.Lat, p.Lng, p.Nombre, "#2563EB", true, false)));
+        marcadores.AddRange(paradas.Select(p => Parada(p.Lat, p.Lng, p.Nombre, "#2563EB", true, false, p.Simbolo)));
         marcadores.Add(Origen(origen.Lat, origen.Lng, origen.Nombre));
         marcadores.Add(Destino(destino.Lat, destino.Lng, destino.Nombre));
 

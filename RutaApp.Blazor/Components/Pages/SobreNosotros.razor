@@ -6,13 +6,13 @@
 @* Página pública "Sobre Nosotros" (Figma: sobre nosotros). Se abre desde la landing page, sin iniciar sesión. *@
 <div class="sobre">
     <header class="sobre-cabecera">
-        <div class="marca">
+        <a href="" class="marca marca-clickable" title="Ver la animación de inicio" @onclick="() => Estado.IrALanding(true)" @onclick:preventDefault="true">
             <div class="marca-logo marca-logo-blanco">R</div>
             <div class="marca-texto marca-azul"><b>RUTA</b><small>TRANSPORTE PÚBLICO</small></div>
-        </div>
+        </a>
         <nav class="landing-nav">
             <button type="button" class="btn btn-ghost-oscuro" @onclick="Explorar">Rutas</button>
-            <a href="" class="btn btn-primario btn-chico">Inicio</a>
+            <a href="" class="btn btn-primario btn-chico"><Icon Nombre="IcoArrowLeft" Tam="15" /> Inicio</a>
         </nav>
     </header>
 
@@ -31,7 +31,7 @@
     private async Task Explorar()
     {
         Estado.DestinoTrasIngreso = "rutas";
-        Estado.EntrarComoInvitado();
+        if (!Estado.HaIngresado) Estado.EntrarComoInvitado();
         await Estado.CompletarIngresoAsync();
     }
 }

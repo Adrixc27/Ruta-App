@@ -14,6 +14,9 @@ public class RutaRepositorio
         _log = log;
     }
 
+    /// <summary>Olvida lo leído de la base de datos (por ejemplo al cambiar la conexión).</summary>
+    public void LimpiarCache() => _rutaService.LimpiarCache();
+
     /// <summary>Devuelve las rutas reales, o null si la base de datos no responde o no hay datos.</summary>
     public async Task<List<Ruta>> CargarAsync()
     {

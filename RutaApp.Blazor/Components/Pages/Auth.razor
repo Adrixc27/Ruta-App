@@ -13,6 +13,7 @@
     </div>
 
     <div class="auth-panel">
+        <a href="" class="volver-inicio" title="Volver a la página principal"><Icon Nombre="IcoArrowLeft" Tam="16" /> Volver al inicio</a>
         <div class="auth-tarjeta tarjeta-flotante">
             @if (!_registro)
             {
@@ -22,10 +23,10 @@
                 <label class="etiqueta-form">Correo electrónico</label>
                 <CampoTexto @bind-Text="_loginCorreo" Icono="IcoMail" Hint="tu@correo.com" OnTecla="TeclaLogin" />
                 <label class="etiqueta-form arriba-form">Contraseña</label>
-                <CampoPassword @bind-Text="_loginPass" />
+                <CampoPassword @bind-Text="_loginPass" OnTecla="TeclaLogin" />
 
                 <div class="auth-fila">
-                    <label class="recordarme"><input type="checkbox" /> Recordarme</label>
+                    <label class="recordarme"><input type="checkbox" @bind="_recordar" /> Recordarme</label>
                     <button type="button" class="btn-ghost btn-mini" @onclick='() => Aviso("La recuperación de contraseña estará disponible próximamente.")'>¿Olvidaste tu contraseña?</button>
                 </div>
 
@@ -43,8 +44,8 @@
                 <button type="button" class="btn btn-contorno btn-ancho" @onclick='() => Aviso("El acceso con Google todavía no está disponible en esta versión.")'>
                     <b class="google">G</b> Continuar con Google
                 </button>
-                <button type="button" class="btn-ghost centrado" @onclick="Invitado">Explorar el mapa sin cuenta</button>
                 <p class="auth-cambio">¿No tienes cuenta? <button type="button" class="btn-ghost btn-mini" @onclick="IrRegistro">Regístrate</button></p>
+                <button type="button" class="btn-ghost centrado explorar-sin-cuenta" @onclick="Invitado"><Icon Nombre="IcoMap" Tam="16" /> Explorar sin cuenta</button>
             }
             else
             {
@@ -52,11 +53,11 @@
                 <p class="auth-sub">Regístrate para guardar tus rutas y viajar sin perderte</p>
 
                 <label class="etiqueta-form">Nombre completo</label>
-                <CampoTexto @bind-Text="_regNombre" Icono="IcoUser" Hint="Tu nombre" />
+                <CampoTexto @bind-Text="_regNombre" Icono="IcoUser" Hint="Tu nombre" OnTecla="TeclaRegistro" />
                 <label class="etiqueta-form arriba-form">Correo electrónico</label>
-                <CampoTexto @bind-Text="_regCorreo" Icono="IcoMail" Hint="tu@correo.com" />
+                <CampoTexto @bind-Text="_regCorreo" Icono="IcoMail" Hint="tu@correo.com" OnTecla="TeclaRegistro" />
                 <label class="etiqueta-form arriba-form">Contraseña</label>
-                <CampoPassword @bind-Text="_regPass" />
+                <CampoPassword @bind-Text="_regPass" OnTecla="TeclaRegistro" />
 
                 <div class="fuerza">
                     @for (int i = 0; i < 4; i++)
@@ -92,6 +93,7 @@
                     <b class="google">G</b> Continuar con Google
                 </button>
                 <p class="auth-cambio">¿Ya tienes cuenta? <button type="button" class="btn-ghost btn-mini" @onclick="IrLogin">Inicia sesión</button></p>
+                <button type="button" class="btn-ghost centrado explorar-sin-cuenta" @onclick="Invitado"><Icon Nombre="IcoMap" Tam="16" /> Explorar sin cuenta</button>
             }
         </div>
     </div>
@@ -100,7 +102,7 @@
 @code {
     private bool _registro;
     private bool _ocupado;
-    private bool _terminos;
+    private bool _terminos, _recordar;
     private string _loginCorreo = "", _loginPass = "";
     private string _regNombre = "", _regCorreo = "", _regPass = "", _regPass2 = "";
     private string _loginError, _regError, _aviso;
@@ -134,6 +136,7 @@
     // ── Acciones ──────────────────────────────────────────────────────────
     private async Task IniciarSesion()
     {
+        if (_ocupado) return;   // Enter repetido mientras ya se está entrando
         _aviso = null;
         string correo = _loginCorreo.Trim();
         if (!EsCorreo(correo)) { _loginError = "Escribe un correo válido, por ejemplo tu@correo.com."; return; }
@@ -148,11 +151,12 @@
             _loginError = null;
             Sesion.Actual = usuario;
             Estado.IniciarSesion(usuario);
+            Estado.RecordarSesion(_recordar);   // "Recordarme": la sesión sigue abierta al volver a abrir la app
             await Estado.CompletarIngresoAsync();
         }
         catch (Exception)
         {
-            _loginError = "No se pudo conectar con el servidor. Intenta de nuevo.";
+            _loginError = "No se pudo conectar con la base de datos. Intenta de nuevo.";
         }
         finally
         {
@@ -162,6 +166,7 @@
 
     private async Task Registrar()
     {
+        if (_ocupado) return;
         _aviso = null;
         string nombre = _regNombre.Trim();
         string correo = _regCorreo.Trim();
@@ -184,7 +189,7 @@
         }
         catch (Exception)
         {
-            _regError = "No se pudo conectar con el servidor. Intenta de nuevo.";
+            _regError = "No se pudo conectar con la base de datos. Intenta de nuevo.";
         }
         finally
         {

@@ -8,7 +8,7 @@
 <div class="split split-400">
     <div class="panel-lateral panel-rutas">
         <div>
-            <h1 class="titulo-panel grande">Rutas de la zona</h1>
+            <h1 class="titulo-panel grande">Rutas de la zona<Ayuda Titulo="Rutas de la zona" Texto="Aquí ves todas las rutas de camión. Toca una para verla en el mapa, con sus paradas y más detalles. Con el marcador la guardas en tu perfil (requiere sesión)." /></h1>
             <p class="sub-panel">@(_soloGuardadas ? "Tus rutas guardadas, siempre a un toque" : "Toca una ruta para verla en el mapa")</p>
         </div>
 
@@ -23,7 +23,8 @@
         </div>
 
         <div class="busqueda-panel">
-            <CampoTexto Text="@_busqueda" TextChanged="AlBuscar" Icono="IcoSearch" Hint="Buscar ruta o colonia..." Fondo="var(--bg-card)" Alto="42" />
+            <Ayuda Titulo="Buscar" Texto="Escribe el nombre de una ruta, una colonia o una parada. Las rutas que pasan por esa parada aparecen con el nombre de la parada coincidente." />
+            <CampoTexto Text="@_busqueda" TextChanged="AlBuscar" Icono="IcoSearch" Hint="Buscar ruta, colonia o parada..." Fondo="var(--bg-card)" Alto="42" />
         </div>
 
         <div class="lista-rutas">
@@ -42,14 +43,18 @@
                 {
                     var r = ruta;
                     <div class="ruta-item @(r.Seleccionada ? "sel" : "")" style="--c:@r.Color" @onclick="() => Seleccionar(r)">
-                        <span class="ruta-numero">@r.NumeroTexto</span>
+                        <span class="ruta-numero">@r.NumeroTexto<span class="simbolo-ruta" aria-hidden="true">@r.Simbolo</span></span>
                         <div class="ruta-texto">
                             <div class="ruta-nombre">
                                 <b>@r.Nombre</b>
                                 @if (r.Desvio) { <span class="etiqueta-desvio">Desvío</span> }
                                 @if (r.TieneVariantes) { <span class="etiqueta-variantes">@r.Variantes.Count variantes</span> }
                             </div>
-                            <small>@r.Meta</small>
+                            <small>@r.Paradas paradas · @Formato.Distancia(r.Kilometros * 1000) · @r.TarifaTexto</small>
+                            @if (_busqueda.Trim().Length >= 3 && Estado.ParadaQueCoincide(r, _busqueda) is string parada)
+                            {
+                                <span class="parada-coincide"><Icon Nombre="IcoPin" Tam="11" /> Parada: @parada</span>
+                            }
                             @if (r.Seleccionada)
                             {
                                 <span class="en-mapa"><Icon Nombre="IcoPin" Tam="11" /> Mostrándose en el mapa</span>
@@ -69,8 +74,9 @@
                     <div class="card invitacion">
                         <Icon Nombre="IcoAlert" Color="var(--warning)" />
                         <b>No pudimos cargar las rutas</b>
-                        <small>Revisa tu conexión a internet e inténtalo de nuevo.</small>
+                        <small>@(Estado.ErrorBaseDatos ?? "Revisa que MySQL esté encendido y vuelve a intentar.")</small>
                         <button type="button" class="btn-ghost" @onclick="Estado.ReintentarRutasAsync"><Icon Nombre="IcoRefresh" Tam="14" /> Reintentar</button>
+                        <button type="button" class="btn-ghost" @onclick='() => Estado.Navegar("ajuste", "Conexión a la base de datos")'><Icon Nombre="IcoSettings" Tam="14" /> Configurar la conexión</button>
                     </div>
                 }
                 else if (!Visibles.Any())
@@ -118,7 +124,8 @@
                 lista = lista.Where(r =>
                     r.Nombre.Contains(q, StringComparison.CurrentCultureIgnoreCase) ||
                     r.OrigenNombre.Contains(q, StringComparison.CurrentCultureIgnoreCase) ||
-                    r.DestinoNombre.Contains(q, StringComparison.CurrentCultureIgnoreCase));
+                    r.DestinoNombre.Contains(q, StringComparison.CurrentCultureIgnoreCase) ||
+                    Estado.ParadaQueCoincide(r, q) != null);   // también por el nombre de una parada
             }
             return lista;
         }

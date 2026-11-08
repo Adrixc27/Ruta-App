@@ -1,87 +1,65 @@
-@* Ajustes → Soporte: reportar un problema, centro de ayuda y comentarios (pantallas de diseño). *@
+@inject EstadoApp Estado
+
+@* Ajustes → Soporte: reportar un problema (se publica como aviso en la comunidad) y centro de ayuda con respuestas. *@
 @switch (Clave)
 {
     case "reportar":
-        <MarcoDetalle Categoria="Soporte" Titulo="Reportar un problema en la ruta" Subtitulo="Cuéntanos qué ocurrió para ayudar a mejorar la información de viaje.">
+        <MarcoDetalle Categoria="Soporte" Titulo="Reportar un problema en la ruta" Subtitulo="Avisa a los demás: tu reporte aparece como aviso en la comunidad y se quita solo cuando caduca.">
             <ChildContent>
                 <DosColumnas Lateral="316">
                     <Principal>
-                        <Tarjeta Titulo="Detalles de la incidencia" Subtitulo="Los campos marcados son necesarios para enviar el reporte.">
-                            <div class="dos-campos">
-                                <div class="etiquetado"><label>Tipo de incidencia</label><Desplegable Icono="IcoAlert" Texto="Retraso o servicio interrumpido" /></div>
-                                <div class="etiquetado"><label>Fecha y hora</label><Desplegable Icono="IcoCalendar" Texto="Hoy, 18:25" /></div>
+                        <Tarjeta Titulo="¿Qué pasó?" Subtitulo="Elige el problema y, si quieres, cuéntanos más.">
+                            <div class="reporte-tipos">
+                                @foreach (var t in EstadoApp.ProblemasComunes)
+                                {
+                                    var tipo = t;
+                                    <button type="button" class="reporte-tipo @(_tipo == tipo.Clave ? "sel" : "")" @onclick="() => ElegirTipo(tipo)">
+                                        <Icon Nombre="@tipo.Icono" Tam="20" /><span>@tipo.Texto</span>
+                                    </button>
+                                }
                             </div>
-                            <div class="etiquetado arriba"><label>Ruta o ubicación</label><Desplegable Icono="IcoPin" Texto="Metro L2 · Estación Universidad" /></div>
-                            <p class="nota">Seleccionada desde tu viaje reciente de hoy.</p>
-                            <div class="etiquetado arriba">
-                                <label>Descripción</label>
-                                <AreaTexto Maximo="500" Texto="El tren permaneció detenido por más de 15 minutos y no hubo avisos en la estación. La conexión con el Autobús 14 se perdió." />
-                            </div>
-                            <div class="adjuntar arriba">
-                                <Icon Nombre="IcoPaperclip" Tam="18" />
-                                <b>Adjuntar captura o fotografía</b>
-                                <small>PNG o JPG · máx. 10 MB</small>
-                            </div>
-                            <div class="arriba"><CasillaTexto Texto="Permitir que soporte me contacte sobre este reporte" Marcada="true" /></div>
-                        </Tarjeta>
-                    </Principal>
-                    <Secundario>
-                        <Tarjeta Titulo="Antes de enviar" Subtitulo="Revisa que la información sea correcta.">
-                            <div class="chequeo"><Icon Nombre="IcoCheckCircle" Tam="18" Color="var(--success)" /> Tipo y hora confirmados</div>
-                            <div class="chequeo"><Icon Nombre="IcoCheckCircle" Tam="18" Color="var(--success)" /> Ubicación verificada</div>
-                            <div class="chequeo"><Icon Nombre="IcoCheckCircle" Tam="18" Color="var(--success)" /> Descripción incluida</div>
-                            <Aviso Icono="IcoInfo" Titulo="Privacidad">No compartas datos personales de otros viajeros. Tu ubicación solo se usará para revisar esta incidencia.</Aviso>
-                            <div class="arriba"><Boton Texto="Enviar reporte" Icono="IcoSend" OnClick="Enviar" /></div>
-                            @if (_enviado)
-                            {
-                                <p class="nota exito">Reporte enviado. ¡Gracias por avisarnos!</p>
-                            }
-                        </Tarjeta>
-                        <p class="nota">Tiempo de respuesta habitual: menos de 24 horas</p>
-                    </Secundario>
-                </DosColumnas>
-            </ChildContent>
-        </MarcoDetalle>
-        break;
 
-    case "comentarios":
-        <MarcoDetalle Categoria="Soporte" Titulo="Enviar comentarios" Subtitulo="Tu opinión nos ayuda a construir una experiencia de transporte más clara y útil.">
-            <ChildContent>
-                <DosColumnas Lateral="316">
-                    <Principal>
-                        <Tarjeta Titulo="Cuéntanos tu experiencia" Subtitulo="Leemos cada comentario y lo compartimos con el equipo responsable.">
-                            <div class="etiquetado">
-                                <label>¿Cómo valorarías RUTA?</label>
-                                <div class="estrellas">
-                                    @for (int i = 1; i <= 5; i++)
-                                    {
-                                        int valor = i;
-                                        <button type="button" class="btn-icono" @onclick="@(() => _estrellas = valor)">
-                                            <Icon Nombre="IcoStar" Tam="28" Color="var(--brand-primary)" Relleno="@(valor <= _estrellas ? "var(--brand-primary)" : null)" />
-                                        </button>
-                                    }
-                                    <Chip Texto="@(_estrellas + " de 5 · " + TextoValoracion)" Variante="tinte" Tam="12" />
+                            <div class="etiquetado arriba-grande">
+                                <label>Ruta afectada <small>(opcional)</small></label>
+                                <div class="select-ruta">
+                                    <Icon Nombre="IcoBus" Tam="18" Color="var(--brand-primary)" />
+                                    <select @bind="_ruta">
+                                        <option value="0">Sin ruta específica</option>
+                                        @foreach (var r in Estado.Rutas)
+                                        {
+                                            <option value="@r.Numero">@r.Nombre</option>
+                                        }
+                                    </select>
                                 </div>
                             </div>
-                            <div class="etiquetado arriba"><label>Categoría</label><Desplegable Icono="IcoRoute" Texto="Planificación y comparación de rutas" /></div>
+
                             <div class="etiquetado arriba">
-                                <label>Comentario</label>
-                                <AreaTexto Maximo="800" Texto="La comparación de rutas es muy clara. Me gustaría poder fijar una opción favorita para verla siempre al principio de los resultados." />
+                                <label>Detalles <small>(opcional)</small></label>
+                                <textarea class="textarea" rows="3" maxlength="400" placeholder="Por ejemplo: en Av. Universidad, el camión tiene una llanta ponchada." @bind="_detalle" @bind:event="oninput"></textarea>
                             </div>
-                            <div class="arriba"><CasillaTexto Texto="Pueden contactarme para ampliar este comentario" Marcada="false" /></div>
+
+                            <div class="etiquetado arriba">
+                                <label>¿Cuánto tiempo sigue siendo útil el aviso?</label>
+                                <div class="chips">
+                                    @foreach (var d in Duraciones)
+                                    {
+                                        var dias = d.Dias;
+                                        <button type="button" class="chip-radio @(_dias == dias ? "activo" : "")" @onclick="() => _dias = dias">@d.Texto</button>
+                                    }
+                                </div>
+                            </div>
                         </Tarjeta>
                     </Principal>
                     <Secundario>
-                        <Tarjeta Titulo="Lo que ocurre después" Subtitulo="Convertimos los comentarios en mejoras concretas.">
-                            <div class="paso-lista"><span>1</span><div class="fila-ajuste-texto"><b>Revisamos</b><small>Clasificamos tu comentario por tema.</small></div></div>
-                            <div class="paso-lista"><span>2</span><div class="fila-ajuste-texto"><b>Priorizamos</b><small>Lo comparamos con otras necesidades.</small></div></div>
-                            <div class="paso-lista"><span>3</span><div class="fila-ajuste-texto"><b>Mejoramos</b><small>Incorporamos cambios en próximas versiones.</small></div></div>
-                            <Aviso Icono="IcoHeart" Titulo="Gracias por participar" Tipo="ok">No usamos tus comentarios con fines publicitarios.</Aviso>
-                            <div class="arriba"><Boton Texto="Enviar comentario" Icono="IcoSend" OnClick="Enviar" /></div>
-                            @if (_enviado)
+                        <Tarjeta Titulo="Antes de enviar" Subtitulo="Revisa tu reporte.">
+                            <div class="chequeo"><Icon Nombre="@(_tipo != null ? "IcoCheckCircle" : "IcoInfo")" Tam="18" Color="@(_tipo != null ? "var(--success)" : "var(--text-secondary)")" /> Problema elegido</div>
+                            <div class="chequeo"><Icon Nombre="IcoCheckCircle" Tam="18" Color="var(--success)" /> Caduca solo: @TextoDuracion</div>
+                            <Aviso Icono="IcoInfo" Titulo="Privacidad">No compartas datos personales de otras personas. El reporte lo verá toda la comunidad.</Aviso>
+                            @if (_mensaje != null)
                             {
-                                <p class="nota exito">Comentario enviado. ¡Gracias!</p>
+                                <p class="@(_exito ? "nota exito" : "error-texto")">@_mensaje</p>
                             }
+                            <div class="arriba"><Boton Texto="@(_enviando ? "Enviando…" : "Enviar reporte")" Icono="IcoSend" OnClick="Enviar" /></div>
                         </Tarjeta>
                     </Secundario>
                 </DosColumnas>
@@ -90,45 +68,32 @@
         break;
 
     case "ayuda":
-        <MarcoDetalle Categoria="Soporte" Titulo="Centro de ayuda" Subtitulo="Encuentra respuestas rápidas o ponte en contacto con nuestro equipo.">
+        <MarcoDetalle Categoria="Soporte" Titulo="Centro de ayuda" Subtitulo="Respuestas rápidas sobre cómo usar R.U.T.A.">
             <ChildContent>
                 <Tarjeta Relleno="14">
-                    <div class="busqueda-ayuda">
-                        <Icon Nombre="IcoSearch" Tam="20" Color="var(--text-secondary)" />
-                        <span>Buscar en el centro de ayuda...</span>
-                        <Chip Texto="⌘ K" Variante="panel" />
-                    </div>
+                    <CampoTexto @bind-Text="_busqueda" Icono="IcoSearch" Hint="Buscar en el centro de ayuda..." Alto="44" />
                 </Tarjeta>
                 <div class="arriba-grande">
-                    <DosColumnas Lateral="356">
-                        <Principal>
-                            <Tarjeta Titulo="Explora por categoría" Subtitulo="Guías breves para resolver las dudas más comunes.">
-                                <div class="dos-columnas-iguales">
-                                    @foreach (var c in Categorias)
-                                    {
-                                        <div class="categoria-ayuda">
-                                            <CajaIcono Icono="@c.Icono" Lado="40" />
-                                            <div class="fila-ajuste-texto"><b>@c.Titulo</b><small>@c.Detalle</small></div>
-                                            <Icon Nombre="IcoChevronRight" Tam="16" />
-                                        </div>
-                                    }
+                    <Tarjeta Titulo="Preguntas frecuentes" Subtitulo="@(Visibles.Count() + " respuestas")">
+                        @foreach (var p in Visibles)
+                        {
+                            var pregunta = p;
+                            <div class="faq-bloque">
+                                <div class="faq @(_abierta == pregunta.Pregunta ? "abierta" : "")" @onclick="() => Alternar(pregunta.Pregunta)" aria-expanded="@(_abierta == pregunta.Pregunta)">
+                                    <span>@pregunta.Pregunta</span>
+                                    <Icon Nombre="@(_abierta == pregunta.Pregunta ? "IcoChevronDown" : "IcoChevronRight")" Tam="15" />
                                 </div>
-                            </Tarjeta>
-                        </Principal>
-                        <Secundario>
-                            <Tarjeta Titulo="Preguntas frecuentes" Subtitulo="Respuestas consultadas esta semana.">
-                                @foreach (var p in Preguntas)
+                                @if (_abierta == pregunta.Pregunta)
                                 {
-                                    <div class="faq"><span>@p</span><Icon Nombre="IcoChevronRight" Tam="15" /></div>
+                                    <p class="faq-resp anima-entra">@pregunta.Respuesta</p>
                                 }
-                            </Tarjeta>
-                            <div class="ayuda-extra">
-                                <b>¿Aún necesitas ayuda?</b>
-                                <small>Nuestro equipo responde de 08:00 a 20:00.</small>
-                                <Boton Texto="Contactar soporte" Icono="IcoChat" Relleno="false" />
                             </div>
-                        </Secundario>
-                    </DosColumnas>
+                        }
+                        @if (!Visibles.Any())
+                        {
+                            <p class="vacio">No encontramos respuestas con ese texto.</p>
+                        }
+                    </Tarjeta>
                 </div>
             </ChildContent>
         </MarcoDetalle>
@@ -138,36 +103,71 @@
 @code {
     [Parameter] public string Clave { get; set; }
 
-    private bool _enviado;
-    private int _estrellas = 4;
+    // ── Reportar ──
+    private record Duracion(string Texto, int Dias);
+    private static readonly Duracion[] Duraciones = { new("1 día", 1), new("3 días", 3), new("7 días", 7) };
 
-    private string TextoValoracion => _estrellas switch { 1 => "Mala", 2 => "Regular", 3 => "Buena", 4 => "Muy buena", _ => "Excelente" };
+    private string _tipo;
+    private string _detalle = "", _mensaje;
+    private int _ruta, _dias = 1;
+    private bool _enviando, _exito;
+
+    private string TextoDuracion => Duraciones.First(d => d.Dias == _dias).Texto;
+
+    private void ElegirTipo(EstadoApp.ProblemaComun t)
+    {
+        _tipo = t.Clave;
+        _dias = t.Dias <= 1 ? 1 : t.Dias <= 3 ? 3 : 7;
+    }
 
     private async Task Enviar()
     {
-        _enviado = true;
-        StateHasChanged();
-        await Task.Delay(3000);
-        _enviado = false;
-        StateHasChanged();
+        if (_enviando) return;
+        _exito = false;
+        if (_tipo == null) { _mensaje = "Elige primero qué pasó."; return; }
+
+        var tipo = EstadoApp.ProblemasComunes.First(t => t.Clave == _tipo);
+        var ruta = _ruta > 0 ? Estado.BuscarRuta(_ruta) : null;
+        string titulo = tipo.Texto + (ruta != null ? " en " + ruta.Nombre : "");
+
+        _enviando = true;
+        try
+        {
+            var (ok, error) = await Estado.PublicarAvisoAsync(titulo, string.IsNullOrWhiteSpace(_detalle) ? "Reportado desde Configuración." : _detalle.Trim(), ruta, _dias);
+            _exito = ok;
+            _mensaje = ok ? "¡Gracias! Tu reporte ya es visible para la comunidad." : error;
+            if (ok) { _tipo = null; _detalle = ""; _ruta = 0; }
+        }
+        finally
+        {
+            _enviando = false;
+        }
     }
 
-    private record CategoriaAyuda(string Icono, string Titulo, string Detalle);
+    // ── Centro de ayuda ──
+    private record PreguntaAyuda(string Pregunta, string Respuesta);
 
-    private static readonly CategoriaAyuda[] Categorias =
+    private static readonly PreguntaAyuda[] Preguntas =
     {
-        new("IcoRoute", "Planificar rutas", "Búsquedas, filtros y resultados"),
-        new("IcoUser", "Cuenta y perfil", "Acceso, datos y dispositivos"),
-        new("IcoBell", "Alertas y avisos", "Notificaciones e incidencias"),
-        new("IcoAccess", "Accesibilidad", "Preferencias de movilidad")
+        new("¿Cómo planifico un viaje?", "En Planificar viaje escribe de dónde sales y a dónde vas (o toca el mapa con «Elegir en el mapa») y pulsa «Buscar y comparar rutas». Elige una opción y pulsa «Comenzar viaje» para ver los pasos."),
+        new("¿Cómo guardo una ruta?", "En Rutas toca el marcador de la ruta. Guardar rutas, viajes y lugares requiere iniciar sesión; las rutas guardadas salen en tu perfil."),
+        new("¿Cómo guardo mi casa o mi escuela?", "En Planificar viaje, en «Mis lugares», pulsa «Guardar un lugar»: ponle nombre y elige dónde está con «Mi ubicación», tocando el mapa o escribiendo la dirección. Después aparece como atajo para llenar origen o destino."),
+        new("¿Cómo comparto un viaje?", "En Comparar rutas pulsa el icono de compartir de la opción que quieras y copia el código. Quien lo reciba lo pega en Planificar viaje → «Pegar un código» y lo ve en el mapa."),
+        new("¿Cómo reporto un problema en la ruta?", "En el mapa pulsa el megáfono, elige el problema (ponchadura, se quedó tirado, tráfico…) y envía. También puedes hacerlo desde Configuración → Reportar un problema. El aviso caduca solo."),
+        new("¿Por qué desaparecen algunas publicaciones?", "Las publicaciones tienen fecha de caducidad: los avisos de problemas duran pocos días para que la comunidad vea solo información vigente."),
+        new("¿Cómo cambio a millas?", "En Configuración → Unidades de distancia elige millas o kilómetros; se aplica al momento."),
+        new("¿Qué hago si no distingo bien los colores?", "En Configuración → Accesibilidad activa el modo daltonismo: los colores pasan a tonos neutros y cada ruta se reconoce por su símbolo y su tipo de línea."),
+        new("¿Puedo usar la app con el teclado?", "Sí. Activa la Guía visual en Configuración → Accesibilidad: verás siempre dónde estás, podrás moverte con Tab, elegir con Enter y cambiar de sección con Alt + 1 a 5. También aparecen botones «?» que explican cada parte."),
+        new("¿Cómo borro mi historial de viajes?", "En Mi perfil → Historial pulsa «Borrar historial»."),
+        new("¿Cómo cierro sesión o borro mi cuenta?", "En Configuración → Mi cuenta. Cerrar sesión pide confirmación; borrar la cuenta pide escribir BORRAR y elimina todos tus datos.")
     };
 
-    private static readonly string[] Preguntas =
-    {
-        "¿Cómo guardo una ruta frecuente?",
-        "¿Por qué cambió el tiempo estimado?",
-        "¿Cómo reporto un ascensor fuera de servicio?",
-        "¿Puedo usar RUTA sin conexión?",
-        "¿Cómo elimino mi historial de viajes?"
-    };
+    private string _busqueda = "", _abierta;
+
+    private IEnumerable<PreguntaAyuda> Visibles =>
+        string.IsNullOrWhiteSpace(_busqueda)
+            ? Preguntas
+            : Preguntas.Where(p => Formato.Coincide(p.Pregunta, _busqueda.Trim()) || Formato.Coincide(p.Respuesta, _busqueda.Trim()));
+
+    private void Alternar(string pregunta) => _abierta = _abierta == pregunta ? null : pregunta;
 }

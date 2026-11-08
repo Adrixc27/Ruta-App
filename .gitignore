@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Datos exportados de la base de datos (pueden traer información de usuarios)
+Database/datos_*.sql

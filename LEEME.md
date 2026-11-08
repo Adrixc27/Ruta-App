@@ -7,7 +7,6 @@ Blazor que se muestran dentro de ella con un `BlazorWebView`. No hace falta nave
 |---|---|
 | `Ruta App.csproj` | **La app de escritorio** (.NET 10, WPF). `Program.cs` arranca, `MainWindow.cs` es la ventana con el `BlazorWebView`, `UbicacionWindows.cs` pide la ubicación del equipo y `wwwroot/` tiene `index.html`, Leaflet y las imágenes |
 | `RutaApp.Blazor` | Biblioteca de componentes Blazor: páginas, layouts, servicios, mapa y `wwwroot/app.css` (estilos del diseño) |
-| `MiApi` | API web (registro, login, camiones y rutas) |
 | `Pruebas` | Pruebas xUnit del motor de rutas |
 
 El motor de rutas (`Models/`, `Graph/`, `Algorithms/`, `Services/`, `Data/`) está en la raíz y lo comparten la biblioteca Blazor y las pruebas.
@@ -20,8 +19,10 @@ dotnet run --project "Ruta App.csproj"
 
 o en Visual Studio: proyecto de inicio `Ruta App`. Requiere el SDK de .NET 10 y el WebView2 Runtime (viene con Windows 11 y Edge).
 
-La dirección de la API está en `Program.cs` (`UrlApi`): por defecto la API publicada (`http://ruta-api.runasp.net/`); para la local usa
-`http://localhost:5023/` con `MiApi` corriendo.
+## Base de datos
+
+No hay API: la app se conecta directo a **MySQL local**. Configura y prueba la conexión en **Configuración → Conexión a la base de datos**
+(se guarda en `%LocalAppData%\RutaApp\conexion.json`). Para crear las tablas y cargar las rutas, mira [`Database/LEEME.md`](Database/LEEME.md).
 
 ## Estructura de `RutaApp.Blazor`
 
@@ -31,7 +32,7 @@ La dirección de la API está en `Program.cs` (`UrlApi`): por defecto la API pub
 | `Components/Pages` | Landing, Sobre nosotros, Acceso/Registro, Planificar, Comparar, Rutas, Comunidad, Perfil, Configuración y detalle de ajustes |
 | `Components/Shared` | Mapa (`Mapa.razor` + `MapaLeaflet`, que controla Leaflet desde C#), carrusel, intro, iconos, campos, stepper, diálogo |
 | `Components/Ajustes` | Bloques de diseño de las pantallas de Configuración |
-| `Services` | Estado de la sesión, API, planificador, buscador de lugares, recorridos (OSRM/Overpass), ubicación |
+| `Services` | Estado de la sesión, planificador, buscador de lugares, recorridos (OSRM/Overpass), ubicación |
 
 ## Notas
 

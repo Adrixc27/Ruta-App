@@ -1,9 +1,9 @@
 -- R.U.T.A. — esquema de la base de datos MySQL local (rutadb).
--- Está deducido de las consultas que hace la app (RutaApp.Datos): sirve para crear una base VACÍA y que la app arranque.
+-- Está deducido de las consultas que hace la app (RutaApp.Blazor): sirve para crear una base VACÍA y que la app arranque.
 -- Es seguro correrlo varias veces: usa CREATE ... IF NOT EXISTS. Si ya tienes tu propia base con datos, NO lo necesitas.
 --
 -- Cómo correrlo (desde la carpeta del repositorio):
---   "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p < database/esquema.sql
+--   "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p < Database/esquema.sql
 -- o abre este archivo en MySQL Workbench y pulsa el rayo.
 
 CREATE DATABASE IF NOT EXISTS rutadb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

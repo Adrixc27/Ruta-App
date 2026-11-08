@@ -5,13 +5,14 @@
 @inject UsuarioService Usuarios
 @inject ComunidadService Comunidad
 @inject ServicioTrazos Trazos
+@inject IServicioUbicacion Ubicacion
 
 <PageTitle>Mi perfil · R.U.T.A.</PageTitle>
 
 <div class="pagina">
     <div class="pagina-cabecera">
         <div>
-            <h1>Mi Perfil</h1>
+            <h1>Mi Perfil<Ayuda Titulo="Mi perfil" Texto="Tus datos, tu historial de viajes, tus rutas guardadas (individuales y personalizadas) y tus lugares. Desde aquí también puedes compartir o pegar un código." /></h1>
             <p>Administra tu información, tu historial, tus rutas guardadas y tus lugares</p>
         </div>
     </div>
@@ -54,10 +55,10 @@
 
             @* Importar lo que compartió otra persona *@
             <div class="card perfil-acciones">
-                <b class="titulo-mini">Importar código</b>
-                <p class="nota-panel">Pega aquí el código que te compartieron (una ruta, un lugar o un viaje).</p>
+                <b class="titulo-mini">Pegar un código</b>
+                <p class="nota-panel">Pega el código que te compartieron (una ruta, un lugar o un viaje) y se guarda en tu perfil.</p>
                 <CampoTexto @bind-Text="_codigoImportar" Icono="IcoShare" Hint="RUTA1:..." Alto="42" />
-                <button type="button" class="btn btn-contorno btn-ancho" @onclick="Importar">Importar</button>
+                <button type="button" class="btn btn-contorno btn-ancho" @onclick="Importar">Guardar en mi perfil</button>
                 @if (_mensajeImportar != null) { <p class="aviso-texto">@_mensajeImportar</p> }
             </div>
         </div>
@@ -142,7 +143,7 @@
                             {
                                 var r = ruta;
                                 <div class="trayecto">
-                                    <span class="trayecto-icono" style="background:@r.Color"><b class="ruta-mini">@r.NumeroTexto</b></span>
+                                    <span class="trayecto-icono" style="background:@r.Color"><b class="ruta-mini">@r.NumeroTexto</b><span class="simbolo-ruta" aria-hidden="true">@r.Simbolo</span></span>
                                     <div class="trayecto-texto">
                                         <b>@r.Nombre</b>
                                         <span class="azul">Ruta individual</span>
@@ -220,7 +221,10 @@
                                     </div>
                                 }
                             </div>
-                            <button type="button" class="btn btn-contorno btn-chico" title="Se abre el mapa para que toques el lugar" @onclick="ElegirEnMapa"><Icon Nombre="IcoPin" Tam="15" /> Elegir en el mapa</button>
+                            <div class="lugar-opciones">
+                                <button type="button" class="btn btn-contorno btn-chico" disabled="@_buscandoUbicacion" @onclick="UsarMiUbicacion"><Icon Nombre="IcoLocate" Tam="15" /> @(_buscandoUbicacion ? "Buscando…" : "Mi ubicación")</button>
+                                <button type="button" class="btn btn-contorno btn-chico" title="Se abre el mapa para que toques el lugar" @onclick="ElegirEnMapa"><Icon Nombre="IcoPin" Tam="15" /> Tocar en el mapa</button>
+                            </div>
                             @if (_elegidaLugar != null) { <p class="aviso-texto">Lugar elegido: <b>@_elegidaLugar.Nombre</b></p> }
                             @if (_errorLugar != null) { <p class="error-texto">@_errorLugar</p> }
                             <div class="modal-acciones">
@@ -512,6 +516,28 @@
 
     // Abre el mapa de Planificar para tocar el lugar; al elegirlo vuelve el formulario para ponerle nombre y guardarlo
     private void ElegirEnMapa() => Estado.Navegar("planificar", new SolicitudLugar { Nombre = _nombreLugar.Trim(), Tipo = _tipoLugar });
+
+    private bool _buscandoUbicacion;
+
+    // Usa donde estás ahora como el lugar
+    private async Task UsarMiUbicacion()
+    {
+        _buscandoUbicacion = true;
+        _errorLugar = null;
+        try
+        {
+            var pos = await Ubicacion.ObtenerAsync();
+            if (pos == null) { _errorLugar = "No pudimos obtener tu ubicación. Revisa que el servicio de ubicación esté activo."; return; }
+            string calle = await Estado.CalleDeAsync(pos[0], pos[1]);
+            _elegidaLugar = new Sugerencia { Nombre = string.IsNullOrWhiteSpace(calle) ? "Mi ubicación actual" : calle, Lat = pos[0], Lng = pos[1] };
+            _direccionLugar = _elegidaLugar.Nombre;
+            _resultados = new();
+        }
+        finally
+        {
+            _buscandoUbicacion = false;
+        }
+    }
 
     private void GuardarLugar()
     {

@@ -14,7 +14,7 @@
             </button>
 
             <div class="encabezado-seccion">
-                <h1 class="titulo-seccion">Elige cómo llegar</h1>
+                <h1 class="titulo-seccion">Elige cómo llegar<Ayuda Titulo="Elige cómo llegar" Texto="Estas son las mejores opciones para tu viaje. Toca una para verla en el mapa y ver los pasos; con el icono de compartir envías el viaje y con el marcador lo guardas. «Comenzar viaje» activa la navegación paso a paso." /></h1>
                 <p class="sub-panel">@_conteo</p>
             </div>
 
@@ -63,7 +63,7 @@
                         <div class="opcion-linea">
                             @foreach (var paso in r.Pasos().Where(p => p.EsBus))
                             {
-                                <span class="chip-ruta" style="--c:@paso.Color"><Icon Nombre="IcoBus" Tam="12" /> @paso.Titulo.Replace("Toma ", "")</span>
+                                <span class="chip-ruta" style="--c:@paso.Color"><span class="simbolo-ruta" aria-hidden="true">@paso.Simbolo</span><Icon Nombre="IcoBus" Tam="12" /> @paso.Titulo.Replace("Toma ", "")</span>
                             }
                         </div>
                         <small class="opcion-resumen">@r.Resumen</small>
@@ -113,7 +113,16 @@
                             <span class="paso-icono">
                                 @if (indice < _paso || _llego) { <Icon Nombre="IcoCheck" Tam="14" /> } else { <Icon Nombre="@p.Icono" Tam="14" /> }
                             </span>
-                            <div><b>@p.Titulo</b><small>@p.Detalle</small></div>
+                            <div>
+                                <b>@p.Titulo</b><small>@p.Detalle</small>
+                                @if (indice == _paso && !_llego && p.Instrucciones != null)
+                                {
+                                    @foreach (var texto in p.Instrucciones)
+                                    {
+                                        <span class="instruccion">@texto</span>
+                                    }
+                                }
+                            </div>
                         </li>
                     }
                 </ol>
@@ -338,14 +347,14 @@
             {
                 double m = Metros(pos, _pasos[siguiente].Lat, _pasos[siguiente].Lng);
                 if (m < 60) { _paso = siguiente; ActualizarBanner(); }
-                _distanciaSiguiente = m < 60 ? null : "Faltan " + (m >= 1000 ? (m / 1000).ToString("0.0") + " km" : (int)(Math.Round(m / 10) * 10) + " m") + " para el siguiente paso";
+                _distanciaSiguiente = m < 60 ? null : "Faltan " + Formato.Distancia(m) + " para el siguiente paso";
             }
             else
             {
                 var fin = _seleccion.Tramos[^1].Puntos[^1];
                 double m = Metros(pos, fin[0], fin[1]);
                 if (m < 60) { _llego = true; ActualizarBanner(); }
-                _distanciaSiguiente = m < 60 ? null : "Faltan " + (m >= 1000 ? (m / 1000).ToString("0.0") + " km" : (int)(Math.Round(m / 10) * 10) + " m") + " para tu destino";
+                _distanciaSiguiente = m < 60 ? null : "Faltan " + Formato.Distancia(m) + " para tu destino";
             }
             StateHasChanged();
         }

@@ -1,37 +1,76 @@
-@* Ajustes → Accesibilidad: criterios de movilidad para planificar (pantalla de diseño). *@
+@inject EstadoApp Estado
+
+@* Ajustes → Accesibilidad: daltonismo y guía visual. Cada opción se aplica al momento en toda la app. *@
 @switch (Clave)
 {
     case "accesibilidad":
-        <MarcoDetalle Categoria="Accesibilidad" Titulo="Priorizar rutas con accesibilidad" Subtitulo="Personaliza los criterios de movilidad que RUTA debe considerar al planificar.">
+        <MarcoDetalle Categoria="Accesibilidad" Titulo="Accesibilidad" Subtitulo="Ajusta R.U.T.A. a tu forma de ver y de usar la app.">
             <ChildContent>
-                <DosColumnas Lateral="316">
+                <DosColumnas Lateral="356">
                     <Principal>
-                        <Tarjeta Titulo="Necesidades de accesibilidad" Subtitulo="Activamos opciones seguras y verificadas siempre que estén disponibles.">
-                            <FilaAjuste Icono="IcoUpDown" Titulo="Ascensores disponibles" Descripcion="Prioriza estaciones con ascensores operativos en ambos sentidos."><Interruptor Activo="true" /></FilaAjuste>
-                            <FilaAjuste Icono="IcoAccess" Titulo="Rampas de acceso" Descripcion="Busca paradas, estaciones y vehículos con acceso mediante rampa."><Interruptor Activo="true" /></FilaAjuste>
-                            <FilaAjuste Icono="IcoXCircle" Titulo="Trayectos sin escaleras" Descripcion="Evita rutas que requieran subir o bajar escaleras."><Interruptor Activo="true" /></FilaAjuste>
-                            <FilaAjuste Icono="IcoBuilding" Titulo="Estaciones accesibles" Descripcion="Muestra solo estaciones con infraestructura accesible verificada."><Interruptor Activo="true" /></FilaAjuste>
+                        <Tarjeta Titulo="Opciones" Subtitulo="Se aplican al momento y se recuerdan en este equipo.">
+                            <FilaAjuste Icono="IcoEye" Titulo="Modo daltonismo"
+                                        Descripcion="Cambia los colores por tonos neutros. Cada ruta y parada se distingue por un símbolo y un tipo de línea distinto, no por su color.">
+                                <Interruptor Activo="Datos.Daltonismo" ActivoChanged="CambiarDaltonismo" />
+                            </FilaAjuste>
+                            <FilaAjuste Icono="IcoLocate" Titulo="Guía visual"
+                                        Descripcion="Navega con el teclado, ve siempre dónde estás y activa botones «?» que explican qué hace cada parte de la app.">
+                                <Interruptor Activo="Datos.GuiaVisual" ActivoChanged="CambiarGuia" />
+                            </FilaAjuste>
+                            <FilaAjuste Icono="IcoZap" Titulo="Reducir animaciones" Descripcion="Quita los movimientos y transiciones de la interfaz." Linea="false">
+                                <Interruptor Activo="Datos.SinAnimaciones" ActivoChanged="CambiarAnimaciones" />
+                            </FilaAjuste>
+                        </Tarjeta>
+
+                        <Tarjeta Titulo="Atajos de teclado" Subtitulo="Con la Guía visual activa." Clase="separada">
+                            <ParValor Etiqueta="Avanzar / retroceder" Valor="Tab / Mayús + Tab" />
+                            <ParValor Etiqueta="Elegir lo enfocado" Valor="Enter o Espacio" />
+                            <ParValor Etiqueta="Ir a Planificar, Rutas, Comunidad, Perfil, Configuración" Valor="Alt + 1 … 5" />
+                            <ParValor Etiqueta="Ir al contenido de la pantalla" Valor="Alt + 0" Linea="false" />
                         </Tarjeta>
                     </Principal>
                     <Secundario>
-                        <Tarjeta Titulo="Perfil activo" Subtitulo="Tus preferencias se aplican a nuevas búsquedas.">
-                            <div class="perfil-activo">
-                                <CajaIcono Icono="IcoAccess" Lado="44" Relleno="true" />
-                                <div class="fila-ajuste-texto"><b>Movilidad asistida</b><small>4 criterios seleccionados</small></div>
-                            </div>
-                            <Aviso Icono="IcoAlert" Titulo="Datos en tiempo real" Tipo="alerta">Te avisaremos si un ascensor reportado como necesario deja de estar disponible.</Aviso>
-                        </Tarjeta>
-                        <Tarjeta Titulo="Información de accesibilidad" Subtitulo="Los datos se actualizan con reportes de operadores y de la comunidad." Clase="separada">
-                            <span class="enlace-flecha">Conoce nuestros criterios de verificación <Icon Nombre="IcoArrowRight" Tam="14" /></span>
+                        <Tarjeta Titulo="Cómo se distinguen las rutas" Subtitulo="Con el modo daltonismo cada ruta tiene su símbolo y su línea.">
+                            @for (int i = 0; i < 6; i++)
+                            {
+                                int numero = i;
+                                <div class="muestra-ruta">
+                                    <span class="muestra-simbolo">@Paleta.Simbolo(numero)</span>
+                                    <svg width="120" height="12" aria-hidden="true"><line x1="0" y1="6" x2="120" y2="6" stroke="currentColor" stroke-width="4" stroke-dasharray="@Paleta.Patron(numero)" /></svg>
+                                    <small>Ruta @(numero + 1)</small>
+                                </div>
+                            }
                         </Tarjeta>
                     </Secundario>
                 </DosColumnas>
             </ChildContent>
-            <Barra><BarraInferior Info="Las rutas accesibles pueden requerir más tiempo de viaje." TextoBoton="Guardar accesibilidad" /></Barra>
         </MarcoDetalle>
         break;
 }
 
 @code {
     [Parameter] public string Clave { get; set; }
+
+    private AjustesData Datos => Estado.Ajustes.Datos;
+
+    private void CambiarDaltonismo(bool valor)
+    {
+        Datos.Daltonismo = valor;
+        Estado.Ajustes.Guardar();
+        Estado.MostrarAviso(valor ? "Modo daltonismo activado" : "Modo daltonismo desactivado");
+    }
+
+    private void CambiarGuia(bool valor)
+    {
+        Datos.GuiaVisual = valor;
+        Estado.Ajustes.Guardar();
+        Estado.MostrarAviso(valor ? "Guía visual activada: busca los botones «?»" : "Guía visual desactivada");
+    }
+
+    private void CambiarAnimaciones(bool valor)
+    {
+        Datos.SinAnimaciones = valor;
+        Estado.Ajustes.Guardar();
+        Estado.MostrarAviso(valor ? "Animaciones reducidas" : "Animaciones activadas");
+    }
 }

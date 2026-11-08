@@ -1250,3 +1250,202 @@ html, body { background: var(--bg-panel-2); }
 .nav-acciones .btn { flex: 1 1 130px; white-space: nowrap; padding: 12px 10px; }
 .panel-comparar { overflow-x: hidden; }
 .navegacion { overflow-x: hidden; }
+
+
+/* ── Instrucciones para caminar y detalles de la ruta ── */
+.instruccion { display: block; position: relative; margin-top: 4px; padding-left: 12px; font-size: 12px; color: var(--text-primary); line-height: 1.35; }
+.instruccion::before { content: ""; position: absolute; left: 0; top: .55em; width: 5px; height: 5px; border-radius: 50%; background: var(--slate); }
+.detalles-ruta { margin: 6px 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--blue-50); border: 1px solid var(--blue-200); display: grid; gap: 6px; max-height: 30vh; overflow-y: auto; }
+.detalles-ruta div { display: grid; grid-template-columns: 96px 1fr; gap: 8px; font-size: 12px; }
+.detalles-ruta dt { color: var(--text-secondary); font-weight: 700; }
+.detalles-ruta dd { margin: 0; font-weight: 600; }
+
+
+/* ── Guardar un lugar: pasos claros ── */
+.paso-form { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--text-primary); margin-top: 4px; }
+.paso-form span { width: 20px; height: 20px; border-radius: 50%; background: var(--brand-primary); color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; }
+.lugar-opciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.lugar-opciones .btn { flex: 1 1 120px; }
+.lugar-elegido { padding: 8px 10px; border-radius: 10px; background: var(--bg-panel); }
+.lugar-elegido.ok { background: var(--success-tint); }
+.aviso-compartido { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--blue-100); font-size: 12px; font-weight: 600; }
+.aviso-compartido span { flex: 1; }
+
+
+/* ═══════════ ANIMACIONES: la interfaz responde a lo que haces ═══════════ */
+@keyframes entra { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes desvanece { from { opacity: 0; } to { opacity: 1; } }
+@keyframes aparece-modal { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes toast-entra { from { opacity: 0; transform: translate(-50%, 16px) scale(.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+@keyframes pop-guardado { 0% { transform: scale(1); } 40% { transform: scale(1.45) rotate(-8deg); } 100% { transform: scale(1); } }
+@keyframes cae-pin { 0% { transform: translateY(-26px); opacity: 0; } 60% { transform: translateY(3px); opacity: 1; } 100% { transform: none; } }
+@keyframes sube-tarjeta { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes confirma { 0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, .45); } 100% { box-shadow: 0 0 0 12px rgba(22, 163, 74, 0); } }
+
+.contenido-cuerpo > .split, .contenido-cuerpo > .pagina, .contenido-cuerpo > .marco-detalle { animation: entra .3s ease-out; }
+.anima-entra { animation: entra .24s ease-out; }
+.modal-fondo { animation: desvanece .18s ease-out; }
+.modal { animation: aparece-modal .24s cubic-bezier(.2, .9, .3, 1.1); }
+.mapa-tarjeta { animation: sube-tarjeta .3s ease-out; }
+.mapa-banner { animation: desvanece .25s ease-out; }
+.mk-pin { animation: cae-pin .4s cubic-bezier(.2, .9, .3, 1.2); }
+.mk-parada, .mk-num, .mk-poi { animation: desvanece .3s ease-out; }
+.lugar-elegido.ok { animation: confirma .8s ease-out; }
+
+/* Listas: los elementos entran uno tras otro */
+.ruta-item, .opcion-ruta, .viaje-historial, .trayecto, .post, .chip-lugar-grupo, .sugerencia { animation: entra .3s ease-out backwards; }
+.lista-rutas > :nth-child(2), .lista-opciones > :nth-child(2), .trayectos-lista > :nth-child(2), .feed > :nth-child(2) { animation-delay: .04s; }
+.lista-rutas > :nth-child(3), .lista-opciones > :nth-child(3), .trayectos-lista > :nth-child(3), .feed > :nth-child(3) { animation-delay: .08s; }
+.lista-rutas > :nth-child(4), .lista-opciones > :nth-child(4), .trayectos-lista > :nth-child(4), .feed > :nth-child(4) { animation-delay: .12s; }
+.lista-rutas > :nth-child(5), .lista-opciones > :nth-child(5), .trayectos-lista > :nth-child(5), .feed > :nth-child(5) { animation-delay: .16s; }
+.lista-rutas > :nth-child(n+6), .lista-opciones > :nth-child(n+6), .trayectos-lista > :nth-child(n+6), .feed > :nth-child(n+6) { animation-delay: .2s; }
+
+/* Botones: se hunden al tocarlos; el icono de guardado "salta" al guardar */
+.btn, .btn-icono, .chip-radio, .chip-lugar, .nav-btn, .seg, .pill-radio, .btn-ghost, .reporte-tipo, .mapa-control, .carrusel-flecha {
+    transition: transform .12s ease, background .15s, border-color .15s, box-shadow .15s, opacity .15s, filter .15s;
+}
+.btn:active:not(:disabled), .btn-icono:active, .chip-radio:active, .chip-lugar:active, .nav-btn:active, .seg:active, .pill-radio:active,
+.btn-ghost:active, .reporte-tipo:active, .mapa-control:active, .tarjeta-boton:active { transform: scale(.96); }
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+svg.icono[fill]:not([fill="none"]) { animation: pop-guardado .4s ease-out; }
+.btn-exito { background: var(--success); color: #fff; animation: confirma .8s ease-out; }
+.interruptor, .interruptor span { transition: all .2s ease; }
+
+/* Aviso breve (toast) */
+.toast-aviso {
+    position: fixed; left: 50%; bottom: 28px; z-index: 3500; transform: translateX(-50%); max-width: calc(100vw - 32px);
+    display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 14px; background: var(--text-primary); color: #fff;
+    font-size: 14px; font-weight: 700; box-shadow: 0 10px 30px rgba(27, 54, 93, .35); animation: toast-entra .3s cubic-bezier(.2, .9, .3, 1.2);
+}
+.toast-aviso .icono { color: #4ADE80; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* ── Botones para volver a la página principal ── */
+.volver-landing { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 6px 12px; border-radius: 999px; background: #fff; border: 1px solid var(--blue-200);
+    font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.volver-landing:hover { background: var(--blue-50); border-color: var(--brand-primary); color: var(--brand-primary); }
+.barra-ubicacion { gap: 14px; }
+.barra-ubicacion .migas { flex: 1; }
+.volver-inicio { position: absolute; top: 20px; left: 20px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: #fff;
+    border: 1px solid var(--blue-200); font-size: 13px; font-weight: 700; color: var(--text-primary); z-index: 2; }
+.volver-inicio:hover { background: var(--blue-50); border-color: var(--brand-primary); color: var(--brand-primary); }
+.auth-panel { position: relative; }
+.auth-panel .auth-tarjeta { margin-top: 28px; }
+
+/* ── Compartir en pasos y buscar por paradas ── */
+.compartir-pasos { list-style: none; margin: 16px 0 18px; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+.compartir-pasos li { display: flex; align-items: center; gap: 10px; }
+.compartir-pasos li span { width: 24px; height: 24px; border-radius: 50%; flex: none; background: var(--brand-primary); color: #fff; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
+.codigo-linea { width: 100%; margin-top: 12px; padding: 9px 12px; border: 1px dashed var(--border-default); border-radius: 10px; background: var(--blue-50);
+    font-family: Consolas, "Courier New", monospace; font-size: 11px; color: var(--text-secondary); text-overflow: ellipsis; }
+.parada-coincide { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--teal); }
+
+@media (max-width: 820px) {
+    .volver-landing span { display: none; }
+    .volver-landing { padding: 6px 9px; }
+    .volver-inicio { top: 12px; left: 12px; padding: 7px 12px; }
+    .toast-aviso { bottom: 76px; }
+}
+
+/* ── Pantallas bajas (laptops 1366x768 o con zoom de Windows): todo más compacto ── */
+@media (max-height: 760px) and (min-width: 821px) {
+    .panel-scroll, .panel-comparar, .panel-rutas { padding: 16px 18px; }
+    .titulo-seccion { font-size: 24px; line-height: 30px; }
+    .encabezado-seccion { margin-bottom: 14px; }
+    .sub-panel { font-size: 13px; margin-top: 4px; }
+    .btn-buscar { margin-top: 14px; padding: 13px; font-size: 15px; }
+    .campo-wrap { margin-bottom: 8px; }
+    .pagina { padding: 22px 28px 18px; }
+    .pagina-cabecera h1 { font-size: 24px; }
+    .barra-ubicacion { height: 42px; }
+    .sidebar { padding: 16px; }
+    .sidebar-menu { margin-top: 18px; }
+    .nav-btn { padding: 9px 14px; margin-bottom: 4px; }
+    .perfil-datos { padding: 20px; }
+    .landing-contenido { padding-top: 8px; padding-bottom: 24px; }
+    .landing-tarjeta { height: min(560px, calc(100vh - 150px)); }
+    .landing-texto h1 { font-size: 44px; line-height: 54px; }
+}
+
+.explorar-sin-cuenta { margin-top: 10px !important; padding: 9px 16px; border: 1px solid var(--blue-200); border-radius: 999px; background: var(--blue-50); }
+.explorar-sin-cuenta:hover { background: var(--blue-100); }
+
+
+/* ── Ajustes funcionales ── */
+.btn-peligro { background: var(--danger); color: #fff; box-shadow: 0 6px 16px rgba(220, 38, 38, .25); }
+.btn-peligro:hover:not(:disabled) { filter: brightness(1.08); }
+.tarjeta-peligro { border-color: #FCA5A5 !important; }
+.tarjeta-peligro .tarjeta-titulo { color: var(--danger); }
+.muestra-ruta { display: flex; align-items: center; gap: 12px; padding: 8px 0; color: var(--text-primary); }
+.muestra-simbolo { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--blue-100); font-size: 14px; font-weight: 800; }
+.faq { cursor: pointer; font-weight: 600; }
+.faq:hover { color: var(--brand-primary); }
+.faq-resp { font-size: 13px; line-height: 20px; color: var(--text-secondary); padding: 4px 4px 14px; }
+
+
+/* ═══════════ ACCESIBILIDAD ═══════════ */
+/* Siempre: un anillo de foco claro al navegar con el teclado */
+:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
+.campo input:focus-visible { outline: none; }
+.saltar-contenido { position: fixed; top: -60px; left: 12px; z-index: 6000; padding: 10px 16px; border-radius: 10px; background: var(--text-primary); color: #fff; font-weight: 700; transition: top .15s; }
+.saltar-contenido:focus { top: 10px; }
+
+/* Símbolo de cada ruta (solo se ve con el modo daltonismo) */
+.simbolo-ruta { display: none; font-size: 12px; font-weight: 900; line-height: 1; }
+html.a11y-dalton .simbolo-ruta { display: inline-flex; align-items: center; justify-content: center; }
+.ruta-numero, .tarjeta-numero, .trayecto-icono { position: relative; }
+.ruta-numero .simbolo-ruta, .tarjeta-numero .simbolo-ruta, .trayecto-icono .simbolo-ruta {
+    position: absolute; right: -7px; bottom: -7px; width: 18px; height: 18px; border-radius: 50%; background: #fff; color: #111; border: 2px solid #111; font-size: 10px;
+}
+.chip-ruta .simbolo-ruta { margin-right: 2px; font-size: 11px; }
+.solo-dalton { display: none; }
+html.a11y-dalton .solo-dalton { display: flex; }
+.mk-simbolo { font-size: 12px; font-weight: 900; line-height: 1; color: #111; }
+html.a11y-dalton .mk-parada, html.a11y-dalton .mk-parada.grande { border-color: #111; color: #111; border-width: 2px; }
+
+/* Modo daltonismo: toda la app en tonos neutros */
+html.a11y-dalton body { filter: grayscale(1) contrast(1.06); }
+html.a11y-dalton .chip-ruta { border-color: #555; }
+
+/* Sin animaciones */
+html.a11y-sin-anim *, html.a11y-sin-anim *::before, html.a11y-sin-anim *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+
+/* Guía visual: foco muy visible y barra "Estás en…" */
+html.a11y-guia :focus-visible { outline: 3px solid #F59E0B; outline-offset: 3px; box-shadow: 0 0 0 6px rgba(245, 158, 11, .3); border-radius: 8px; }
+html.a11y-guia .campo input:focus-visible { box-shadow: none; }
+#guia-estado {
+    position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 5500; max-width: min(960px, calc(100vw - 24px));
+    padding: 10px 18px; border-radius: 14px; background: #111827; color: #fff; font-size: 13px; line-height: 1.4; box-shadow: 0 10px 30px rgba(0, 0, 0, .35); pointer-events: none;
+}
+#guia-estado b { color: #FCD34D; }
+#guia-estado span { opacity: .75; }
+html.a11y-guia .toast-aviso { bottom: 76px; }
+
+/* Botones "?" de ayuda */
+.ayuda-wrap { position: relative; display: inline-flex; vertical-align: middle; margin-left: 6px; }
+.mapa-controles .ayuda-wrap { margin-left: 0; }
+.ayuda-btn { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--brand-primary); background: #fff; color: var(--brand-primary); font-weight: 900; font-size: 13px; line-height: 1; cursor: pointer; padding: 0; }
+.ayuda-btn:hover { background: var(--brand-primary); color: #fff; }
+.ayuda-fondo { position: fixed; inset: 0; z-index: 1400; }
+.ayuda-globo { position: absolute; z-index: 1500; top: calc(100% + 8px); left: 0; width: 270px; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 12px;
+    background: #fff; border: 2px solid var(--brand-primary); box-shadow: 0 10px 30px rgba(27, 54, 93, .3); font-size: 13px; line-height: 1.4; font-weight: 400; color: var(--text-primary); text-align: left; white-space: normal; }
+.ayuda-globo b { font-size: 14px; }
+.ayuda-globo .btn-ghost { align-self: flex-end; }
+.ayuda-globo.derecha { left: auto; right: 0; }
+.mapa-controles .ayuda-globo { right: calc(100% + 8px); top: 0; left: auto; }
+.vence { color: var(--amber); font-weight: 700; }
+.chips-problemas { flex-wrap: wrap; margin-bottom: 4px; }
+
+
+/* ── Guía visual: la barra "Estás en…" no tapa el contenido ── */
+html.a11y-guia .pagina, html.a11y-guia .marco-detalle { padding-bottom: 76px; }
+html.a11y-guia .panel-scroll, html.a11y-guia .lista-rutas, html.a11y-guia .lista-opciones, html.a11y-guia .navegacion { padding-bottom: 64px; }
+html.a11y-guia .mapa-tarjeta { bottom: 64px; }
+html.a11y-guia .mapa-leyenda { bottom: 70px; }
+#guia-estado { padding: 8px 16px; font-size: 12.5px; max-width: min(820px, calc(100vw - 120px)); }
+.busqueda-panel { display: flex; align-items: center; gap: 8px; }
+.busqueda-panel .campo { flex: 1; width: auto; }
+.busqueda-panel .ayuda-wrap { order: 2; margin: 0; }

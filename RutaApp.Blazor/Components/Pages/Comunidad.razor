@@ -9,7 +9,7 @@
 <div class="pagina pagina-comunidad">
     <div class="pagina-cabecera">
         <div>
-            <h1>Comunidad</h1>
+            <h1>Comunidad<Ayuda Titulo="Comunidad" Texto="Avisos, preguntas y propuestas de otras personas. Los avisos de problemas (ponchaduras, tráfico…) se quitan solos cuando caducan." /></h1>
             <p>Noticias, preguntas y mejoras para moverse por Chihuahua</p>
         </div>
         <button type="button" class="btn btn-primario" @onclick="Nueva">
@@ -72,7 +72,7 @@
                             <Icon Nombre="IcoBadgeCheck" Tam="14" Color="#0D9488" />
                         }
                     </span>
-                    <small>@p.Tiempo</small>
+                    <small>@p.Tiempo@if (p.Vence != null) { <span class="vence"> · @p.VenceTexto</span> }</small>
                 </div>
                 <span class="post-tipo @p.Tipo"><Icon Nombre="@p.IconoTipo" Tam="12" /> @p.TipoTexto</span>
             </header>
@@ -130,7 +130,7 @@
         <div class="card invitacion">
             <Icon Nombre="IcoAlert" Color="var(--warning)" />
             <b>No pudimos cargar la comunidad</b>
-            <small>Revisa tu conexión a internet e inténtalo de nuevo.</small>
+            <small>@(Estado.ErrorBaseDatos ?? "Revisa que MySQL esté encendido y vuelve a intentar.")</small>
             <button type="button" class="btn-ghost" @onclick="Recargar"><Icon Nombre="IcoRefresh" Tam="14" /> Reintentar</button>
         </div>
     }
@@ -160,18 +160,41 @@
 
             <div class="etiqueta-form">¿Qué quieres compartir?</div>
             <div class="tipos">
-                <label class="tipo-opcion @(_nuevoTipo == "aviso" ? "sel" : "")" @onclick='() => _nuevoTipo = "aviso"'>
+                <label class="tipo-opcion @(_nuevoTipo == "aviso" ? "sel" : "")" @onclick='() => ElegirTipoPublicacion("aviso")'>
                     <span class="tipo-icono" style="background:var(--warning-tint)"><Icon Nombre="IcoAlert" Tam="18" Color="var(--warning)" /></span>
                     <b>Aviso</b><small>Algo que afecta una ruta</small>
                 </label>
-                <label class="tipo-opcion @(_nuevoTipo == "pregunta" ? "sel" : "")" @onclick='() => _nuevoTipo = "pregunta"'>
+                <label class="tipo-opcion @(_nuevoTipo == "pregunta" ? "sel" : "")" @onclick='() => ElegirTipoPublicacion("pregunta")'>
                     <span class="tipo-icono" style="background:var(--brand-tint)"><Icon Nombre="IcoHelp" Tam="18" Color="var(--brand-primary)" /></span>
                     <b>Pregunta</b><small>Pide ayuda o un consejo</small>
                 </label>
-                <label class="tipo-opcion @(_nuevoTipo == "propuesta" ? "sel" : "")" @onclick='() => _nuevoTipo = "propuesta"'>
+                <label class="tipo-opcion @(_nuevoTipo == "propuesta" ? "sel" : "")" @onclick='() => ElegirTipoPublicacion("propuesta")'>
                     <span class="tipo-icono" style="background:var(--success-tint)"><Icon Nombre="IcoBulb" Tam="18" Color="var(--success)" /></span>
                     <b>Propuesta</b><small>Una mejora al servicio</small>
                 </label>
+            </div>
+
+            @if (_nuevoTipo == "aviso")
+            {
+                <div class="etiqueta-form">Problemas comunes <small>(toca uno y se llena el título)</small></div>
+                <div class="chips chips-problemas">
+                    @foreach (var problema in EstadoApp.ProblemasComunes)
+                    {
+                        var pr = problema;
+                        <button type="button" class="chip-radio @(_titulo == pr.Texto ? "activo" : "")" @onclick="() => ElegirProblema(pr)">
+                            <Icon Nombre="@pr.Icono" Tam="13" /> @pr.Texto
+                        </button>
+                    }
+                </div>
+            }
+
+            <div class="etiqueta-form">¿Cuánto tiempo se mostrará? <small>(después se quita sola)</small></div>
+            <div class="chips">
+                @foreach (var d in Duraciones)
+                {
+                    var dias = d.Dias;
+                    <button type="button" class="chip-radio @(_dias == dias ? "activo" : "")" @onclick="() => _dias = dias">@d.Texto</button>
+                }
             </div>
 
             <div class="etiqueta-form">Ruta relacionada <small>(opcional · la verán quienes sigan esa ruta)</small></div>
@@ -216,6 +239,24 @@
     private bool _modal;
     private bool _ocupado;
     private string _nuevoTipo = "pregunta";
+    private int _dias = 7;   // 0 = no caduca
+
+    private record Duracion(string Texto, int Dias);
+    private static readonly Duracion[] Duraciones =
+        { new("1 día", 1), new("3 días", 3), new("7 días", 7), new("30 días", 30), new("Sin caducidad", 0) };
+
+    // Cada tipo empieza con una duración razonable: los avisos duran poco, las propuestas más
+    private void ElegirTipoPublicacion(string tipo)
+    {
+        _nuevoTipo = tipo;
+        _dias = tipo == "aviso" ? 3 : tipo == "pregunta" ? 7 : 30;
+    }
+
+    private void ElegirProblema(EstadoApp.ProblemaComun problema)
+    {
+        _titulo = problema.Texto;
+        _dias = problema.Dias <= 1 ? 1 : problema.Dias <= 3 ? 3 : 7;
+    }
     private int _rutaModal;
     private string _titulo = "", _mensaje = "", _errorModal;
 
@@ -354,7 +395,7 @@
         _mensaje = "";
         _errorModal = null;
         _rutaModal = 0;
-        _nuevoTipo = "pregunta";
+        ElegirTipoPublicacion("pregunta");
         _modal = true;
     }
 
@@ -372,7 +413,7 @@
         try
         {
             int? idRuta = _rutaModal > 0 ? _rutaModal : null;
-            int id = await ServicioComunidad.CrearAsync(IdUsuario, _nuevoTipo, titulo, mensaje, idRuta, null);
+            int id = await ServicioComunidad.CrearAsync(IdUsuario, _nuevoTipo, titulo, EstadoApp.AgregarCaducidad(mensaje, _dias), idRuta, null);
             if (id == 0) { _errorModal = "No se pudo publicar."; return; }
 
             var ruta = idRuta != null ? Estado.BuscarRuta(_rutaModal) : null;
@@ -386,6 +427,7 @@
                 Fecha = DateTime.Now,
                 Titulo = titulo,
                 Cuerpo = mensaje,
+                Vence = _dias > 0 ? DateTime.Now.AddDays(_dias) : null,
                 Orden = Estado.Publicaciones.Count > 0 ? Estado.Publicaciones.Max(p => p.Orden) + 1 : 1,
                 RutaNumero = ruta?.Numero ?? 0
             };
@@ -399,7 +441,7 @@
         }
         catch (Exception)
         {
-            _errorModal = "No se pudo conectar con el servidor. Intenta de nuevo.";
+            _errorModal = "No se pudo conectar con la base de datos. Intenta de nuevo.";
         }
         finally
         {

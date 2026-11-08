@@ -6,9 +6,10 @@
    Solo se entra con sesión (o como invitado). *@
 @if (Estado.HaIngresado)
 {
+    <a href="#contenido-principal" class="saltar-contenido">Saltar al contenido</a>
     <div class="app-shell">
         <aside class="sidebar @(_colapsado ? "colapsado" : "")">
-            <a href="planificar" class="sidebar-marca marca marca-clickable" title="Ir al inicio">
+            <a href="" class="sidebar-marca marca marca-clickable" title="Ir a la página de inicio" @onclick="() => Estado.IrALanding(true)" @onclick:preventDefault="true">
                 <div class="marca-logo">R</div>
                 @if (!_colapsado)
                 {
@@ -65,7 +66,7 @@
             @* Barra de ubicación: siempre dice en qué pantalla estás y quién tiene la sesión *@
             <div class="barra-ubicacion">
                 <nav class="migas" aria-label="Dónde estás">
-                    <a href="planificar" class="miga-inicio"><Icon Nombre="IcoHome" Tam="15" /> Inicio</a>
+                    <a href="" class="miga-inicio" title="Ir a la página de inicio"><Icon Nombre="IcoHome" Tam="15" /> Inicio</a>
                     @foreach (var miga in Migas)
                     {
                         <Icon Nombre="IcoChevronRight" Tam="13" Color="var(--text-secondary)" />
@@ -89,20 +90,9 @@
                     }
                 </div>
             </div>
-            <div class="contenido-cuerpo">@Body</div>
+            <div class="contenido-cuerpo" id="contenido-principal" tabindex="-1">@Body</div>
         </main>
     </div>
-
-    @if (_confirmarCierre)
-    {
-        <div class="modal-fondo">
-            <div class="modal modal-sesion">
-                <h2>¿Confirmas que quieres cerrar sesión?</h2>
-                <button type="button" class="btn btn-primario btn-grande" @onclick="ConfirmarCierre">Cerrar sesión</button>
-                <button type="button" class="btn btn-contorno btn-grande" @onclick="() => _confirmarCierre = false">Cancelar</button>
-            </div>
-        </div>
-    }
 
     @* Guardar rutas, viajes y lugares es solo con cuenta: este aviso invita a iniciar sesión *@
     @if (Estado.AvisoSesion != null)
@@ -129,7 +119,6 @@
 
 @code {
     private bool _colapsado;
-    private bool _confirmarCierre;
 
     // Invitado: el botón dice "Iniciar sesión" y lleva al login. Con cuenta: "Cerrar sesión" (con confirmación).
     private string TextoSesion => Estado.Invitado ? "Iniciar sesión" : "Cerrar sesión";
@@ -172,10 +161,19 @@
                 "comunidad" => new() { "Comunidad" },
                 "perfil" => new() { "Mi perfil" },
                 "configuracion" => new() { "Configuración" },
-                _ when ruta.StartsWith("configuracion/") => new() { "Configuración", "Ajuste" },
+                _ when ruta.StartsWith("configuracion/") => new() { "Configuración", NombreAjuste() },
                 _ => new() { }
             };
         }
+    }
+
+    // Nombre del ajuste que se está viendo (viene en la dirección: ?nombre=Accesibilidad (daltonismo y guía visual))
+    private string NombreAjuste()
+    {
+        string nombre = System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query)["nombre"];
+        if (string.IsNullOrWhiteSpace(nombre)) return "Ajuste";
+        int p = nombre.IndexOf(" (", StringComparison.Ordinal);
+        return p > 0 ? nombre.Substring(0, p) : nombre;
     }
 
     private void AlternarBarra()
@@ -192,14 +190,7 @@
             Nav.NavigateTo("/acceso");
             return;
         }
-        _confirmarCierre = true;
-    }
-
-    private void ConfirmarCierre()
-    {
-        _confirmarCierre = false;
-        Estado.CerrarSesion();
-        Nav.NavigateTo("/");
+        Estado.PedirCierreSesion();   // pide confirmación antes de cerrar
     }
 
     private void Refrescar() => InvokeAsync(StateHasChanged);

@@ -15,10 +15,14 @@ public class EstadoApp
     private readonly FavoritoService _favoritos;
     private readonly DatosUsuarioService _datos;
     private readonly ComunidadService _comunidad;
+    private readonly AjustesService _ajustes;
+    private readonly UsuarioService _usuarios;
 
     public EstadoApp(NavigationManager nav, RutaRepositorio repositorio, ServicioTrazos trazos, FavoritoService favoritos,
-                     DatosUsuarioService datos, ComunidadService comunidad)
+                     DatosUsuarioService datos, ComunidadService comunidad, AjustesService ajustes, UsuarioService usuarios)
     {
+        _ajustes = ajustes;
+        _usuarios = usuarios;
         _comunidad = comunidad;
         _nav = nav;
         _repositorio = repositorio;
@@ -34,6 +38,55 @@ public class EstadoApp
     /// <summary>Se dispara al contraer o expandir el sidebar: los mapas cambian de ancho y deben recalcular su tamaño.</summary>
     public event Action BarraLateralCambio;
     public void NotificarBarraLateral() => BarraLateralCambio?.Invoke();
+
+    /// <summary>Preferencias de este equipo (unidades, accesibilidad).</summary>
+    public AjustesService Ajustes => _ajustes;
+
+    // ── Avisos breves ("Ruta guardada", "Lugar guardado"…) ────────────────
+    public string Aviso { get; private set; }
+    private int _versionAviso;
+
+    public async void MostrarAviso(string texto)
+    {
+        Aviso = texto;
+        int version = ++_versionAviso;
+        Notificar();
+        await Task.Delay(2600);
+        if (version != _versionAviso) return;
+        Aviso = null;
+        Notificar();
+    }
+
+    // ── Buscar por paradas ────────────────────────────────────────────────
+    /// <summary>Paradas de las rutas cuyo nombre contiene el texto (sin repetir la misma parada de varias rutas).</summary>
+    public List<ParadaBuscada> BuscarParadas(string texto, int max = 6)
+    {
+        var lista = new List<ParadaBuscada>();
+        string q = (texto ?? "").Trim();
+        if (q.Length < 3) return lista;
+        foreach (var r in Rutas)
+        {
+            if (r.Oficial == null) continue;
+            foreach (var p in r.Oficial.Paradas)
+            {
+                string nombre = Formato.NombreParada(p.Nombre);
+                if (!Formato.Coincide(nombre, q)) continue;
+                bool repetida = lista.Any(x => Math.Abs(x.Lat - p.Latitud) < 0.0004 && Math.Abs(x.Lng - p.Longitud) < 0.0004 || x.Nombre == nombre);
+                if (!repetida) lista.Add(new ParadaBuscada(nombre, p.Latitud, p.Longitud, r.Nombre, r.Numero));
+                if (lista.Count >= max) return lista;
+            }
+        }
+        return lista;
+    }
+
+    /// <summary>Nombre de la primera parada de la ruta que coincide con el texto, o null.</summary>
+    public string ParadaQueCoincide(Ruta r, string texto)
+    {
+        if (r.Oficial == null || string.IsNullOrWhiteSpace(texto)) return null;
+        foreach (var p in r.Oficial.Paradas)
+            if (Formato.Coincide(Formato.NombreParada(p.Nombre), texto.Trim())) return Formato.NombreParada(p.Nombre);
+        return null;
+    }
 
     // ── Pantalla de carga ─────────────────────────────────────────────────
     public bool Cargando { get; private set; }
@@ -84,6 +137,20 @@ public class EstadoApp
         HaIngresado = true;
     }
 
+    /// <summary>Se dispara cuando se pide ver otra vez la animación de entrada estando ya en la landing.</summary>
+    public event Action IntroSolicitada;
+
+    /// <summary>Lleva a la landing page. Con animación (al tocar el logo) se vuelve a reproducir la animación de entrada.</summary>
+    public void IrALanding(bool conAnimacion = false)
+    {
+        if (conAnimacion)
+        {
+            IntroVista = false;
+            IntroSolicitada?.Invoke();
+        }
+        _nav.NavigateTo("/");
+    }
+
     /// <summary>true cuando la animación de entrada (el camión que revela "RUTA") ya se vio en esta sesión.</summary>
     public bool IntroVista { get; set; }
 
@@ -93,7 +160,15 @@ public class EstadoApp
     /// </summary>
     public async Task CompletarIngresoAsync()
     {
-        MostrarCarga(ConCuenta ? "Preparando tu cuenta…" : "Cargando rutas…");
+        await PrepararCuentaAsync(ConCuenta ? "Preparando tu cuenta…" : "Cargando rutas…");
+        string destino = DestinoTrasIngreso;
+        DestinoTrasIngreso = "planificar";
+        Navegar(destino);
+    }
+
+    private async Task PrepararCuentaAsync(string mensaje)
+    {
+        MostrarCarga(mensaje);
         try
         {
             await CargarRutasRealesAsync();
@@ -104,9 +179,47 @@ public class EstadoApp
         {
             OcultarCarga();
         }
-        string destino = DestinoTrasIngreso;
-        DestinoTrasIngreso = "planificar";
-        Navegar(destino);
+    }
+
+    // ── "Recordarme": la sesión sigue abierta aunque cierres y abras la app ──
+    private bool _restauracionIntentada;
+
+    /// <summary>Guarda (o quita) el recordatorio de la sesión de este usuario.</summary>
+    public void RecordarSesion(bool recordar)
+    {
+        if (!ConCuenta) return;
+        _ajustes.Datos.SesionUsuarioId = recordar ? Usuario.Id : null;
+        _ajustes.Guardar();
+    }
+
+    /// <summary>Si el usuario pidió "Recordarme", vuelve a abrir su sesión al iniciar la app. Devuelve true si hay sesión.</summary>
+    public async Task<bool> RestaurarSesionAsync()
+    {
+        if (HaIngresado) return ConCuenta;
+        if (_restauracionIntentada) return false;
+        _restauracionIntentada = true;
+
+        int? id = _ajustes.Datos.SesionUsuarioId;
+        if (id == null) return false;
+        try
+        {
+            var u = await _usuarios.ObtenerAsync(id.Value);
+            if (u == null)
+            {
+                _ajustes.Datos.SesionUsuarioId = null;
+                _ajustes.Guardar();
+                return false;
+            }
+            Sesion.Actual = u;
+            IniciarSesion(u);
+            await PrepararCuentaAsync("Abriendo tu sesión…");
+            Notificar();
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;   // sin conexión: se queda sin sesión y puede iniciarla a mano
+        }
     }
 
     private async Task CargarFavoritosAsync()
@@ -123,8 +236,59 @@ public class EstadoApp
         }
     }
 
+    // ── Cerrar sesión (siempre con confirmación) ──────────────────────────
+    public bool ConfirmandoCierre { get; private set; }
+
+    public void PedirCierreSesion()
+    {
+        if (!ConCuenta) { IrAIniciarSesion(); return; }
+        ConfirmandoCierre = true;
+        Notificar();
+    }
+
+    public void CancelarCierreSesion()
+    {
+        ConfirmandoCierre = false;
+        Notificar();
+    }
+
+    public void ConfirmarCierreSesion()
+    {
+        ConfirmandoCierre = false;
+        CerrarSesion();
+        _nav.NavigateTo("/");
+    }
+
+    // ── Borrar la cuenta ──────────────────────────────────────────────────
+    /// <summary>Borra la cuenta y todo lo suyo (base de datos y datos de este equipo). Devuelve el error, o null si salió bien.</summary>
+    public async Task<string> BorrarCuentaAsync()
+    {
+        if (!ConCuenta) return "No hay una cuenta con sesión iniciada.";
+        int id = Usuario.Id;
+        try
+        {
+            if (!await _usuarios.EliminarAsync(id)) return "No se pudo borrar la cuenta. Inténtalo de nuevo.";
+        }
+        catch (Exception)
+        {
+            return "No se pudo conectar con la base de datos para borrar la cuenta. Revisa tu conexión.";
+        }
+        await _datos.BorrarAsync(id);
+        _publicacionesCargadas = false;
+        CerrarSesion();
+        _nav.NavigateTo("/");
+        MostrarAviso("Tu cuenta se borró");
+        return null;
+    }
+
     public void CerrarSesion()
     {
+        Sesion.Actual = null;
+        if (_ajustes.Datos.SesionUsuarioId != null)
+        {
+            _ajustes.Datos.SesionUsuarioId = null;
+            _ajustes.Guardar();
+        }
         HaIngresado = false;
         Invitado = false;
         Usuario = null;
@@ -239,13 +403,42 @@ public class EstadoApp
     /// <summary>true si la última carga de rutas no pudo conectarse a la base de datos.</summary>
     public bool ErrorRutas { get; private set; }
 
+    /// <summary>Qué falló en la conexión a MySQL (en español), o null si todo bien.</summary>
+    public string ErrorBaseDatos { get; private set; }
+
+    /// <summary>Vuelve a leer todo de la base de datos (después de cambiar la conexión en Configuración).</summary>
+    public async Task RecargarDatosAsync()
+    {
+        _rutasReales = false;
+        _publicacionesCargadas = false;
+        _repositorio.LimpiarCache();
+        MostrarCarga("Conectando con la base de datos…");
+        try
+        {
+            await CargarRutasRealesAsync();
+            await CargarFavoritosAsync();
+        }
+        finally
+        {
+            OcultarCarga();
+        }
+        Notificar();
+    }
+
     /// <summary>Carga las rutas de la base de datos. Devuelve false si no se pudo.</summary>
     public async Task<bool> CargarRutasRealesAsync()
     {
         if (_rutasReales) return true;
         var reales = await _repositorio.CargarAsync();
         ErrorRutas = reales == null;
-        if (reales == null) return false;
+        if (reales == null)
+        {
+            // Se explica qué falla (MySQL apagado, contraseña, falta la base de datos…)
+            var (ok, mensaje) = await Connection.ProbarAsync();
+            ErrorBaseDatos = ok ? "Hay conexión con MySQL, pero no se encontraron rutas con recorrido en la base de datos." : mensaje;
+            return false;
+        }
+        ErrorBaseDatos = null;
 
         Rutas = reales;
         _rutasReales = true;
@@ -281,7 +474,11 @@ public class EstadoApp
             Publicaciones.Clear();
             int orden = posts.Count;
             foreach (var d in posts)
-                Publicaciones.Add(ConvertirPublicacion(d, orden--));
+            {
+                var pub = ConvertirPublicacion(d, orden--);
+                if (pub.Vence != null && pub.Vence < DateTime.Now) continue;   // ya caducó: no se muestra
+                Publicaciones.Add(pub);
+            }
             _publicacionesCargadas = true;
             ErrorPublicaciones = false;
         }
@@ -290,6 +487,54 @@ public class EstadoApp
             ErrorPublicaciones = true;
         }
         Notificar();
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex RegexVence = new(@"\s*\[\[vence:([0-9T:\-]+)\]\]\s*$");
+
+    /// <summary>Agrega al texto la fecha en que la publicación deja de verse (dias = 0: no caduca).</summary>
+    public static string AgregarCaducidad(string cuerpo, int dias) =>
+        dias <= 0 ? cuerpo : cuerpo + "\n[[vence:" + DateTime.Now.AddDays(dias).ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture) + "]]";
+
+    /// <summary>Problemas comunes para avisar (sirven al reportar desde el mapa y al publicar un aviso).</summary>
+    public record ProblemaComun(string Clave, string Icono, string Texto, int Dias);
+
+    public static readonly ProblemaComun[] ProblemasComunes =
+    {
+        new("trafico", "IcoClock", "Tráfico pesado", 1),
+        new("accidente", "IcoAlert", "Accidente", 1),
+        new("ponchadura", "IcoBus", "Ponchadura de llanta", 1),
+        new("tirado", "IcoXCircle", "Se quedó tirado", 1),
+        new("roto", "IcoWrench", "Se rompió algo", 2),
+        new("llena", "IcoUsers", "Unidad llena", 1),
+        new("obras", "IcoShuffle", "Obras o desvío", 3),
+        new("parada", "IcoPin", "Parada sin servicio", 3),
+        new("otro", "IcoInfo", "Otro problema", 1)
+    };
+
+    /// <summary>Publica un aviso (reporte de problema) que caduca solo. Devuelve (true, null) o (false, error).</summary>
+    public async Task<(bool Ok, string Error)> PublicarAvisoAsync(string titulo, string detalle, Ruta ruta, int dias)
+    {
+        if (!RequiereCuenta("Inicia sesión para reportar problemas y ayudar a otras personas a viajar mejor.")) return (false, null);
+        try
+        {
+            int id = await _comunidad.CrearAsync(Usuario.Id, "aviso", titulo, AgregarCaducidad(detalle, dias), ruta?.Numero, null);
+            if (id == 0) return (false, "No se pudo enviar el reporte.");
+
+            var p = new Publicacion
+            {
+                Id = id, IdAutor = Usuario.Id, Tipo = "aviso", Autor = Nombre, Tiempo = "ahora", Fecha = DateTime.Now,
+                Titulo = titulo, Cuerpo = detalle, RutaNumero = ruta?.Numero ?? 0,
+                Vence = dias > 0 ? DateTime.Now.AddDays(dias) : null,
+                Orden = Publicaciones.Count > 0 ? Publicaciones.Max(x => x.Orden) + 1 : 1
+            };
+            if (ruta != null) p.Etiquetas.Add(new Etiqueta { Texto = ruta.Nombre, EsRuta = true });
+            AgregarPublicacion(p);
+            return (true, null);
+        }
+        catch (Exception)
+        {
+            return (false, "No se pudo conectar con la base de datos. Intenta de nuevo.");
+        }
     }
 
     /// <summary>Agrega una publicación recién creada sin volver a pedir todas.</summary>
@@ -317,6 +562,13 @@ public class EstadoApp
             Orden = orden,
             RutaNumero = d.IdRuta ?? 0
         };
+        // La fecha de caducidad viaja al final del texto: "[[vence:2026-11-20T18:00]]"
+        var vence = RegexVence.Match(p.Cuerpo ?? "");
+        if (vence.Success)
+        {
+            if (DateTime.TryParse(vence.Groups[1].Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var fechaVence)) p.Vence = fechaVence;
+            p.Cuerpo = p.Cuerpo.Substring(0, vence.Index).TrimEnd();
+        }
         if (d.IdRuta != null)
         {
             var ruta = BuscarRuta(d.IdRuta.Value);
@@ -371,6 +623,7 @@ public class EstadoApp
         if (!RequiereCuenta("Inicia sesión para guardar rutas y encontrarlas siempre en tu perfil.")) return;
         ruta.Guardada = !ruta.Guardada;
         Notificar();
+        MostrarAviso(ruta.Guardada ? "Ruta guardada: " + ruta.Nombre : "Ruta quitada de guardadas");
         _ = GuardarFavoritoAsync(ruta, ruta.Guardada);
     }
 
@@ -415,6 +668,7 @@ public class EstadoApp
         Trayectos.Add(t);
         v.GuardadoId = t.Id;
         Notificar();
+        MostrarAviso("Viaje guardado en tu perfil");
         GuardarDatos();
     }
 
@@ -446,6 +700,7 @@ public class EstadoApp
         r.Guardada = true;
         _viajesGuardados.Add(r);
         Notificar();
+        MostrarAviso("Viaje guardado en tu perfil");
         GuardarDatos();
     }
 
@@ -483,6 +738,7 @@ public class EstadoApp
         (tramos ?? Enumerable.Empty<Tramo>()).Select(t => new Tramo
         {
             EsBus = t.EsBus, Puntos = t.Puntos.Select(p => new[] { p[0], p[1] }).ToList(), TextoInicio = t.TextoInicio,
+            Simbolo = t.Simbolo, Patron = t.Patron, Metros = t.Metros, Instrucciones = t.Instrucciones?.ToList(), ParadaInicio = t.ParadaInicio, ParadaFin = t.ParadaFin, EsperaMin = t.EsperaMin,
             TextoFin = t.TextoFin, Linea = t.Linea, Color = t.Color, Minutos = t.Minutos, AjustarACalles = t.AjustarACalles && !t.Ajustado, Reparar = t.Reparar && !t.Ajustado, Ajustado = t.Ajustado
         }).ToList();
 
@@ -583,6 +839,7 @@ public class EstadoApp
         var l = new LugarGuardado { Nombre = nombre.Trim(), Tipo = tipo, Direccion = direccion ?? "", Lat = lat, Lng = lng };
         Lugares.Add(l);
         Notificar();
+        MostrarAviso("Lugar guardado: " + l.Nombre);
         GuardarDatos();
         return l;
     }
@@ -591,6 +848,7 @@ public class EstadoApp
     {
         Lugares.Remove(l);
         Notificar();
+        MostrarAviso("Lugar eliminado");
         GuardarDatos();
     }
 
@@ -626,6 +884,9 @@ public class EstadoApp
         }
         return "Ese código no se pudo leer.";
     }
+
+    /// <summary>Busca direcciones y lugares por nombre (para guardar un lugar escribiendo su dirección).</summary>
+    public Task<List<Sugerencia>> BuscarLugaresAsync(string texto) => _trazos.BuscarLugaresAsync(texto);
 
     /// <summary>Nombre de la calle de un punto del mapa (para ponerle nombre a un lugar elegido tocando el mapa).</summary>
     public Task<string> CalleDeAsync(double lat, double lng) => _trazos.CalleDeAsync(lat, lng);

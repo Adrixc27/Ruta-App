@@ -37,6 +37,8 @@
 
     @* Controles a la derecha, como en las apps de navegación: centrar en mí, reportar y leyenda *@
     <div class="mapa-controles">
+        <Ayuda Titulo="Controles del mapa" Derecha="true"
+               Texto="Mira el mapa: la cruz te lleva a tu ubicación, el megáfono reporta un problema (ponchadura, tráfico, se quedó tirado…) y las capas abren la leyenda con el significado de pines y líneas." />
         <button type="button" class="mapa-control" title="Centrar el mapa en mi ubicación" @onclick="CentrarEnMi">
             <Icon Nombre="IcoCrosshair" Tam="20" />
         </button>
@@ -56,7 +58,7 @@
                 <div class="viaje-chips">
                     @foreach (var paso in _tarjeta.Pasos().Where(p => p.EsBus))
                     {
-                        <span class="chip-ruta" style="--c:@paso.Color"><Icon Nombre="IcoBus" Tam="12" /> @paso.Titulo.Replace("Toma ", "")</span>
+                        <span class="chip-ruta" style="--c:@paso.Color"><span class="simbolo-ruta" aria-hidden="true">@paso.Simbolo</span><Icon Nombre="IcoBus" Tam="12" /> @paso.Titulo.Replace("Toma ", "")</span>
                     }
                 </div>
                 <div class="viaje-cifras">
@@ -76,7 +78,16 @@
                         var p = paso;
                         <li style="--c:@p.Color" @onclick="() => CentrarEn(p.Lat, p.Lng)">
                             <span class="paso-icono"><Icon Nombre="@p.Icono" Tam="14" /></span>
-                            <div><b>@p.Titulo</b><small>@p.Detalle</small></div>
+                            <div>
+                                <b>@p.Titulo</b><small>@p.Detalle</small>
+                                @if (p.Instrucciones != null)
+                                {
+                                    @foreach (var texto in p.Instrucciones)
+                                    {
+                                        <span class="instruccion">@texto</span>
+                                    }
+                                }
+                            </div>
                         </li>
                     }
                 </ol>
@@ -92,7 +103,7 @@
         var avisos = Estado.AvisosDe(_tarjeta);
         <div class="glass mapa-tarjeta">
             <div class="tarjeta-cabecera">
-                <div class="tarjeta-numero" style="background:@_tarjeta.Color">@_tarjeta.NumeroTexto</div>
+                <div class="tarjeta-numero" style="background:@_tarjeta.Color">@_tarjeta.NumeroTexto<span class="simbolo-ruta" aria-hidden="true">@_tarjeta.Simbolo</span></div>
                 <div class="tarjeta-titulo"><b>@_tarjeta.Nombre</b><small>@_tarjeta.Subtitulo</small></div>
                 <a class="tarjeta-guardar @(_tarjeta.Guardada ? "" : "off")" @onclick="Guardar">
                     <Icon Nombre="IcoBookmark" Tam="13" Relleno="@(_tarjeta.Guardada ? "currentColor" : null)" /> @(_tarjeta.Guardada ? "Guardada" : "Guardar")
@@ -129,6 +140,31 @@
                 <div><b>@(_tarjeta.Paradas) paradas</b><small>Recorrido</small></div>
                 <div><b>@_tarjeta.MinutosTexto</b><small>Trayecto</small></div>
             </div>
+            <button type="button" class="ver-pasos" @onclick="() => _detallesAbiertos = !_detallesAbiertos">
+                @(_detallesAbiertos ? "Menos detalles" : "Más detalles de la ruta") <Icon Nombre="@(_detallesAbiertos ? "IcoChevronDown" : "IcoChevronRight")" Tam="14" />
+            </button>
+            @if (_detallesAbiertos)
+            {
+                <dl class="detalles-ruta">
+                    <div><dt>Servicio</dt><dd>@_tarjeta.ModoTexto@(_tarjeta.Desvio ? " · con desvío temporal" : "")</dd></div>
+                    <div><dt>Horario</dt><dd>@_tarjeta.Horario</dd></div>
+                    <div><dt>Pasa cada</dt><dd>@(_tarjeta.FrecuenciaMin) min aprox.</dd></div>
+                    <div><dt>Tarifa</dt><dd>@_tarjeta.TarifaTexto</dd></div>
+                    <div><dt>Recorrido</dt><dd>@DescripcionRecorrido(_tarjeta)</dd></div>
+                    @if (_tarjeta.Oficial != null && _tarjeta.Oficial.Paradas.Count > 0)
+                    {
+                        <div><dt>Primera parada</dt><dd>@Formato.NombreParada(_tarjeta.Oficial.Paradas[0].Nombre)</dd></div>
+                    }
+                    @if (_tarjeta.TieneVariantes)
+                    {
+                        <div><dt>Variantes</dt><dd>@string.Join(" · ", _tarjeta.Variantes.Select(v => v.Variante)) (elige arriba cuál ver)</dd></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_tarjeta.Descripcion))
+                    {
+                        <div><dt>Notas</dt><dd>@_tarjeta.Descripcion</dd></div>
+                    }
+                </dl>
+            }
             <a class="tarjeta-boton" @onclick="Planificar">Planificar viaje con esta ruta →</a>
         </div>
     }
@@ -144,6 +180,7 @@
             <div class="leyenda-item"><span class="leg-linea"></span>Camión</div>
             <div class="leyenda-item"><span class="leg-linea punteada"></span>A pie</div>
             <div class="leyenda-item"><span class="leg-icono leg-yo"><i></i></span>Tu ubicación</div>
+            <div class="leyenda-item solo-dalton"><span class="leg-icono leg-parada">▲</span>Cada ruta tiene su símbolo y su tipo de línea</div>
         </div>
     }
 </div>
@@ -163,7 +200,7 @@
 
             <div class="etiqueta-form">¿Qué está pasando?</div>
             <div class="reporte-tipos">
-                @foreach (var t in TiposReporte)
+                @foreach (var t in EstadoApp.ProblemasComunes)
                 {
                     var tipo = t;
                     <button type="button" class="reporte-tipo @(_tipoReporte == tipo.Clave ? "sel" : "")" @onclick="() => _tipoReporte = tipo.Clave">
@@ -217,18 +254,6 @@
         public bool ConQuitar;
     }
 
-    private record TipoReporte(string Clave, string Icono, string Texto);
-
-    private static readonly TipoReporte[] TiposReporte =
-    {
-        new("trafico", "IcoClock", "Tráfico pesado"),
-        new("accidente", "IcoAlert", "Accidente"),
-        new("obras", "IcoShuffle", "Obras o desvío"),
-        new("unidad", "IcoBus", "Unidad descompuesta"),
-        new("parada", "IcoXCircle", "Parada sin servicio"),
-        new("otro", "IcoInfo", "Otro problema")
-    };
-
     private readonly string _id = "mapa-" + Guid.NewGuid().ToString("N");
     private readonly TaskCompletionSource<bool> _listo = new();
     private MapaLeaflet _mapa;
@@ -237,7 +262,16 @@
     private Ruta _tarjeta;
     private int _versionRuta;
     private bool _leyendaAbierta;   // cerrada por defecto: el mapa se ve limpio; el botón de capas la abre
-    private bool _pasosAbiertos;
+    private bool _pasosAbiertos, _detallesAbiertos;
+
+    // "Circuito de ida y vuelta · 38.1 km · 88 paradas"
+    private static string DescripcionRecorrido(Ruta r)
+    {
+        bool circuito = r.Trazo != null && r.Trazo.Count > 1 &&
+            Math.Abs(r.Trazo[0][0] - r.Trazo[^1][0]) < 0.001 && Math.Abs(r.Trazo[0][1] - r.Trazo[^1][1]) < 0.001;
+        return (circuito ? "Circuito de ida y vuelta" : "Recorrido de ida") + " · " +
+               Formato.Distancia(r.Kilometros * 1000) + " · " + r.Paradas + " paradas";
+    }
     private readonly Dictionary<string, int> _versionUbic = new();
 
     // Reporte tipo Waze
@@ -388,14 +422,16 @@
             foreach (var p in r.Oficial.Paradas)
             {
                 var q = Geo.ProyectarEnLinea(pts, p.Latitud, p.Longitud, out double metros);
-                if (q != null && metros <= 200) paradas.Add(new Marcador(q[0], q[1], p.Nombre));
+                if (q != null && metros <= 200) paradas.Add(new Marcador(q[0], q[1], Formato.NombreParada(p.Nombre)));
             }
 
         var ini = pts[0];
         var fin = pts[pts.Count - 1];
+        bool dalton = Estado.Ajustes.Datos.Daltonismo;   // sin colores: cada ruta con su símbolo y su tipo de línea
         return EnMapa(m => m.DibujarRuta(pts, paradas,
             new Marcador(ini[0], ini[1], r.OrigenNombre),
-            new Marcador(fin[0], fin[1], r.DestinoNombre), r.Color, encuadrar));
+            new Marcador(fin[0], fin[1], r.DestinoNombre), r.Color, encuadrar,
+            dalton ? r.Simbolo : null, dalton ? r.Patron : null));
     }
 
     private async Task DibujarViaje(Ruta r, int version)
@@ -409,9 +445,19 @@
         var pendientes = tramos.Where(t => (t.AjustarACalles || t.Reparar) && !t.Ajustado).ToList();
         if (pendientes.Count == 0) return;
 
-        var resultados = await Task.WhenAll(pendientes.Select(async t => (t, linea: t.Reparar
-            ? (await Trazos.ReparaTramosRectosAsync(t.Puntos)).Linea
-            : await Trazos.AjustarACallesAsync(t.Puntos, !t.EsBus))));
+        var resultados = await Task.WhenAll(pendientes.Select(async t =>
+        {
+            if (!t.EsBus)
+            {
+                // A pie: la ruta por banquetas y las instrucciones (calles y giros)
+                var (caminata, pasos) = await Trazos.CaminataAsync(t.Puntos[0], t.Puntos[t.Puntos.Count - 1]);
+                if (pasos != null && pasos.Count > 0) t.Instrucciones = pasos;
+                return (t, linea: caminata);
+            }
+            return (t, linea: t.Reparar
+                ? (await Trazos.ReparaTramosRectosAsync(t.Puntos)).Linea
+                : await Trazos.AjustarACallesAsync(t.Puntos, false));
+        }));
         bool alguno = false;
         foreach (var (t, linea) in resultados)
         {
@@ -428,6 +474,7 @@
             alguno = true;
         }
         if (alguno && version == _versionRuta) await DibujarTramos(r, false);
+        await InvokeAsync(StateHasChanged);   // ya llegaron las instrucciones para caminar
     }
 
     private Task DibujarTramos(Ruta r, bool encuadrar = true)
@@ -442,15 +489,16 @@
         {
             var a = tr.Puntos[0];
             var b = tr.Puntos[tr.Puntos.Count - 1];
-            if (tr.TextoInicio != null) paradas.Add(new Marcador(a[0], a[1], tr.TextoInicio));
-            if (tr.TextoFin != null) paradas.Add(new Marcador(b[0], b[1], tr.TextoFin));
+            string simbolo = Estado.Ajustes.Datos.Daltonismo ? tr.Simbolo : null;
+            if (tr.TextoInicio != null) paradas.Add(new Marcador(a[0], a[1], tr.TextoInicio, simbolo));
+            if (tr.TextoFin != null) paradas.Add(new Marcador(b[0], b[1], tr.TextoFin, simbolo));
         }
         var escalas = (r.Escalas ?? new List<Sugerencia>()).Select(e => new Marcador(e.Lat, e.Lng, e.Nombre)).ToList();
         string origen = string.IsNullOrWhiteSpace(r.OrigenNombre) ? Estado.Origen : r.OrigenNombre;
         string destino = string.IsNullOrWhiteSpace(r.DestinoNombre) ? Estado.Destino : r.DestinoNombre;
 
         return EnMapa(m => m.DibujarViaje(
-            tramos.Select(t => new TramoMapa(t.EsBus, t.Puntos, t.Color)).ToList(),
+            tramos.Select(t => new TramoMapa(t.EsBus, t.Puntos, t.Color, Estado.Ajustes.Datos.Daltonismo ? t.Patron : null)).ToList(),
             paradas,
             new Marcador(o[0], o[1], origen),
             new Marcador(d[0], d[1], destino),
@@ -550,7 +598,7 @@
 
     private async Task EnviarReporte()
     {
-        var tipo = TiposReporte.First(t => t.Clave == _tipoReporte);
+        var tipo = EstadoApp.ProblemasComunes.First(t => t.Clave == _tipoReporte);
         var ruta = _rutaReporte > 0 ? Estado.BuscarRuta(_rutaReporte) : null;
         string titulo = tipo.Texto + (ruta != null ? " en " + ruta.Nombre : "");
         string detalle = string.IsNullOrWhiteSpace(_detalleReporte) ? "Reportado desde el mapa." : _detalleReporte.Trim();
@@ -558,24 +606,9 @@
         _enviandoReporte = true;
         try
         {
-            int id = await Comunidad.CrearAsync(Estado.Usuario.Id, "aviso", titulo, detalle, ruta?.Numero, null);
-            if (id == 0) { _mensajeReporte = "No se pudo enviar el reporte."; return; }
-
-            var p = new Publicacion
-            {
-                Id = id, IdAutor = Estado.Usuario.Id, Tipo = "aviso", Autor = Estado.Nombre, Tiempo = "ahora", Fecha = DateTime.Now,
-                Titulo = titulo, Cuerpo = detalle, RutaNumero = ruta?.Numero ?? 0,
-                Orden = Estado.Publicaciones.Count > 0 ? Estado.Publicaciones.Max(x => x.Orden) + 1 : 1
-            };
-            if (ruta != null) p.Etiquetas.Add(new Etiqueta { Texto = ruta.Nombre, EsRuta = true });
-            Estado.AgregarPublicacion(p);
-
-            _reporteEnviado = true;
-            _mensajeReporte = "¡Gracias! Tu reporte ya es visible para la comunidad.";
-        }
-        catch (Exception)
-        {
-            _mensajeReporte = "No se pudo conectar con el servidor. Intenta de nuevo.";
+            var (ok, error) = await Estado.PublicarAvisoAsync(titulo, detalle, ruta, tipo.Dias);   // el aviso caduca solo
+            _reporteEnviado = ok;
+            _mensajeReporte = ok ? "¡Gracias! Tu reporte ya es visible para la comunidad y se quitará solo cuando caduque." : error;
         }
         finally
         {

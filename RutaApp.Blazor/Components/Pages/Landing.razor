@@ -1,21 +1,21 @@
 @page "/"
+@implements IDisposable
 @inject EstadoApp Estado
 
 <PageTitle>R.U.T.A. · Transporte público</PageTitle>
 
 @if (_mostrarIntro)
 {
-    <IntroAnimacion OnTerminada="IntroTerminada" />
+    <IntroAnimacion @key="_claveIntro" OnTerminada="IntroTerminada" />
 }
 
 <div class="landing">
     <header class="landing-cabecera">
-        <a href="" class="marca marca-clickable" title="Ir al inicio">
+        <a href="" class="marca marca-clickable" title="Ver la animación de inicio" @onclick="() => Estado.IrALanding(true)" @onclick:preventDefault="true">
             <div class="marca-logo">R</div>
             <div class="marca-texto marca-azul"><b>RUTA</b><small>TRANSPORTE PÚBLICO</small></div>
         </a>
         <nav class="landing-nav">
-            <button type="button" class="btn btn-ghost-oscuro" @onclick="Explorar">Rutas</button>
             <a href="sobre-nosotros" class="btn btn-primario btn-chico">Sobre Nosotros</a>
         </nav>
     </header>
@@ -25,9 +25,9 @@
             <h1>Transporte público en la palma de tu mano</h1>
             <p>Llegando a tu destino, rápido y directo.</p>
             <div class="landing-botones">
-                @if (Estado.HaIngresado)
+                @if (Estado.ConCuenta)
                 {
-                    <button type="button" class="btn btn-primario btn-grande" @onclick='() => Estado.Navegar("planificar")'>Abrir R.U.T.A.</button>
+                    <button type="button" class="btn btn-primario btn-grande" @onclick="Estado.PedirCierreSesion"><Icon Nombre="IcoLogout" Tam="20" /> Cerrar sesión</button>
                 }
                 else
                 {
@@ -48,11 +48,36 @@
 
 @code {
     private bool _mostrarIntro;
+    private int _claveIntro;
 
     protected override void OnInitialized()
     {
         // La animación se ve una vez al abrir la app; al terminar queda la landing
         _mostrarIntro = !Estado.IntroVista;
+        Estado.IntroSolicitada += VolverAVerIntro;
+        Estado.Cambio += Refrescar;
+    }
+
+    // Si pidió "Recordarme", la sesión se abre sola al iniciar la app (y se mantiene al volver a la landing)
+    protected override async Task OnInitializedAsync()
+    {
+        await Estado.RestaurarSesionAsync();
+    }
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    // El logo se tocó estando ya en la landing: la animación vuelve a empezar
+    private void VolverAVerIntro()
+    {
+        _claveIntro++;
+        _mostrarIntro = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Estado.IntroSolicitada -= VolverAVerIntro;
+        Estado.Cambio -= Refrescar;
     }
 
     private void IntroTerminada()
@@ -60,13 +85,6 @@
         Estado.IntroVista = true;
         _mostrarIntro = false;
         StateHasChanged();
-    }
-
-    // "Rutas": se explora la app como invitado, directo al catálogo de rutas
-    private async Task Explorar()
-    {
-        Estado.DestinoTrasIngreso = "rutas";
-        await Entrar();
     }
 
     // "Planificar viaje": como invitado, directo a la pantalla para planear el viaje

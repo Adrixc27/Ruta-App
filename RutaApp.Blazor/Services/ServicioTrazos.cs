@@ -12,6 +12,7 @@ public class ServicioTrazos
     private readonly IHttpClientFactory _fabrica;
     private readonly ILogger<ServicioTrazos> _log;
     private readonly ConcurrentDictionary<string, List<double[]>> _cacheOsrm = new();
+    private readonly ConcurrentDictionary<string, (List<double[]> Linea, List<string> Pasos)> _cacheCaminata = new();
 
     public ServicioTrazos(IHttpClientFactory fabrica, ILogger<ServicioTrazos> log)
     {
@@ -54,6 +55,78 @@ public class ServicioTrazos
             _log.LogDebug("OSRM: {Mensaje}", ex.Message);
             return null;
         }
+    }
+
+    /// <summary>
+    /// Cómo caminar de A a B por banquetas: la línea y las instrucciones paso a paso ("Sal hacia el norte por Calle X (120 m)",
+    /// "Gira a la derecha en…"). Devuelve (null, null) si no hay internet.
+    /// </summary>
+    public async Task<(List<double[]> Linea, List<string> Pasos)> CaminataAsync(double[] a, double[] b)
+    {
+        string coords = ClaveOsrm(new[] { a, b });
+        if (_cacheCaminata.TryGetValue(coords, out var guardado)) return guardado;
+        try
+        {
+            string json = await Http.GetStringAsync("https://routing.openstreetmap.de/routed-foot/route/v1/foot/" + coords +
+                                                    "?overview=full&geometries=geojson&steps=true");
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var raiz = doc.RootElement;
+            if (raiz.GetProperty("code").GetString() != "Ok") return (null, null);
+            var ruta = raiz.GetProperty("routes")[0];
+
+            var linea = new List<double[]>();
+            foreach (var c in ruta.GetProperty("geometry").GetProperty("coordinates").EnumerateArray())
+                linea.Add(new[] { c[1].GetDouble(), c[0].GetDouble() });
+
+            var pasos = new List<string>();
+            foreach (var paso in ruta.GetProperty("legs")[0].GetProperty("steps").EnumerateArray())
+            {
+                var texto = InstruccionCaminar(paso);
+                if (texto != null) pasos.Add(texto);
+            }
+            var resultado = (linea.Count >= 2 ? linea : null, pasos);
+            if (resultado.Item1 != null) _cacheCaminata[coords] = resultado;
+            return resultado;
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug("Caminata: {Mensaje}", ex.Message);
+            return (null, null);
+        }
+    }
+
+    private static string InstruccionCaminar(System.Text.Json.JsonElement paso)
+    {
+        var man = paso.GetProperty("maneuver");
+        string tipo = man.GetProperty("type").GetString() ?? "";
+        string modificador = man.TryGetProperty("modifier", out var m) ? m.GetString() ?? "" : "";
+        string calle = paso.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
+        double metros = paso.GetProperty("distance").GetDouble();
+        int redondeo = (int)Math.Max(10, Math.Round(metros / 10) * 10);
+        string por = calle.Length > 0 ? " por " + calle : "";
+
+        if (tipo == "arrive") return "Llegas al punto";
+        if (metros < 8) return null;
+
+        if (tipo == "depart")
+        {
+            double rumbo = man.TryGetProperty("bearing_after", out var b) ? b.GetDouble() : 0;
+            string[] puntos = { "norte", "noreste", "este", "sureste", "sur", "suroeste", "oeste", "noroeste" };
+            return "Sal hacia el " + puntos[(int)Math.Round(rumbo / 45.0) % 8] + por + " (" + redondeo + " m)";
+        }
+
+        string verbo = modificador switch
+        {
+            "left" => "Gira a la izquierda",
+            "right" => "Gira a la derecha",
+            "slight left" => "Gira ligeramente a la izquierda",
+            "slight right" => "Gira ligeramente a la derecha",
+            "sharp left" => "Gira cerrado a la izquierda",
+            "sharp right" => "Gira cerrado a la derecha",
+            "uturn" => "Da la vuelta",
+            _ => "Sigue derecho"
+        };
+        return verbo + por + " (" + redondeo + " m)";
     }
 
     /// <summary>
