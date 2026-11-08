@@ -76,7 +76,6 @@
                         <b>No pudimos cargar las rutas</b>
                         <small>@(Estado.ErrorBaseDatos ?? "Revisa que MySQL esté encendido y vuelve a intentar.")</small>
                         <button type="button" class="btn-ghost" @onclick="Estado.ReintentarRutasAsync"><Icon Nombre="IcoRefresh" Tam="14" /> Reintentar</button>
-                        <button type="button" class="btn-ghost" @onclick='() => Estado.Navegar("ajuste", "Conexión a la base de datos")'><Icon Nombre="IcoSettings" Tam="14" /> Configurar la conexión</button>
                     </div>
                 }
                 else if (!Visibles.Any())

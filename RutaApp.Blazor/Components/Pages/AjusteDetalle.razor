@@ -15,9 +15,6 @@
     case "cuenta":
         <AjustesCuenta Clave="@Clave" />
         break;
-    case "basedatos":
-        <AjustesBaseDatos Clave="@Clave" />
-        break;
     case "soporte":
         <AjustesSoporte Clave="@Clave" />
         break;
@@ -44,7 +41,6 @@
         bool es(string clave) => ajuste.Contains(clave, StringComparison.OrdinalIgnoreCase);
 
         (Grupo, Clave) =
-            es("Conexión a la base") ? ("basedatos", "conexion") :
             es("Unidades") ? ("general", "unidades") :
             es("Accesibilidad") ? ("accesibilidad", "accesibilidad") :
             es("Mi cuenta") ? ("cuenta", "cuenta") :

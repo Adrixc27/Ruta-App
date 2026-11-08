@@ -20,7 +20,7 @@ namespace RutaApp.Blazor
     /// Conexión a la base de datos MySQL LOCAL. De dónde sale la configuración (en este orden):
     ///  1) la variable de entorno RUTA_DB_CONNECTION (cadena de conexión completa), si existe;
     ///  2) el archivo %LocalAppData%\RutaApp\conexion.json (se crea solo la primera vez con los valores de un MySQL local);
-    /// y se puede cambiar y probar desde la app en Configuración → Conexión a la base de datos.
+    /// Para cambiar usuario, contraseña o base de datos se edita ese archivo y se vuelve a abrir la app.
     /// La contraseña NO va en el código: así no se sube a git.
     /// </summary>
     public static class Connection

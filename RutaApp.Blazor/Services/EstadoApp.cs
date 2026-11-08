@@ -406,25 +406,6 @@ public class EstadoApp
     /// <summary>Qué falló en la conexión a MySQL (en español), o null si todo bien.</summary>
     public string ErrorBaseDatos { get; private set; }
 
-    /// <summary>Vuelve a leer todo de la base de datos (después de cambiar la conexión en Configuración).</summary>
-    public async Task RecargarDatosAsync()
-    {
-        _rutasReales = false;
-        _publicacionesCargadas = false;
-        _repositorio.LimpiarCache();
-        MostrarCarga("Conectando con la base de datos…");
-        try
-        {
-            await CargarRutasRealesAsync();
-            await CargarFavoritosAsync();
-        }
-        finally
-        {
-            OcultarCarga();
-        }
-        Notificar();
-    }
-
     /// <summary>Carga las rutas de la base de datos. Devuelve false si no se pudo.</summary>
     public async Task<bool> CargarRutasRealesAsync()
     {

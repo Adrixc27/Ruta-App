@@ -21,8 +21,8 @@ o en Visual Studio: proyecto de inicio `Ruta App`. Requiere el SDK de .NET 10 y 
 
 ## Base de datos
 
-No hay API: la app se conecta directo a **MySQL local**. Configura y prueba la conexión en **Configuración → Conexión a la base de datos**
-(se guarda en `%LocalAppData%\RutaApp\conexion.json`). Para crear las tablas y cargar las rutas, mira [`Database/LEEME.md`](Database/LEEME.md).
+No hay API: la app se conecta directo a **MySQL local**. La conexión se configura en `%LocalAppData%\RutaApp\conexion.json`
+(se crea solo la primera vez; si no conecta, la pantalla Rutas explica por qué). Para crear las tablas y cargar las rutas, mira [`Database/LEEME.md`](Database/LEEME.md).
 
 ## Estructura de `RutaApp.Blazor`
 
