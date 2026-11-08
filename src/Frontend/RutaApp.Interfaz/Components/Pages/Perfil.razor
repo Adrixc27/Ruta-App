@@ -536,7 +536,6 @@
         _porEliminar = null;
     }
 
-    // Compartir e importar
     private void AbrirCompartir(string titulo, Compartido contenido)
     {
         _tituloCompartir = titulo;
@@ -559,7 +558,6 @@
         if (!string.IsNullOrEmpty(_mensajeImportar) && _mensajeImportar.StartsWith("Se ")) _codigoImportar = "";
     }
 
-    // Agregar un lugar
     private async Task BuscarDireccion(string texto)
     {
         _direccionLugar = texto;

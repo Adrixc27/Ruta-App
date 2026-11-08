@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Reinicio de estilos, tipografía base y utilidades sueltas.</summary>
+// Reinicio de estilos, tipografía base y utilidades sueltas.
 public static class CssBase
 {
     public const string Reglas = """

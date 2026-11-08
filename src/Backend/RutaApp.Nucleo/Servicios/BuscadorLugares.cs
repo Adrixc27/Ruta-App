@@ -4,10 +4,8 @@ using System.Text.RegularExpressions;
 
 namespace RutaApp.Nucleo.Servicios;
 
-/// <summary>
-/// Busca lugares solo dentro de Chihuahua con Photon (mientras escribes) y Nominatim (direcciones y calles), de OpenStreetMap
-/// y sin API key. Entiende abreviaturas ("av", "blvd", "uach"...).
-/// </summary>
+// Busca lugares solo dentro de Chihuahua con Photon (mientras escribes) y Nominatim (direcciones y calles), de OpenStreetMap
+// y sin API key. Entiende abreviaturas ("av", "blvd", "uach"...).
 public static class BuscadorLugares
 {
     // Mancha urbana de la ciudad de Chihuahua (los resultados fuera de este rectángulo se descartan)
@@ -48,7 +46,7 @@ public static class BuscadorLugares
         { "soriana", "Soriana" }, { "walmart", "Walmart" }, { "oxxo", "OXXO" }
     };
 
-    /// <summary>Minúsculas y sin acentos ni signos, para comparar textos.</summary>
+    // Minúsculas y sin acentos ni signos, para comparar textos.
     public static string Normalizar(string s)
     {
         if (string.IsNullOrEmpty(s)) return "";
@@ -63,7 +61,7 @@ public static class BuscadorLugares
         return Regex.Replace(sb.ToString(), "\\s+", " ").Trim();
     }
 
-    /// <summary>"av independencia" → "avenida independencia"; "uach" → "Universidad Autonoma de Chihuahua".</summary>
+    // "av independencia" → "avenida independencia"; "uach" → "Universidad Autonoma de Chihuahua".
     public static string Expandir(string texto)
     {
         string n = Normalizar(texto);

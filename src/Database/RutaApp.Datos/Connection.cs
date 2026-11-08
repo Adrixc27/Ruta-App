@@ -4,7 +4,7 @@ using MySqlConnector;
 
 namespace RutaApp.Datos;
 
-/// <summary>Datos para conectarse a MySQL. Se guardan en este equipo (conexion.json), no en el código.</summary>
+// Datos para conectarse a MySQL. Se guardan en este equipo (conexion.json), no en el código.
 public class ConfigConexion
 {
     public string Servidor { get; set; } = "localhost";
@@ -14,10 +14,8 @@ public class ConfigConexion
     public string Contrasena { get; set; } = "";
 }
 
-/// <summary>
-/// MySQL local. La configuración sale de la variable de entorno RUTA_DB_CONNECTION (cadena completa) o, si no existe,
-/// de %LocalAppData%\RutaApp\conexion.json, que se crea solo la primera vez. La contraseña nunca va en el código.
-/// </summary>
+// MySQL local. La configuración sale de la variable de entorno RUTA_DB_CONNECTION (cadena completa) o, si no existe,
+// de %LocalAppData%\RutaApp\conexion.json, que se crea solo la primera vez. La contraseña nunca va en el código.
 public static class Connection
 {
     public static string Archivo => Path.Combine(
@@ -25,10 +23,10 @@ public static class Connection
 
     public static ConfigConexion Actual { get; private set; } = new();
 
-    /// <summary>Cadena de conexión que usan todos los servicios (Dapper + MySqlConnector).</summary>
+    // Cadena de conexión que usan todos los servicios (Dapper + MySqlConnector).
     public static string ConnectionString { get; private set; } = "";
 
-    /// <summary>true si la cadena viene de la variable de entorno RUTA_DB_CONNECTION (entonces conexion.json no se usa).</summary>
+    // true si la cadena viene de la variable de entorno RUTA_DB_CONNECTION (entonces conexion.json no se usa).
     public static bool UsaVariableDeEntorno { get; private set; }
 
     static Connection()
@@ -103,9 +101,7 @@ public static class Connection
         }.ConnectionString;
     }
 
-    /// <summary>
-    /// Prueba la conexión y explica en español qué falla; si funciona, dice cuántas rutas y paradas hay.
-    /// </summary>
+    // Prueba la conexión y explica en español qué falla; si funciona, dice cuántas rutas y paradas hay.
     public static async Task<(bool Ok, string Mensaje)> ProbarAsync(ConfigConexion? config = null)
     {
         bool actual = config == null;

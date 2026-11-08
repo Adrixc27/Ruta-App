@@ -18,7 +18,7 @@ namespace RutaApp.Pruebas
             return new Conexion { IdOrigen = origen, IdDestino = destino, IdRuta = ruta, TiempoMin = min, DistanciaM = metros };
         }
 
-        /// <summary>Grafo pequeño con coordenadas en (0,0): sirve para probar la lógica sin depender de la geografía.</summary>
+        // Grafo pequeño con coordenadas en (0,0): sirve para probar la lógica sin depender de la geografía.
         private static GrafoTransporte Mini(string[] paradas, string[] rutas, params Conexion[] conexiones)
         {
             var g = new GrafoTransporte();
@@ -33,7 +33,7 @@ namespace RutaApp.Pruebas
             return ServicioDatosTransporte.ConstruirGrafo(DatosPrueba.Crear());
         }
 
-        /// <summary>Grafo de prueba con el transbordo caminando P03 &lt;-&gt; P09 (como lo arma ServicioTransporte).</summary>
+        // Grafo de prueba con el transbordo caminando P03 <-> P09 (como lo arma ServicioTransporte).
         private static GrafoTransporte GrafoPruebaConCaminata()
         {
             var g = GrafoPrueba();

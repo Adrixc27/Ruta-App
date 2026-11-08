@@ -4,10 +4,8 @@ using System.Linq;
 
 namespace RutaApp.Motor
 {
-    /// <summary>
-    /// Grafo dirigido de paradas. Cada arista es una Conexion (autobús o caminata entre paradas cercanas).
-    /// Es independiente de la interfaz y de la fuente de datos: se llena con AgregarParada/AgregarRuta/AgregarConexion.
-    /// </summary>
+    // Grafo dirigido de paradas. Cada arista es una Conexion (autobús o caminata entre paradas cercanas).
+    // Es independiente de la interfaz y de la fuente de datos: se llena con AgregarParada/AgregarRuta/AgregarConexion.
     public class GrafoTransporte
     {
         private readonly Dictionary<string, Parada> _paradas = new Dictionary<string, Parada>();
@@ -38,7 +36,7 @@ namespace RutaApp.Motor
             _rutas.Add(ruta.Id, ruta);
         }
 
-        /// <summary>Agrega una conexión. Rechaza paradas/rutas inexistentes, valores negativos o no numéricos y duplicados.</summary>
+        // Agrega una conexión. Rechaza paradas/rutas inexistentes, valores negativos o no numéricos y duplicados.
         public void AgregarConexion(Conexion c)
         {
             if (c == null) throw new ArgumentNullException("c");
@@ -69,21 +67,21 @@ namespace RutaApp.Motor
             return id != null && _rutas.TryGetValue(id, out r) ? r : null;
         }
 
-        /// <summary>Conexiones que salen de la parada (lista vacía si no existe o no tiene salidas).</summary>
+        // Conexiones que salen de la parada (lista vacía si no existe o no tiene salidas).
         public IReadOnlyList<Conexion> Salientes(string idParada)
         {
             List<Conexion> l;
             return idParada != null && _salientes.TryGetValue(idParada, out l) ? l : SinConexiones;
         }
 
-        /// <summary>Conexiones que llegan a la parada.</summary>
+        // Conexiones que llegan a la parada.
         public IReadOnlyList<Conexion> Entrantes(string idParada)
         {
             List<Conexion> l;
             return idParada != null && _entrantes.TryGetValue(idParada, out l) ? l : SinConexiones;
         }
 
-        /// <summary>Construye un Recorrido (con métricas) a partir de conexiones consecutivas.</summary>
+        // Construye un Recorrido (con métricas) a partir de conexiones consecutivas.
         public Recorrido CrearRecorrido(IList<Conexion> conexiones)
         {
             return Recorrido.Crear(conexiones, _paradas, _rutas);
@@ -91,11 +89,9 @@ namespace RutaApp.Motor
 
         // Reglas de transición: las usan Dijkstra y el buscador de alternativas para que ambos busquen igual
 
-        /// <summary>
-        /// ¿Se puede tomar "siguiente" justo después de "previa" (null = inicio del viaje)?
-        /// Reglas: no se empieza ni se encadena una caminata entre paradas, y con soloAccesibles
-        /// toda parada donde se sube, baja o cambia debe ser accesible.
-        /// </summary>
+        // ¿Se puede tomar "siguiente" justo después de "previa" (null = inicio del viaje)?
+        // Reglas: no se empieza ni se encadena una caminata entre paradas, y con soloAccesibles
+        // toda parada donde se sube, baja o cambia debe ser accesible.
         public bool PuedeContinuar(Conexion previa, Conexion siguiente, bool soloAccesibles)
         {
             if (previa == null)
@@ -113,13 +109,13 @@ namespace RutaApp.Motor
             return !soloAccesibles || EsAccesible(siguiente.IdOrigen);       // cambia de autobús en esta parada
         }
 
-        /// <summary>El recorrido solo puede terminar bajando de un autobús (y en una parada accesible si se pidió).</summary>
+        // El recorrido solo puede terminar bajando de un autobús (y en una parada accesible si se pidió).
         public bool PuedeTerminar(Conexion ultima, bool soloAccesibles)
         {
             return ultima != null && !ultima.EsCaminata && (!soloAccesibles || EsAccesible(ultima.IdDestino));
         }
 
-        /// <summary>¿"siguiente" implica subir a un autobús nuevo (cuenta como transbordo si no es el primero)?</summary>
+        // ¿"siguiente" implica subir a un autobús nuevo (cuenta como transbordo si no es el primero)?
         public static bool EsTransbordo(Conexion previa, Conexion siguiente)
         {
             return previa != null && !siguiente.EsCaminata && (previa.EsCaminata || previa.IdRuta != siguiente.IdRuta);

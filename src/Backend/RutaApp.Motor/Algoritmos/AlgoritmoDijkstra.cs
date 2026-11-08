@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace RutaApp.Motor
 {
-    /// <summary>Cola de prioridad mínima (montículo binario). Empata por orden de inserción para que los resultados sean deterministas.</summary>
+    // Cola de prioridad mínima (montículo binario). Empata por orden de inserción para que los resultados sean deterministas.
     internal class MonticuloMinimo<T>
     {
         private struct Elemento
@@ -69,19 +69,16 @@ namespace RutaApp.Motor
     public class ResultadoDijkstra
     {
         public bool Alcanzable { get; set; }
-        /// <summary>Costo total de búsqueda (incluye la penalización por transbordo si se pidió).</summary>
+        // Costo total de búsqueda (incluye la penalización por transbordo si se pidió).
         public double Costo { get; set; }
         public List<Conexion> Conexiones { get; set; } = new List<Conexion>();
         public Recorrido Recorrido { get; set; }
-        /// <summary>Si no es alcanzable, explica por qué.</summary>
+        // Si no es alcanzable, explica por qué.
         public string Motivo { get; set; } = "";
     }
 
-    /// <summary>
-    /// Dijkstra sobre el GrafoTransporte con costos no negativos.
-    /// Como cambiar de autobús cuesta (penalización) y depende de cómo se llegó a la parada, el estado de la
-    /// búsqueda es (parada, autobús con el que se llegó), no solo la parada.
-    /// </summary>
+    // Dijkstra sobre GrafoTransporte con costos no negativos. El estado de la búsqueda es (parada, autobús con el
+    // que se llegó), no solo la parada, porque cambiar de autobús cuesta y eso depende de cómo se llegó.
     public class AlgoritmoDijkstra
     {
         private readonly GrafoTransporte _grafo;
@@ -100,11 +97,8 @@ namespace RutaApp.Motor
             public double Costo;
         }
 
-        /// <summary>
-        /// Camino de menor costo entre dos paradas.
-        /// costo(conexion) debe devolver un valor >= 0; double.PositiveInfinity descarta esa conexión; un valor
-        /// negativo o NaN lanza InvalidOperationException (Dijkstra no funciona con pesos negativos).
-        /// </summary>
+        // costo(conexion) debe ser >= 0: double.PositiveInfinity descarta la conexión; un valor negativo o NaN lanza
+        // InvalidOperationException (Dijkstra no admite pesos negativos).
         public ResultadoDijkstra CaminoMasCorto(string idOrigen, string idDestino, Func<Conexion, double> costo,
                                                 double penalizacionTransbordo = 0, bool soloAccesibles = false)
         {
@@ -154,10 +148,8 @@ namespace RutaApp.Motor
             return NoAlcanzable("No existe un camino de '" + idOrigen + "' a '" + idDestino + "' con las conexiones y restricciones actuales.");
         }
 
-        /// <summary>
-        /// Costo mínimo desde cada parada hasta el destino, recorriendo las conexiones al revés y sin reglas de transbordo.
-        /// Es una cota inferior válida (nunca sobreestima), útil para podar búsquedas. Las paradas que no llegan al destino no aparecen.
-        /// </summary>
+        // Costo mínimo de cada parada al destino, recorriendo las conexiones al revés y sin reglas de transbordo.
+        // Es una cota inferior (nunca sobreestima) para podar búsquedas; las paradas que no llegan no aparecen.
         public Dictionary<string, double> DistanciasHaciaDestino(string idDestino, Func<Conexion, double> costo)
         {
             if (costo == null) throw new ArgumentNullException("costo");

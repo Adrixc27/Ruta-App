@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Comunidad, Perfil y Configuración.</summary>
+// Comunidad, Perfil y Configuración.
 public static class CssPaginasConEncabezado
 {
     public const string Reglas = """

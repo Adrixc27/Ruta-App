@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Animaciones, pantallas bajas y ajustes funcionales.</summary>
+// Animaciones, pantallas bajas y ajustes funcionales.
 public static class CssAnimaciones
 {
     public const string Reglas = """

@@ -1,6 +1,6 @@
 @implements IDisposable
 
-@* Animación de entrada de la landing: un camión cruza la pantalla revelando las letras de "RUTA", que se desvanecen para dar paso a la landing. Un clic la salta. *@
+@* Animación de entrada de la landing: un camión cruza la pantalla revelando "RUTA". Un clic la salta. *@
 @if (_visible)
 {
     <div class="intro @(_saliendo ? "saliendo" : "")" @onclick="Saltar">

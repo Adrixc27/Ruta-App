@@ -4,7 +4,7 @@ namespace RutaApp.Nucleo;
 
 public static class RegistroNucleo
 {
-    /// <summary>Registra la lógica de la app (rutas, recorridos, ubicación, ajustes) y, con ella, la capa de datos.</summary>
+    // Registra la lógica de la app (rutas, recorridos, ubicación, ajustes) y, con ella, la capa de datos.
     public static IServiceCollection AgregarNucleo(this IServiceCollection servicios)
     {
         servicios.AgregarDatos();

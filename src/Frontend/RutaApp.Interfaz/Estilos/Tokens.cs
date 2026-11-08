@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Variables de diseño (colores, degradados y sombras): se usan en toda la hoja como var(--nombre).</summary>
+// Variables de diseño (colores, degradados y sombras): se usan en toda la hoja como var(--nombre).
 public static class Tokens
 {
     private static readonly (string Nombre, string Valor)[] Variables =

@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Validación de formularios y barra de error de Blazor.</summary>
+// Validación de formularios y barra de error de Blazor.
 public static class CssErroresBlazor
 {
     public const string Reglas = """

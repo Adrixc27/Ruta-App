@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Mapa Leaflet, marcadores y su tinte.</summary>
+// Mapa Leaflet, marcadores y su tinte.
 public static class CssMapa
 {
     public const string Reglas = """

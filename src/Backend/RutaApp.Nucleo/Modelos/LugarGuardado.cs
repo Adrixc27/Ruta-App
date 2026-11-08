@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace RutaApp.Nucleo.Modelos;
 
-/// <summary>Un lugar que el usuario guarda para planificar (Casa, Escuela, Trabajo u otro punto de referencia).</summary>
+// Un lugar que el usuario guarda para planificar (Casa, Escuela, Trabajo u otro punto de referencia).
 public class LugarGuardado
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");

@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Logotipo y marca.</summary>
+// Logotipo y marca.
 public static class CssMarca
 {
     public const string Reglas = """

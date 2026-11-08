@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Campos de texto.</summary>
+// Campos de texto.
 public static class CssCampos
 {
     public const string Reglas = """

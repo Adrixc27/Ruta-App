@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Servicios;
 
-/// <summary>Petición de otra pantalla (Perfil) para elegir un lugar tocando el mapa de Planificar.</summary>
+// Petición de otra pantalla (Perfil) para elegir un lugar tocando el mapa de Planificar.
 public class SolicitudLugar
 {
     public string Nombre { get; set; } = "";

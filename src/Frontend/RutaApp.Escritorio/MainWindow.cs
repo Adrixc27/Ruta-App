@@ -5,7 +5,7 @@ using RutaApp.Interfaz.Components;
 
 namespace RutaApp.Escritorio;
 
-/// Ventana principal: solo contiene un BlazorWebView que muestra las pantallas de RutaApp.Interfaz
+// Ventana principal: solo contiene un BlazorWebView que muestra las pantallas de RutaApp.Interfaz
 public class MainWindow : Window
 {
     public MainWindow(IServiceProvider servicios)

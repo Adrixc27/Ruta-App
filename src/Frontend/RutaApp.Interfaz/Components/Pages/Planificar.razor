@@ -269,7 +269,6 @@
     private CancellationTokenSource _esperaLugar;
     private bool _buscandoUbicacion;
 
-    // Código que te compartieron
     private bool _pegarCodigo, _viajeCompartido;
     private string _codigoTexto = "", _mensajeCodigo, _codigoAbierto = "";
 
@@ -457,7 +456,6 @@
         return i >= 0 ? (i + 1).ToString() : "";
     }
 
-    // Mis lugares (casa, escuela...)
     // Pone el lugar en el campo que se estaba editando (por defecto, el destino) y lo marca en el mapa
     private async Task UsarLugar(LugarGuardado l)
     {
@@ -580,7 +578,6 @@
         await _mapa.ElegirUbicacion("lugar", s.Nombre, s.Lat, s.Lng);
     }
 
-    // Código que te compartieron
     private async Task AbrirCodigo()
     {
         var c = CodigoCompartir.Leer(_codigoTexto);
@@ -682,7 +679,6 @@
         StateHasChanged();
     }
 
-    // Ubicaciones en el mapa
     // Espera a que el usuario deje de escribir (450 ms) y entonces busca lugares parecidos
     private async Task AlEscribir(string tipo, string texto)
     {
@@ -776,7 +772,6 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    // Buscar
     private async Task Buscar()
     {
         _sugerencias = new List<Sugerencia>();
@@ -830,7 +825,7 @@
         }
     }
 
-    /// <summary>Coordenadas [lat, lng] de lo que hay escrito en el campo, o null si no se pudo ubicar.</summary>
+    // Coordenadas [lat, lng] de lo que hay escrito en el campo, o null si no se pudo ubicar.
     private async Task<double[]> ResolverAsync(string tipo)
     {
         string texto = TextoDe(tipo).Trim();

@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Idiomas;
 
-/// <summary>Traducciones de las pantallas principales: inicio, acceso, planificar, rutas, comunidad, perfil y mapa.</summary>
+// Traducciones de las pantallas principales: inicio, acceso, planificar, rutas, comunidad, perfil y mapa.
 internal static class InglesPantallas
 {
     public static readonly (string Español, string Ingles)[] Pares =

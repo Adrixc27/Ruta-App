@@ -35,7 +35,6 @@
         </div>
     }
 
-    @* Filtros *@
     <div class="filtros">
         <div class="pills">
             <button type="button" class="pill-radio @(_tipo == "" ? "activo" : "")" @onclick='() => _tipo = ""'>@T["Todo"] <em>@Estado.Publicaciones.Count</em></button>
@@ -57,7 +56,6 @@
         </div>
     </div>
 
-    @* Feed *@
     <div class="feed">
         @foreach (var publicacion in Visibles)
         {

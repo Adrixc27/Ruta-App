@@ -3,13 +3,9 @@ using System.Collections.Generic;
 
 namespace RutaApp.Motor
 {
-    /// <summary>
-    /// Busca varios recorridos (directos y con transbordos) entre dos paradas, del más rápido al más lento.
-    /// Es una búsqueda A* que no descarta caminos al llegar a una parada: cada camino parcial se extiende
-    /// por orden de (tiempo recorrido + cota inferior del tiempo restante). Así los recorridos completos salen
-    /// ya ordenados por tiempo y la búsqueda se detiene en cuanto se llega a los límites de Preferencias.
-    /// Los caminos nunca repiten una parada (sin ciclos).
-    /// </summary>
+    // Busca recorridos (directos y con transbordos) entre dos paradas, del más rápido al más lento, sin repetir paradas.
+    // Es un A* que extiende cada camino parcial por (tiempo recorrido + cota inferior del restante): así salen
+    // ordenados por tiempo y la búsqueda se corta al llegar a los límites de Preferencias.
     public class BuscadorRutas
     {
         private readonly GrafoTransporte _grafo;
@@ -31,10 +27,7 @@ namespace RutaApp.Motor
             public int Transbordos;
         }
 
-        /// <summary>
-        /// Límites usados (de Preferencias): MaxTransbordos, MaxAlternativasPorPar, FactorTiempoMaximo,
-        /// MaxExpansiones y SoloParadasAccesibles. Devuelve lista vacía si no hay camino.
-        /// </summary>
+        // Respeta los límites de Preferencias. Devuelve lista vacía si no hay camino.
         public List<Recorrido> Buscar(string idOrigen, string idDestino, Preferencias preferencias)
         {
             var resultado = new List<Recorrido>();

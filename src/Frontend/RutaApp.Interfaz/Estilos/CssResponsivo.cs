@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Adaptación a distintos anchos y detalles del mapa.</summary>
+// Adaptación a distintos anchos y detalles del mapa.
 public static class CssResponsivo
 {
     public const string Reglas = """

@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Hoja de estilos completa de la app. El orden de las secciones es el de la cascada: no lo cambies sin revisar la pantalla.</summary>
+// Hoja de estilos completa de la app. El orden de las secciones es el de la cascada: no lo cambies sin revisar la pantalla.
 public static class Hoja
 {
     public static readonly string Completa = string.Join(

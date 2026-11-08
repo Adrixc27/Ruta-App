@@ -29,7 +29,7 @@ public class Publicacion
     public DateTime Fecha { get; set; } = DateTime.Now;
     public DateTime? Vence { get; set; }  // null = no caduca
 
-    /// <summary>Dónde estaba quien reportó un problema de movilidad (null si el reporte no lleva ubicación).</summary>
+    // Dónde estaba quien reportó un problema de movilidad (null si el reporte no lleva ubicación).
     public double? Lat { get; set; }
     public double? Lng { get; set; }
     public bool TieneUbicacion => Lat != null && Lng != null;

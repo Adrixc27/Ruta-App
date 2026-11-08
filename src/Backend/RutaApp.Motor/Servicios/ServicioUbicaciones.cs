@@ -4,15 +4,13 @@ using System.Linq;
 
 namespace RutaApp.Motor
 {
-    /// <summary>
-    /// Parada cercana a una ubicación. Distingue la distancia en línea recta (la que se usa para filtrar por radio)
-    /// de la distancia estimada caminando (línea recta × factor de rodeo), que es la que cuenta como caminata del viaje.
-    /// </summary>
+    // Parada cercana a una ubicación. Distingue la distancia en línea recta (la que se usa para filtrar por radio)
+    // de la distancia estimada caminando (línea recta × factor de rodeo), que es la que cuenta como caminata del viaje.
     public class ParadaCercana
     {
         public Parada Parada { get; set; }
         public double DistanciaLineaRectaM { get; set; }
-        /// <summary>Estimación: no sigue calles reales hasta que se integre un servicio de rutas peatonales.</summary>
+        // Estimación: no sigue calles reales hasta que se integre un servicio de rutas peatonales.
         public double DistanciaCaminandoM { get; set; }
         public double TiempoCaminandoMin { get; set; }
     }
@@ -28,7 +26,7 @@ namespace RutaApp.Motor
             _paradas = paradas.Where(p => p != null).ToList();
         }
 
-        /// <summary>Distancia en línea recta sobre la esfera terrestre (fórmula de Haversine), en metros.</summary>
+        // Distancia en línea recta sobre la esfera terrestre (fórmula de Haversine), en metros.
         public static double DistanciaLineaRectaM(Coordenada a, Coordenada b)
         {
             if (a == null || b == null) throw new ArgumentNullException(a == null ? "a" : "b");
@@ -43,7 +41,7 @@ namespace RutaApp.Motor
             return 2 * RadioTierraM * Math.Asin(Math.Min(1, Math.Sqrt(h)));
         }
 
-        /// <summary>Estima la distancia caminando a partir de la línea recta.</summary>
+        // Estima la distancia caminando a partir de la línea recta.
         public static double EstimarDistanciaCaminandoM(double lineaRectaM, double factorRodeo)
         {
             return lineaRectaM * factorRodeo;
@@ -54,10 +52,8 @@ namespace RutaApp.Motor
             return distanciaM / (velocidadKmh * 1000.0 / 60.0);
         }
 
-        /// <summary>
-        /// Paradas dentro del radio (en línea recta) de una ubicación, de la más cercana a la más lejana.
-        /// Devuelve lista vacía si la ubicación es inválida o no hay paradas en el radio.
-        /// </summary>
+        // Paradas dentro del radio (en línea recta) de una ubicación, de la más cercana a la más lejana.
+        // Devuelve lista vacía si la ubicación es inválida o no hay paradas en el radio.
         public List<ParadaCercana> BuscarParadasCercanas(Coordenada ubicacion, Preferencias preferencias, int maximo = int.MaxValue)
         {
             var resultado = new List<ParadaCercana>();
@@ -73,7 +69,7 @@ namespace RutaApp.Motor
             return resultado.OrderBy(c => c.DistanciaLineaRectaM).ThenBy(c => c.Parada.Id, StringComparer.Ordinal).Take(Math.Max(0, maximo)).ToList();
         }
 
-        /// <summary>Pares de paradas a menos de radioM (en línea recta) para crear los transbordos caminando.</summary>
+        // Pares de paradas a menos de radioM (en línea recta) para crear los transbordos caminando.
         public IEnumerable<KeyValuePair<Parada, ParadaCercana>> ParesCercanos(double radioM, Preferencias preferencias)
         {
             for (int i = 0; i < _paradas.Count; i++)

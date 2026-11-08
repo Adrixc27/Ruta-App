@@ -1,8 +1,6 @@
 namespace RutaApp.Nucleo.Servicios;
 
-/// <summary>
-/// Arma las Ruta de la app a partir de la base de datos (routes, bus, stop y route_stop) vía RutaService.
-/// </summary>
+// Arma las Ruta de la app a partir de la base de datos (routes, bus, stop y route_stop) vía RutaService.
 public class RutaRepositorio
 {
     private readonly RutaService _rutaService;
@@ -14,10 +12,10 @@ public class RutaRepositorio
         _log = log;
     }
 
-    /// <summary>Olvida lo leído de la base de datos (por ejemplo al cambiar la conexión).</summary>
+    // Olvida lo leído de la base de datos (por ejemplo al cambiar la conexión).
     public void LimpiarCache() => _rutaService.LimpiarCache();
 
-    /// <summary>Devuelve las rutas reales, o null si la base de datos no responde o no hay datos.</summary>
+    // Devuelve las rutas reales, o null si la base de datos no responde o no hay datos.
     public async Task<List<Ruta>> CargarAsync()
     {
         try

@@ -7,12 +7,12 @@ using System.Text.Json.Serialization;
 
 namespace RutaApp.Motor
 {
-    /// <summary>Conjunto de datos de transporte tal como llega de la fuente (JSON, base de datos, GTFS convertido, etc.).</summary>
+    // Conjunto de datos de transporte tal como llega de la fuente (JSON, base de datos, GTFS convertido, etc.).
     public class DatosTransporte
     {
         public List<Parada> Paradas { get; set; } = new List<Parada>();
         public List<RutaAutobus> Rutas { get; set; } = new List<RutaAutobus>();
-        /// <summary>Tramos de autobús dirigidos con su tiempo y distancia. Se espera uno por cada par de paradas consecutivas según el sentido de la ruta.</summary>
+        // Tramos de autobús dirigidos con su tiempo y distancia. Se espera uno por cada par de paradas consecutivas según el sentido de la ruta.
         public List<Conexion> Conexiones { get; set; } = new List<Conexion>();
     }
 
@@ -23,7 +23,7 @@ namespace RutaApp.Motor
         public bool EsValido { get { return Errores.Count == 0; } }
     }
 
-    /// <summary>Carga, valida y convierte datos de transporte en un GrafoTransporte.</summary>
+    // Carga, valida y convierte datos de transporte en un GrafoTransporte.
     public static class ServicioDatosTransporte
     {
         private static readonly JsonSerializerOptions OpcionesJson = CrearOpcionesJson();
@@ -35,10 +35,8 @@ namespace RutaApp.Motor
             return o;
         }
 
-        /// <summary>
-        /// Revisa los datos sin modificarlos. Errores = el grafo no se puede construir con seguridad;
-        /// Advertencias = datos raros pero utilizables (p. ej. paradas sin servicio).
-        /// </summary>
+        // Revisa los datos sin modificarlos. Errores = el grafo no se puede construir con seguridad;
+        // Advertencias = datos raros pero utilizables (p. ej. paradas sin servicio).
         public static ResultadoValidacion Validar(DatosTransporte datos)
         {
             var v = new ResultadoValidacion();
@@ -49,7 +47,6 @@ namespace RutaApp.Motor
                 return v;
             }
 
-            // Paradas
             var paradas = new Dictionary<string, Parada>();
             foreach (var p in datos.Paradas)
             {
@@ -60,7 +57,6 @@ namespace RutaApp.Motor
                 if (!p.Posicion.EsValida) v.Errores.Add("La parada '" + p.Id + "' tiene coordenadas inválidas (" + p.Latitud + ", " + p.Longitud + ").");
             }
 
-            // Rutas
             var rutas = new Dictionary<string, RutaAutobus>();
             foreach (var r in datos.Rutas)
             {
@@ -77,7 +73,6 @@ namespace RutaApp.Motor
                     v.Errores.Add("La confiabilidad de la ruta '" + r.Id + "' debe estar entre 0 y 1 (o ser null si se desconoce).");
             }
 
-            // Conexiones
             var existentes = new HashSet<string>();
             foreach (var c in datos.Conexiones)
             {
@@ -118,7 +113,7 @@ namespace RutaApp.Motor
             return v;
         }
 
-        /// <summary>Valida y construye el grafo de autobuses. Lanza InvalidDataException con todos los errores si los datos no son válidos.</summary>
+        // Valida y construye el grafo de autobuses. Lanza InvalidDataException con todos los errores si los datos no son válidos.
         public static GrafoTransporte ConstruirGrafo(DatosTransporte datos)
         {
             var validacion = Validar(datos);

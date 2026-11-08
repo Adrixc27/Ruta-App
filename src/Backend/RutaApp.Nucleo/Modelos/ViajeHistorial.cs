@@ -2,10 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace RutaApp.Nucleo.Modelos;
 
-/// <summary>
-/// Un viaje que el usuario ya hizo (de dónde a dónde y en qué camiones). Se agrega solo al pulsar "Comenzar viaje".
-/// Conserva los tramos para poder dibujarlo de nuevo en el mapa al tocarlo.
-/// </summary>
+// Un viaje que el usuario ya hizo (de dónde a dónde y en qué camiones). Se agrega solo al pulsar "Comenzar viaje".
+// Conserva los tramos para poder dibujarlo de nuevo en el mapa al tocarlo.
 public class ViajeHistorial
 {
     public int Id { get; set; }
@@ -21,7 +19,7 @@ public class ViajeHistorial
     public List<Tramo> Tramos { get; set; } = new();
     public List<Sugerencia> Escalas { get; set; } = new();
 
-    /// <summary>De dónde salió. Si salió de su ubicación, lleva la calle: "Ubicación actual (Calle Aldama)".</summary>
+    // De dónde salió. Si salió de su ubicación, lleva la calle: "Ubicación actual (Calle Aldama)".
     public string Origen { get; set; } = "";
 
     public string GuardadoId { get; set; }      // id del Trayecto guardado a partir de este viaje (si lo hay)

@@ -3,7 +3,7 @@ using MySqlConnector;
 
 namespace RutaApp.Datos;
 
-/// <summary>Comentarios que la gente manda para mejorar la app (Configuración → Soporte).</summary>
+// Comentarios que la gente manda para mejorar la app (Configuración → Soporte).
 public class OpinionService
 {
     private const string CrearTabla = @"
@@ -19,7 +19,7 @@ public class OpinionService
 
     private bool _tablaLista;
 
-    /// <summary>Guarda el comentario. Sin cuenta, idUsuario es null. La tabla se crea sola si todavía no existe.</summary>
+    // Guarda el comentario. Sin cuenta, idUsuario es null. La tabla se crea sola si todavía no existe.
     public async Task EnviarAsync(int? idUsuario, string categoria, int? calificacion, string mensaje, string idioma)
     {
         await using var db = new MySqlConnection(Connection.ConnectionString);

@@ -5,10 +5,8 @@ public static class Geo
     public const double CentroLat = 28.6353;
     public const double CentroLng = -106.0889;
 
-    /// <summary>
-    /// Punto de la línea más cercano a (lat, lng) y a qué distancia en metros queda. Sirve para que una parada
-    /// desfasada se dibuje sobre el recorrido en lugar de a un lado.
-    /// </summary>
+    // Punto de la línea más cercano a (lat, lng) y a qué distancia en metros queda. Sirve para que una parada
+    // desfasada se dibuje sobre el recorrido en lugar de a un lado.
     public static double[] ProyectarEnLinea(IList<double[]> linea, double lat, double lng, out double metros)
     {
         metros = double.MaxValue;

@@ -2,16 +2,14 @@ using System.Globalization;
 
 namespace RutaApp.Nucleo.Servicios;
 
-/// <summary>Da la ubicación del equipo como [lat, lng], o null si no se pudo obtener.</summary>
+// Da la ubicación del equipo como [lat, lng], o null si no se pudo obtener.
 public interface IServicioUbicacion
 {
     Task<double[]> ObtenerAsync();
 }
 
-/// <summary>
-/// Ubicación aproximada por IP (ipwho.is). Como la app corre en el equipo del usuario, la IP es la suya.
-/// Sirve de respaldo cuando el sistema no da la ubicación exacta.
-/// </summary>
+// Ubicación aproximada por IP (ipwho.is). Como la app corre en el equipo del usuario, la IP es la suya.
+// Sirve de respaldo cuando el sistema no da la ubicación exacta.
 public class ServicioUbicacionIp : IServicioUbicacion
 {
     private readonly IHttpClientFactory _fabrica;

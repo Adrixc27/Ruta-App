@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Bloques de las pantallas de ajustes.</summary>
+// Bloques de las pantallas de ajustes.
 public static class CssAjustes
 {
     public const string Reglas = """

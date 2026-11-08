@@ -6,7 +6,7 @@ namespace RutaApp.Interfaz.Servicios;
 
 public static class RegistroServicios
 {
-    /// <summary>Registra todo lo que necesita la interfaz: el estado de la sesión y los servicios del núcleo.</summary>
+    // Registra todo lo que necesita la interfaz: el estado de la sesión y los servicios del núcleo.
     public static IServiceCollection AgregarServiciosRuta(this IServiceCollection servicios)
     {
         servicios.AgregarNucleo();

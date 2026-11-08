@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Carrusel y animación de entrada.</summary>
+// Carrusel y animación de entrada.
 public static class CssCarrusel
 {
     public const string Reglas = """

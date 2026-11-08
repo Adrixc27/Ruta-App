@@ -1,6 +1,6 @@
 namespace RutaApp.Interfaz.Estilos;
 
-/// <summary>Foco visible, daltonismo, sin animaciones, guía visual y botones de ayuda.</summary>
+// Foco visible, daltonismo, sin animaciones, guía visual y botones de ayuda.
 public static class CssAccesibilidad
 {
     public const string Reglas = """
