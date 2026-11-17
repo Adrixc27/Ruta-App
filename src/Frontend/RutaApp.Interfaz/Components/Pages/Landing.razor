@@ -1,0 +1,113 @@
+@page "/"
+@implements IDisposable
+@inject EstadoApp Estado
+
+<PageTitle>@T["R.U.T.A. · Transporte público"]</PageTitle>
+
+@if (_mostrarIntro)
+{
+    <IntroAnimacion @key="_claveIntro" OnTerminada="IntroTerminada" />
+}
+
+<div class="landing @(_mostrarIntro ? "landing-espera" : "landing-entra")">
+    <header class="landing-cabecera">
+        <a href="" class="marca marca-clickable" title="@(T["Ver la animación de inicio"])" @onclick="() => Estado.IrALanding(true)" @onclick:preventDefault="true">
+            <div class="marca-logo">@T["R"]</div>
+            <div class="marca-texto marca-azul"><b>@T["RUTA"]</b><small>@T["TRANSPORTE PÚBLICO"]</small></div>
+        </a>
+        <nav class="landing-nav">
+            <a href="sobre-nosotros" class="btn btn-primario btn-chico">@T["Sobre Nosotros"]</a>
+        </nav>
+    </header>
+
+    <section class="landing-contenido">
+        <div class="landing-texto">
+            <span class="bienvenida" @key="Estado.ConCuenta"><Icon Nombre="IcoStar" Tam="15" /> @TextoBienvenida</span>
+            <h1>@T["Transporte público en la palma de tu mano"]</h1>
+            <p>@T["Llegando a tu destino, rápido y directo."]</p>
+            <div class="landing-botones">
+                @if (Estado.ConCuenta)
+                {
+                    <button type="button" class="btn btn-primario btn-grande" @onclick="Estado.PedirCierreSesion"><Icon Nombre="IcoLogout" Tam="20" /> @T["Cerrar sesión"]</button>
+                }
+                else
+                {
+                    <a href="acceso" class="btn btn-primario btn-grande">@T["Iniciar sesión"]</a>
+                }
+                <button type="button" class="btn btn-sinborde btn-grande" @onclick="PlanificarViaje">
+                    <Icon Nombre="IcoNavigation" Tam="20" /> @T["Planificar viaje"]
+                </button>
+            </div>
+        </div>
+
+        <div class="landing-tarjeta">
+            <Carrusel ConMarca="true" Titular="Muévete por tu ciudad sin perderte."
+                      Subtitular="Planifica, compara y viaja en transporte público con rutas claras y en tiempo real." />
+        </div>
+    </section>
+</div>
+
+@code {
+    private string TextoBienvenida
+    {
+        get
+        {
+            if (!Estado.ConCuenta) return T["¡Bienvenido a R.U.T.A.!"];
+            string primero = Estado.Nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? Estado.Nombre;
+            return T.F("¡Hola, {0}! Qué bueno verte de nuevo.", primero);
+        }
+    }
+
+    private bool _mostrarIntro;
+    private int _claveIntro;
+
+    protected override void OnInitialized()
+    {
+        // La animación se ve una vez al abrir la app; al terminar queda la landing
+        _mostrarIntro = !Estado.IntroVista;
+        Estado.IntroSolicitada += VolverAVerIntro;
+        Estado.Cambio += Refrescar;
+    }
+
+    // Si pidió "Recordarme", la sesión se abre sola al iniciar la app (y se mantiene al volver a la landing)
+    protected override async Task OnInitializedAsync()
+    {
+        await Estado.RestaurarSesionAsync();
+    }
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    // El logo se tocó estando ya en la landing: la animación vuelve a empezar
+    private void VolverAVerIntro()
+    {
+        _claveIntro++;
+        _mostrarIntro = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Estado.IntroSolicitada -= VolverAVerIntro;
+        Estado.Cambio -= Refrescar;
+    }
+
+    private void IntroTerminada()
+    {
+        Estado.IntroVista = true;
+        _mostrarIntro = false;
+        StateHasChanged();
+    }
+
+    // "Planificar viaje": como invitado, directo a la pantalla para planear el viaje
+    private async Task PlanificarViaje()
+    {
+        Estado.DestinoTrasIngreso = "planificar";
+        await Entrar();
+    }
+
+    private async Task Entrar()
+    {
+        if (!Estado.HaIngresado) Estado.EntrarComoInvitado();
+        await Estado.CompletarIngresoAsync();
+    }
+}

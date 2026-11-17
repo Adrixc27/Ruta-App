@@ -1,0 +1,37 @@
+@page "/sobre-nosotros"
+@inject EstadoApp Estado
+
+<PageTitle>@T["Sobre Nosotros · R.U.T.A."]</PageTitle>
+
+@* Página pública "Sobre Nosotros". Se abre desde la landing page, sin iniciar sesión. *@
+<div class="sobre">
+    <header class="sobre-cabecera">
+        <a href="" class="marca marca-clickable" title="@(T["Ver la animación de inicio"])" @onclick="() => Estado.IrALanding(true)" @onclick:preventDefault="true">
+            <div class="marca-logo marca-logo-blanco">@T["R"]</div>
+            <div class="marca-texto marca-azul"><b>@T["RUTA"]</b><small>@T["TRANSPORTE PÚBLICO"]</small></div>
+        </a>
+        <nav class="landing-nav">
+            <button type="button" class="btn btn-ghost-oscuro" @onclick="Explorar">@T["Rutas"]</button>
+            <a href="" class="btn btn-primario btn-chico"><Icon Nombre="IcoArrowLeft" Tam="15" /> @T["Inicio"]</a>
+        </nav>
+    </header>
+
+    <div class="sobre-cuerpo">
+        <h1>@T["Sobre Nosotros"]</h1>
+        <p class="sobre-sub">@T["Conoce la misión, el equipo y los valores detrás de RUTA."]</p>
+        <ContenidoSobreNosotros Ubicacion="Chihuahua, CHIH" Lateral="512" />
+        <div class="sobre-pie">
+            <span>@T["RUTA v4.12.0 · Escritorio estable"]</span>
+            <span class="azul">@T["Ayuda y soporte"]</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    private async Task Explorar()
+    {
+        Estado.DestinoTrasIngreso = "rutas";
+        if (!Estado.HaIngresado) Estado.EntrarComoInvitado();
+        await Estado.CompletarIngresoAsync();
+    }
+}

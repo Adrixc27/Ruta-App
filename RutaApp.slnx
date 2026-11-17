@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/Frontend/">
+    <Project Path="src/Frontend/RutaApp.Escritorio/RutaApp.Escritorio.csproj" />
+    <Project Path="src/Frontend/RutaApp.Interfaz/RutaApp.Interfaz.csproj" />
+  </Folder>
+  <Folder Name="/Backend/">
+    <Project Path="src/Backend/RutaApp.Motor/RutaApp.Motor.csproj" />
+    <Project Path="src/Backend/RutaApp.Nucleo/RutaApp.Nucleo.csproj" />
+  </Folder>
+  <Folder Name="/Database/">
+    <Project Path="src/Database/RutaApp.Datos/RutaApp.Datos.csproj" />
+    <File Path="src/Database/Scripts/esquema.sql" />
+  </Folder>
+  <Folder Name="/Pruebas/">
+    <Project Path="tests/RutaApp.Pruebas/RutaApp.Pruebas.csproj" />
+  </Folder>
+</Solution>

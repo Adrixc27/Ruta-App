@@ -1,0 +1,79 @@
+@inject EstadoApp Estado
+
+@* Ajustes → Mi cuenta: sesión, "recordarme", cerrar sesión (con confirmación) y borrar la cuenta. *@
+@switch (Clave)
+{
+    case "cuenta":
+        <MarcoDetalle Categoria="@(T["Cuenta"])" Titulo="@(T["Mi cuenta"])" Subtitulo="@(T["Tu sesión y tus datos en R.U.T.A."])">
+            <ChildContent>
+                @if (!Estado.ConCuenta)
+                {
+                    <Tarjeta Titulo="@(T["No has iniciado sesión"])" Subtitulo="@(T["Estás explorando sin cuenta."])">
+                        <p class="nota">@T["Con una cuenta puedes guardar rutas, lugares y viajes, ver tu historial y participar en la comunidad."]</p>
+                        <div class="arriba"><Boton Texto="@(T["Iniciar sesión"])" Icono="IcoUser" OnClick="Estado.IrAIniciarSesion" /></div>
+                    </Tarjeta>
+                }
+                else
+                {
+                    <DosColumnas Lateral="396">
+                        <Principal>
+                            <Tarjeta Titulo="@(T["Sesión"])" Subtitulo="@(Estado.Nombre + " · " + Estado.Correo)">
+                                <FilaAjuste Icono="IcoLock" Titulo="Mantener la sesión abierta"
+                                            Descripcion="Al abrir la app seguirás dentro de tu cuenta sin volver a iniciar sesión (solo en este equipo).">
+                                    <Interruptor Activo="Recordada" ActivoChanged="Recordar" />
+                                </FilaAjuste>
+                                <div class="arriba"><Boton Texto="@(T["Cerrar sesión"])" Icono="IcoLogout" Relleno="false" OnClick="Estado.PedirCierreSesion" /></div>
+                            </Tarjeta>
+                        </Principal>
+                        <Secundario>
+                            <Tarjeta Titulo="@(T["Borrar mi cuenta"])" Subtitulo="@(T["Esta acción no se puede deshacer."])" Clase="tarjeta-peligro">
+                                <p class="nota">@T["Se borran tu cuenta, tus publicaciones y comentarios, tus rutas guardadas, tu historial, tus viajes y tus lugares guardados."]</p>
+                                <div class="etiquetado arriba">
+                                    <label>@T["Para confirmar, escribe BORRAR"]</label>
+                                    <CampoTexto @bind-Text="_confirmacion" Hint="@(T["BORRAR"])" Alto="42" />
+                                </div>
+                                @if (_error != null) { <p class="error-texto">@T[_error]</p> }
+                                <div class="arriba">
+                                    <button type="button" class="btn btn-peligro btn-ancho" disabled="@(!PuedeBorrar)" @onclick="Borrar">
+                                        <Icon Nombre="IcoTrash" Tam="17" /> @(_borrando ? "Borrando…" : "Borrar mi cuenta")
+                                    </button>
+                                </div>
+                            </Tarjeta>
+                        </Secundario>
+                    </DosColumnas>
+                }
+            </ChildContent>
+        </MarcoDetalle>
+        break;
+}
+
+@code {
+    [Parameter] public string Clave { get; set; }
+
+    private string _confirmacion = "", _error;
+    private bool _borrando;
+
+    private bool Recordada => Estado.Ajustes.Datos.SesionUsuarioId == Estado.Usuario?.Id;
+    private bool PuedeBorrar => !_borrando && _confirmacion.Trim().Equals("BORRAR", StringComparison.OrdinalIgnoreCase);
+
+    private void Recordar(bool valor)
+    {
+        Estado.RecordarSesion(valor);
+        Estado.MostrarAviso(valor ? "La sesión se mantendrá abierta" : "Ya no se recordará la sesión");
+    }
+
+    private async Task Borrar()
+    {
+        if (!PuedeBorrar) return;
+        _borrando = true;
+        _error = null;
+        try
+        {
+            _error = await Estado.BorrarCuentaAsync();   // si sale bien, la app vuelve a la landing
+        }
+        finally
+        {
+            _borrando = false;
+        }
+    }
+}

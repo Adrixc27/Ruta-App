@@ -1,0 +1,23 @@
+@implements IDisposable
+@inject EstadoApp Estado
+
+@* Pantalla de carga: aparece mientras se cargan las rutas y los datos de la cuenta *@
+@if (Estado.Cargando)
+{
+    <div class="carga" role="status" aria-live="polite">
+        <div class="carga-caja">
+            <div class="carga-camion"><Icon Nombre="IcoBus" Tam="56" Relleno="white" /></div>
+            <div class="carga-carretera"><i></i></div>
+            <b class="carga-marca">@T["RUTA"]</b>
+            <span class="carga-mensaje">@Estado.MensajeCarga</span>
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized() => Estado.Cambio += Refrescar;
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Estado.Cambio -= Refrescar;
+}

@@ -1,0 +1,218 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject EstadoApp Estado
+
+@* Diseño de la app: sidebar que se contrae (barra inferior en pantallas chicas), barra de ubicación y zona de pantallas. Solo con sesión o como invitado. *@
+@if (Estado.HaIngresado)
+{
+    <a href="#contenido-principal" class="saltar-contenido">@T["Saltar al contenido"]</a>
+    <div class="app-shell" tabindex="-1" @onkeydown="AlPulsar">
+        <aside class="sidebar @(_colapsado ? "colapsado" : "")">
+            <a href="" class="sidebar-marca marca marca-clickable" title="@(T["Ir a la página de inicio"])" @onclick="() => Estado.IrALanding(true)" @onclick:preventDefault="true">
+                <div class="marca-logo">@T["R"]</div>
+                <div class="marca-texto"><b>@T["RUTA"]</b><small>@T["TRANSPORTE PÚBLICO"]</small></div>
+            </a>
+
+            <nav class="sidebar-menu" aria-label="@(T["Menú principal"])">
+                <div class="sidebar-etiqueta">@T["MENÚ"]</div>
+                <a href="planificar" class="nav-btn @Activo("planificar")" title="@(T["Planificar viaje"])" aria-current="@AriaActual("planificar")">
+                    <Icon Nombre="IcoMap" />
+                    <span>@T["Planificar viaje"]</span>
+                </a>
+                <a href="rutas" class="nav-btn @Activo("rutas")" title="@(T["Rutas"])" aria-current="@AriaActual("rutas")">
+                    <Icon Nombre="IcoRoute" />
+                    <span>@T["Rutas"]</span>
+                    @if (Estado.TotalGuardadas > 0)
+                    {
+                        <em class="nav-badge">@Estado.TotalGuardadas</em>
+                    }
+                </a>
+                <a href="comunidad" class="nav-btn @Activo("comunidad")" title="@(T["Comunidad"])" aria-current="@AriaActual("comunidad")">
+                    <Icon Nombre="IcoUsers" />
+                    <span>@T["Comunidad"]</span>
+                </a>
+                <a href="perfil" class="nav-btn @Activo("perfil")" title="@(T["Mi perfil"])" aria-current="@AriaActual("perfil")">
+                    <Icon Nombre="IcoUser" />
+                    <span>@T["Mi perfil"]</span>
+                </a>
+                <a href="configuracion" class="nav-btn @Activo("configuracion")" title="@(T["Configuración"])" aria-current="@AriaActual("configuracion")">
+                    <Icon Nombre="IcoSettings" />
+                    <span>@T["Configuración"]</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-pie">
+                <button type="button" class="nav-btn nav-contraer" title="@(_colapsado ? "Expandir menú" : "Contraer menú")" @onclick="AlternarBarra">
+                    <Icon Nombre="@(_colapsado ? "IcoChevronRight" : "IcoChevronLeft")" />
+                    <span>@T["Contraer menú"]</span>
+                </button>
+                <div class="sidebar-sesion">
+                    <button type="button" class="nav-btn" title="@T[TextoSesion]" @onclick="BotonSesion">
+                        <Icon Nombre="IcoLogout" />
+                        <span>@T[TextoSesion]</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="contenido">
+            @* Barra de ubicación: siempre dice en qué pantalla estás y quién tiene la sesión *@
+            <div class="barra-ubicacion">
+                <nav class="migas" aria-label="@(T["Dónde estás"])">
+                    <a href="" class="miga-inicio" title="@(T["Ir a la página de inicio"])"><Icon Nombre="IcoHome" Tam="15" /> @T["Inicio"]</a>
+                    @foreach (var miga in Migas)
+                    {
+                        <Icon Nombre="IcoChevronRight" Tam="13" Color="var(--text-secondary)" />
+                        <span class="miga @(miga == Migas.Last() ? "actual" : "")">@T[miga]</span>
+                    }
+                </nav>
+                <div class="barra-usuario">
+                    @if (Estado.Invitado)
+                    {
+                        <span class="chip-invitado" title="@(T["Estás explorando sin cuenta"])">@T["Modo invitado"]</span>
+                        <a href="acceso" class="btn-ghost btn-mini">@T["Iniciar sesión"]</a>
+                    }
+                    else
+                    {
+                        <a href="perfil" class="usuario-chip" title="@(T["Mi perfil"])">
+                            <span class="usuario-avatar" style="@(string.IsNullOrEmpty(Estado.Usuario?.Foto) ? "" : $"background-image:url({Estado.Usuario.Foto})")">
+                                @if (string.IsNullOrEmpty(Estado.Usuario?.Foto)) { @EstadoApp.Iniciales(Estado.Nombre) }
+                            </span>
+                            <span class="usuario-nombre">@Estado.Nombre</span>
+                        </a>
+                    }
+                </div>
+            </div>
+            <div class="contenido-cuerpo" id="contenido-principal" tabindex="-1" @ref="_contenido">@Body</div>
+        </main>
+    </div>
+
+    @if (Estado.Ajustes.Datos.GuiaVisual)
+    {
+        <div id="guia-estado" role="status" aria-live="polite" title="@(T["Tab: avanzar · Enter: elegir · Alt+1…5: cambiar de sección · Alt+0: ir al contenido"])">
+            <b>Estás en: @T[Migas.Count > 0 ? Migas.Last() : "Inicio"]</b><span> @T["· Tab: avanzar · Enter: elegir · Alt+1…5: secciones"]</span>
+        </div>
+    }
+
+    @* Guardar rutas, viajes y lugares es solo con cuenta: este aviso invita a iniciar sesión *@
+    @if (Estado.AvisoSesion != null)
+    {
+        <div class="modal-fondo" @onclick="Estado.CerrarAvisoSesion">
+            <div class="modal modal-dialogo" @onclick:stopPropagation="true">
+                <div class="aviso-sesion-icono"><Icon Nombre="IcoLock" Tam="26" Color="var(--brand-primary)" /></div>
+                <h2>@T["Inicia sesión para continuar"]</h2>
+                <p>@T[Estado.AvisoSesion]</p>
+                <div class="modal-acciones">
+                    <button type="button" class="btn btn-contorno" @onclick="Estado.CerrarAvisoSesion">@T["Ahora no"]</button>
+                    <button type="button" class="btn btn-primario" @onclick="Estado.IrAIniciarSesion">@T["Iniciar sesión"]</button>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<div id="blazor-error-ui" data-nosnippet>
+    @T["Ocurrió un error inesperado."]
+    <a href="." class="reload">@T["Recargar"]</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private static readonly string[] _atajos = { "planificar", "rutas", "comunidad", "perfil", "configuracion" };
+
+    private bool _colapsado;
+    private ElementReference _contenido;
+
+    // Invitado: el botón dice "Iniciar sesión" y lleva al login. Con cuenta: "Cerrar sesión" (con confirmación).
+    private string TextoSesion => Estado.Invitado ? "Iniciar sesión" : "Cerrar sesión";
+
+    protected override void OnInitialized()
+    {
+        if (!Estado.HaIngresado)
+        {
+            Nav.NavigateTo("/", replace: true);
+            return;
+        }
+        Estado.Cambio += Refrescar;
+        Estado.Ajustes.Cambio += Refrescar;
+        Nav.LocationChanged += AlCambiarUbicacion;
+    }
+
+    // Con la guía visual: Alt+1…5 cambia de sección y Alt+0 lleva el foco al contenido
+    private async Task AlPulsar(KeyboardEventArgs e)
+    {
+        if (!Estado.Ajustes.Datos.GuiaVisual || !e.AltKey) return;
+        if (e.Key.Length == 1 && e.Key[0] is >= '1' and <= '5') Nav.NavigateTo(_atajos[e.Key[0] - '1']);
+        else if (e.Key == "0") await _contenido.FocusAsync();
+    }
+
+    private string Ruta => new Uri(Nav.Uri).AbsolutePath.Trim('/');
+
+    // Marca el botón de la pantalla actual (Comparar cuenta como Planificar; los detalles de ajustes, como Configuración)
+    private string Activo(string clave) => EsActivo(clave) ? "activo" : "";
+    private string AriaActual(string clave) => EsActivo(clave) ? "page" : null;
+
+    private bool EsActivo(string clave)
+    {
+        string ruta = Ruta;
+        if (clave == "planificar") return ruta is "planificar" or "comparar";
+        return ruta == clave || ruta.StartsWith(clave + "/");
+    }
+
+    // Dónde estás: "Inicio › Planificar viaje › Comparar rutas"
+    private List<string> Migas
+    {
+        get
+        {
+            string ruta = Ruta;
+            return ruta switch
+            {
+                "planificar" => new() { "Planificar viaje" },
+                "comparar" => new() { "Planificar viaje", "Comparar rutas" },
+                "rutas" => new() { "Rutas" },
+                "comunidad" => new() { "Comunidad" },
+                "perfil" => new() { "Mi perfil" },
+                "configuracion" => new() { "Configuración" },
+                _ when ruta.StartsWith("configuracion/") => new() { "Configuración", NombreAjuste() },
+                _ => new() { }
+            };
+        }
+    }
+
+    // Nombre del ajuste que se está viendo (viene en la dirección: ?nombre=Accesibilidad (daltonismo y guía visual))
+    private string NombreAjuste()
+    {
+        string nombre = System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query)["nombre"];
+        if (string.IsNullOrWhiteSpace(nombre)) return "Ajuste";
+        int p = nombre.IndexOf(" (", StringComparison.Ordinal);
+        return p > 0 ? nombre.Substring(0, p) : nombre;
+    }
+
+    private void AlternarBarra()
+    {
+        _colapsado = !_colapsado;
+        Estado.NotificarBarraLateral();
+    }
+
+    private void BotonSesion()
+    {
+        if (Estado.Invitado)
+        {
+            // No hay sesión que cerrar: se va directo a la pantalla de inicio de sesión
+            Nav.NavigateTo("/acceso");
+            return;
+        }
+        Estado.PedirCierreSesion();   // pide confirmación antes de cerrar
+    }
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    private void AlCambiarUbicacion(object sender, LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Estado.Cambio -= Refrescar;
+        Estado.Ajustes.Cambio -= Refrescar;
+        Nav.LocationChanged -= AlCambiarUbicacion;
+    }
+}

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>R.U.T.A.</title>
+    <base href="/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;900&display=swap" />
+    <link rel="stylesheet" href="lib/leaflet/leaflet.css" />
+    <link rel="icon" href="data:," />
+</head>
+
+<body style="margin: 0; height: 100%;">
+
+    <!-- Se ve mientras arranca Blazor; los estilos de la app los pone el componente HojaEstilos -->
+    <div id="app" style="height: 100%;">
+        <div style="position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: #E6F0FA; font-family: 'Source Sans 3', 'Segoe UI', sans-serif; color: #2563EB;">
+            <div style="width: 72px; height: 72px; border-radius: 20px; background: #2563EB; color: #fff; font-size: 38px; font-weight: 900; display: flex; align-items: center; justify-content: center;">R</div>
+            <b style="font-size: 26px; font-weight: 900; letter-spacing: .06em;">RUTA</b>
+            <span style="font-size: 14px; font-weight: 600; color: #4A6FA5;">Cargando…</span>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui" data-nosnippet>
+        Ocurrió un error inesperado.
+        <a href="." class="reload">Recargar</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <!-- Leaflet: la única librería de JavaScript de la app; mapa.js solo la llama desde C# -->
+    <script src="lib/leaflet/leaflet.js"></script>
+    <script src="_content/RutaApp.Interfaz/mapa.js"></script>
+    <script src="_framework/blazor.webview.js"></script>
+
+</body>
+
+</html>

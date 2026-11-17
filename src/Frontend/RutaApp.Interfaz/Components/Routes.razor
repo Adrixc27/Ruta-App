@@ -1,0 +1,32 @@
+@implements IDisposable
+@inject EstadoApp Estado
+
+<HojaEstilos />
+<div class="ruta-app @ClasesAccesibilidad" @key="T.EsIngles">
+    <Router AppAssembly="typeof(Routes).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+        <Found Context="routeData">
+            <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+            <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        </Found>
+    </Router>
+
+    <PantallaCarga />
+    <AvisosGlobales />
+</div>
+
+@code {
+    private string ClasesAccesibilidad
+    {
+        get
+        {
+            var a = Estado.Ajustes.Datos;
+            return (a.Daltonismo ? "a11y-dalton " : "") + (a.GuiaVisual ? "a11y-guia " : "") + (a.SinAnimaciones ? "a11y-sin-anim" : "");
+        }
+    }
+
+    protected override void OnInitialized() => Estado.Ajustes.Cambio += Refrescar;
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Estado.Ajustes.Cambio -= Refrescar;
+}
