@@ -8,24 +8,24 @@ public static class CssCarrusel
         .carrusel-slide { position: absolute; inset: 0; opacity: 0; transition: opacity .6s; pointer-events: none; }
         .carrusel-slide.visible { opacity: 1; pointer-events: auto; z-index: 1; }
         .carrusel-puntos { position: absolute; bottom: 18px; left: 0; right: 0; display: flex; justify-content: center; z-index: 5; }
-        .carrusel-puntos .punto { width: 8px; height: 8px; border-radius: 50%; margin: 0 4px; cursor: pointer; background: rgba(255, 255, 255, .47); box-shadow: 0 0 4px rgba(0, 0, 0, .5); }
-        .carrusel-puntos .punto.activo { background: #fff; }
+        .carrusel-puntos .punto { width: 8px; height: 8px; border-radius: var(--radio-circulo); margin: 0 4px; cursor: pointer; background: rgba(255, 255, 255, .47); box-shadow: 0 0 4px rgba(0, 0, 0, .5); }
+        .carrusel-puntos .punto.activo { background: var(--bg-white); }
 
         .slide-foto { position: absolute; inset: 0; background-size: cover; background-position: center; }
         .slide-foto-velo { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 25, 60, .59), rgba(10, 25, 60, 0) 28%, rgba(10, 25, 60, 0) 72%, rgba(10, 25, 60, .59)); }
-        .slide-foto-titulo, .slide-foto-ciudad { position: absolute; left: 0; right: 0; text-align: center; color: #fff; font-size: 26px; font-weight: 700; text-shadow: 0 1px 8px rgba(0, 0, 0, .6); }
+        .slide-foto-titulo, .slide-foto-ciudad { position: absolute; left: 0; right: 0; text-align: center; color: var(--text-on-brand); font-size: var(--texto-3xl); font-weight: var(--peso-fuerte); text-shadow: 0 1px 8px rgba(0, 0, 0, .6); }
         .slide-foto-titulo { top: 36px; }
         .slide-foto-ciudad { bottom: 52px; }
 
         .slide-marca { position: absolute; inset: 0; background: var(--brand-primary); overflow: hidden; }
-        .burbuja { position: absolute; border-radius: 50%; background: #fff; opacity: .07; }
+        .burbuja { position: absolute; border-radius: var(--radio-circulo); background: var(--bg-white); opacity: .07; }
         .burbuja-1 { width: 460px; height: 460px; left: 380px; top: -150px; }
         .burbuja-2 { width: 320px; height: 320px; left: -110px; bottom: -80px; }
         .slide-marca-contenido { position: absolute; inset: 0; padding: 56px; display: flex; flex-direction: column; justify-content: space-between; }
         .slide-ilustracion { flex: 1; display: flex; align-items: center; margin: 24px 0; min-height: 0; }
         .slide-ilustracion svg { max-width: 528px; width: 100%; max-height: 100%; }
-        .slide-titular { font-size: 38px; font-weight: 900; line-height: 44px; color: #fff; }
-        .slide-subtitular { font-size: 16px; line-height: 24px; color: rgba(255, 255, 255, .85); margin-top: 12px; }
+        .slide-titular { font-size: 38px; font-weight: var(--peso-titulo); line-height: 44px; color: var(--text-on-brand); }
+        .slide-subtitular { font-size: var(--texto-lg); line-height: 24px; color: rgba(255, 255, 255, .85); margin-top: 12px; }
         .landing-tarjeta .slide-marca-contenido { padding: 40px; }
         .landing-tarjeta .slide-titular { font-size: 32px; line-height: 38px; }
 
@@ -34,9 +34,9 @@ public static class CssCarrusel
         .intro.saliendo { opacity: 0; }
         .intro-marca { text-align: center; color: var(--brand-primary); transition: opacity .7s; }
         .intro-marca.desvanece { opacity: 0; }
-        .intro-nombre { font-size: 150px; font-weight: 900; line-height: 1.1; }
-        .intro-lema { font-size: 24px; margin-top: -6px; }
-        .intro-lema b { font-weight: 900; }
+        .intro-nombre { font-size: 150px; font-weight: var(--peso-titulo); line-height: 1.1; }
+        .intro-lema { font-size: var(--texto-3xl); margin-top: -6px; }
+        .intro-lema b { font-weight: var(--peso-titulo); }
         .intro-letras.revelando { animation: intro-revela 3.6s cubic-bezier(.37, 0, .63, 1) forwards; }
         .intro-letras.revelado { clip-path: inset(-20px -20px -20px 0); }
         @keyframes intro-revela {
@@ -51,7 +51,7 @@ public static class CssCarrusel
             from { transform: translateX(-130px); }
             to { transform: translateX(100vw); }
         }
-        .intro-pista { position: absolute; bottom: 56px; left: 0; right: 0; text-align: center; font-size: 16px; font-weight: 600; color: var(--brand-primary); opacity: 0; }
+        .intro-pista { position: absolute; bottom: 56px; left: 0; right: 0; text-align: center; font-size: var(--texto-lg); font-weight: var(--peso-medio); color: var(--brand-primary); opacity: 0; }
         .intro-pista.latido { animation: latido 2.2s linear infinite; }
         @keyframes latido { 0% { opacity: 0; } 35% { opacity: 1; } 75% { opacity: .45; } 100% { opacity: 1; } }
         """;

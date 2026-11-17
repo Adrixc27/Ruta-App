@@ -1,0 +1,41 @@
+@* Estado de una lista o pantalla: vacío, sin resultados, error, éxito o cargando.
+   Titulo dice qué pasa, Texto dice por qué y el contenido (ChildContent) es la acción para salir de ahí. *@
+<div class="estado-vista @Tipo @(Compacto ? "compacto" : "")" role="@(Tipo == "error" ? "alert" : "status")">
+    <span class="estado-icono">
+        @if (Tipo == "cargando")
+        {
+            <Spinner Clase="grande" />
+        }
+        else
+        {
+            <Icon Nombre="@IconoFinal" Tam="22" />
+        }
+    </span>
+    <b>@Titulo</b>
+    @if (!string.IsNullOrEmpty(Texto))
+    {
+        <p>@Texto</p>
+    }
+    @if (ChildContent != null)
+    {
+        <div class="estado-accion">@ChildContent</div>
+    }
+</div>
+
+@code {
+    // vacio | busqueda | error | exito | cargando
+    [Parameter] public string Tipo { get; set; } = "vacio";
+    [Parameter] public string Titulo { get; set; }
+    [Parameter] public string Texto { get; set; }
+    [Parameter] public string Icono { get; set; }
+    [Parameter] public bool Compacto { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+
+    private string IconoFinal => Icono ?? Tipo switch
+    {
+        "error" => "IcoAlert",
+        "exito" => "IcoCheckCircle",
+        "busqueda" => "IcoSearch",
+        _ => "IcoInfo"
+    };
+}

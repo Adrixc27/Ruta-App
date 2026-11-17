@@ -39,10 +39,8 @@
                                 <textarea class="textarea" rows="3" maxlength="400" placeholder="@(T["Por ejemplo: en Av. Universidad, el camión tiene una llanta ponchada."])" @bind="_detalle" @bind:event="oninput"></textarea>
                             </div>
 
-                            @if (Seleccionado?.Movilidad == true)
-                            {
-                                <p class="nota nota-ubicacion arriba"><Icon Nombre="IcoLocate" Tam="14" /> @T["Este reporte incluye tu ubicación actual y se marcará en el mapa para que otras personas lo vean."]</p>
-                            }
+                            @* Dónde ocurrió: en problemas de movilidad se toma sola la ubicación de quien avisa *@
+                            <UbicacionReporte @bind-Valor="_ubicacion" Automatica="@(Seleccionado?.Movilidad == true)" Bloqueada="@_enviando" BuscandoChanged="@((bool b) => _buscandoUbicacion = b)" />
                         </Tarjeta>
                     </Principal>
                     <Secundario>
@@ -52,9 +50,9 @@
                             <Aviso Icono="IcoInfo" Titulo="@(T["Privacidad"])">@T["No compartas datos personales de otras personas. El reporte lo verá toda la comunidad."]</Aviso>
                             @if (_mensaje != null)
                             {
-                                <p class="@(_exito ? "nota exito" : "error-texto")">@T[_mensaje]</p>
+                                <div class="mensaje @(_exito ? "exito" : "error")" role="@(_exito ? "status" : "alert")"><Icon Nombre="@(_exito ? "IcoCheckCircle" : "IcoAlert")" Tam="16" /> <span>@T[_mensaje]</span></div>
                             }
-                            <div class="arriba"><Boton Texto="@(_enviando ? "Enviando…" : "Enviar reporte")" Icono="IcoSend" OnClick="Enviar" /></div>
+                            <div class="arriba"><Boton Texto="@(_enviando ? T["Enviando…"] : _buscandoUbicacion ? T["Obteniendo ubicación…"] : T["Enviar reporte"])" Icono="IcoSend" Cargando="@(_enviando || _buscandoUbicacion)" OnClick="Enviar" /></div>
                         </Tarjeta>
                     </Secundario>
                 </DosColumnas>
@@ -106,9 +104,9 @@
                             <Aviso Icono="IcoInfo" Titulo="@(T["Privacidad"])">@T["No escribas contraseñas ni datos personales de otras personas."] @T[Estado.ConCuenta ? "Tu comentario se guarda con tu cuenta." : "Estás sin cuenta: el comentario se envía de forma anónima."]</Aviso>
                             @if (_mensajeOpinion != null)
                             {
-                                <p class="@(_exitoOpinion ? "nota exito" : "error-texto")">@T[_mensajeOpinion]</p>
+                                <div class="mensaje @(_exitoOpinion ? "exito" : "error")" role="@(_exitoOpinion ? "status" : "alert")"><Icon Nombre="@(_exitoOpinion ? "IcoCheckCircle" : "IcoAlert")" Tam="16" /> <span>@T[_mensajeOpinion]</span></div>
                             }
-                            <div class="arriba"><Boton Texto="@(_enviandoOpinion ? T["Enviando…"] : T["Enviar comentario"])" Icono="IcoSend" OnClick="EnviarComentario" /></div>
+                            <div class="arriba"><Boton Texto="@(_enviandoOpinion ? T["Enviando…"] : T["Enviar comentario"])" Icono="IcoSend" Cargando="@_enviandoOpinion" OnClick="EnviarComentario" /></div>
                         </Tarjeta>
                     </Secundario>
                 </DosColumnas>
@@ -140,7 +138,7 @@
                         }
                         @if (!Visibles.Any())
                         {
-                            <p class="vacio">@T["No encontramos respuestas con ese texto."]</p>
+                            <EstadoVista Compacto="true" Tipo="busqueda" Titulo="@(T["No encontramos respuestas con ese texto."])" Texto="@(T["Prueba con otra palabra o envíanos tu duda desde Opinión."])" />
                         }
                     </Tarjeta>
                 </div>
@@ -156,6 +154,8 @@
     private string _detalle = "", _mensaje;
     private int _ruta;
     private bool _enviando, _exito;
+    private double[] _ubicacion;
+    private bool _buscandoUbicacion;
 
     private EstadoApp.ProblemaComun Seleccionado => EstadoApp.ProblemasComunes.FirstOrDefault(t => t.Clave == _tipo);
 
@@ -167,7 +167,7 @@
 
     private async Task Enviar()
     {
-        if (_enviando) return;
+        if (_enviando || _buscandoUbicacion) return;
         _exito = false;
         if (_tipo == null) { _mensaje = "Elige primero qué pasó."; return; }
 
@@ -178,14 +178,14 @@
         _enviando = true;
         try
         {
-            double[] ubicacion = tipo.Movilidad ? await Estado.UbicacionDeReporteAsync() : null;
+            double[] ubicacion = _ubicacion;
             var (ok, error) = await Estado.PublicarAvisoAsync(titulo, string.IsNullOrWhiteSpace(_detalle) ? "Reportado desde Configuración." : _detalle.Trim(), ruta, tipo.Dias, ubicacion);
             _exito = ok;
             _mensaje = !ok ? error
                 : tipo.Movilidad && ubicacion == null ? T["Tu reporte se envió, pero no pudimos tomar tu ubicación: no aparecerá marcado en el mapa."]
-                : tipo.Movilidad ? T["¡Gracias! Tu reporte quedó marcado en el mapa."]
+                : ubicacion != null ? T["¡Gracias! Tu reporte quedó marcado en el mapa."]
                 : T["¡Gracias! Tu reporte ya es visible para la comunidad."];
-            if (ok) { _tipo = null; _detalle = ""; _ruta = 0; }
+            if (ok) { _tipo = null; _detalle = ""; _ruta = 0; _ubicacion = null; }
         }
         finally
         {

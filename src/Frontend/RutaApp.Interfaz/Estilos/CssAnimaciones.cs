@@ -39,14 +39,14 @@ public static class CssAnimaciones
         .btn-ghost:active, .reporte-tipo:active, .mapa-control:active, .tarjeta-boton:active { transform: scale(.96); }
         .btn:hover:not(:disabled) { transform: translateY(-1px); }
         svg.icono[fill]:not([fill="none"]) { animation: pop-guardado .4s ease-out; }
-        .btn-exito { background: var(--success); color: #fff; animation: confirma .8s ease-out; }
+        .btn-exito { background: var(--success); color: var(--text-on-brand); animation: confirma .8s ease-out; }
         .interruptor, .interruptor span { transition: all .2s ease; }
 
         /* Aviso breve (toast) */
         .toast-aviso {
             position: fixed; left: 50%; bottom: 28px; z-index: 3500; transform: translateX(-50%); max-width: calc(100vw - 32px);
-            display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 14px; background: var(--text-primary); color: #fff;
-            font-size: 14px; font-weight: 700; box-shadow: 0 10px 30px rgba(27, 54, 93, .35); animation: toast-entra .3s cubic-bezier(.2, .9, .3, 1.2);
+            display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: var(--radio-lg); background: var(--text-primary); color: var(--text-on-brand);
+            font-size: var(--texto-md); font-weight: var(--peso-fuerte); box-shadow: var(--sombra-modal); animation: toast-entra .3s cubic-bezier(.2, .9, .3, 1.2);
         }
         .toast-aviso .icono { color: #4ADE80; }
 
@@ -55,24 +55,24 @@ public static class CssAnimaciones
         }
 
         /* Botones para volver a la página principal */
-        .volver-landing { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 6px 12px; border-radius: 999px; background: #fff; border: 1px solid var(--blue-200);
-            font-size: 13px; font-weight: 700; color: var(--text-primary); }
+        .volver-landing { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 6px 12px; border-radius: var(--radio-pill); background: var(--bg-white); border: 1px solid var(--blue-200);
+            font-size: var(--texto-base); font-weight: var(--peso-fuerte); color: var(--text-primary); }
         .volver-landing:hover { background: var(--blue-50); border-color: var(--brand-primary); color: var(--brand-primary); }
         .barra-ubicacion { gap: 14px; }
         .barra-ubicacion .migas { flex: 1; }
-        .volver-inicio { position: absolute; top: 20px; left: 20px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: #fff;
-            border: 1px solid var(--blue-200); font-size: 13px; font-weight: 700; color: var(--text-primary); z-index: 2; }
+        .volver-inicio { position: absolute; top: 20px; left: 20px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--radio-pill); background: var(--bg-white);
+            border: 1px solid var(--blue-200); font-size: var(--texto-base); font-weight: var(--peso-fuerte); color: var(--text-primary); z-index: 2; }
         .volver-inicio:hover { background: var(--blue-50); border-color: var(--brand-primary); color: var(--brand-primary); }
         .auth-panel { position: relative; }
         .auth-panel .auth-tarjeta { margin-top: 28px; }
 
         /* Compartir en pasos y buscar por paradas */
-        .compartir-pasos { list-style: none; margin: 16px 0 18px; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+        .compartir-pasos { list-style: none; margin: 16px 0 18px; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: var(--texto-md); }
         .compartir-pasos li { display: flex; align-items: center; gap: 10px; }
-        .compartir-pasos li span { width: 24px; height: 24px; border-radius: 50%; flex: none; background: var(--brand-primary); color: #fff; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
-        .codigo-linea { user-select: all; width: 100%; margin-top: 12px; padding: 9px 12px; border: 1px dashed var(--border-default); border-radius: 10px; background: var(--blue-50);
-            font-family: Consolas, "Courier New", monospace; font-size: 11px; color: var(--text-secondary); text-overflow: ellipsis; }
-        .parada-coincide { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--teal); }
+        .compartir-pasos li span { width: 24px; height: 24px; border-radius: var(--radio-circulo); flex: none; background: var(--brand-primary); color: var(--text-on-brand); font-size: var(--texto-sm); font-weight: var(--peso-titulo); display: inline-flex; align-items: center; justify-content: center; }
+        .codigo-linea { user-select: all; width: 100%; margin-top: 12px; padding: 9px 12px; border: 1px dashed var(--border-default); border-radius: var(--radio-md); background: var(--blue-50);
+            font-family: var(--fuente-mono); font-size: var(--texto-xs); color: var(--text-secondary); text-overflow: ellipsis; }
+        .parada-coincide { display: flex; align-items: center; gap: var(--espacio-1); font-size: var(--texto-xs); font-weight: var(--peso-fuerte); color: var(--teal); }
 
         @media (max-width: 820px) {
             .volver-landing span { display: none; }
@@ -84,13 +84,13 @@ public static class CssAnimaciones
         /* Pantallas bajas (laptops 1366x768 o con zoom de Windows): todo más compacto */
         @media (max-height: 760px) and (min-width: 821px) {
             .panel-scroll, .panel-comparar, .panel-rutas { padding: 16px 18px; }
-            .titulo-seccion { font-size: 24px; line-height: 30px; }
+            .titulo-seccion { font-size: var(--texto-3xl); line-height: 30px; }
             .encabezado-seccion { margin-bottom: 14px; }
-            .sub-panel { font-size: 13px; margin-top: 4px; }
-            .btn-buscar { margin-top: 14px; padding: 13px; font-size: 15px; }
+            .sub-panel { font-size: var(--texto-base); margin-top: 4px; }
+            .btn-buscar { margin-top: 14px; padding: 13px; font-size: var(--texto-lg); }
             .campo-wrap { margin-bottom: 8px; }
             .pagina { padding: 22px 28px 18px; }
-            .pagina-cabecera h1 { font-size: 24px; }
+            .pagina-cabecera h1 { font-size: var(--texto-3xl); }
             .barra-ubicacion { height: 42px; }
             .sidebar { padding: 16px; }
             .sidebar-menu { margin-top: 18px; }
@@ -101,19 +101,19 @@ public static class CssAnimaciones
             .landing-texto h1 { font-size: 44px; line-height: 54px; }
         }
 
-        .explorar-sin-cuenta { margin-top: 10px !important; padding: 9px 16px; border: 1px solid var(--blue-200); border-radius: 999px; background: var(--blue-50); }
+        .explorar-sin-cuenta { margin-top: 10px !important; padding: 9px 16px; border: 1px solid var(--blue-200); border-radius: var(--radio-pill); background: var(--blue-50); }
         .explorar-sin-cuenta:hover { background: var(--blue-100); }
 
 
         /* Ajustes funcionales */
-        .btn-peligro { background: var(--danger); color: #fff; box-shadow: 0 6px 16px rgba(220, 38, 38, .25); }
+        .btn-peligro { background: var(--danger); color: var(--text-on-brand); box-shadow: 0 6px 16px rgba(220, 38, 38, .25); }
         .btn-peligro:hover:not(:disabled) { filter: brightness(1.08); }
         .tarjeta-peligro { border-color: #FCA5A5 !important; }
         .tarjeta-peligro .tarjeta-titulo { color: var(--danger); }
-        .muestra-ruta { display: flex; align-items: center; gap: 12px; padding: 8px 0; color: var(--text-primary); }
-        .muestra-simbolo { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--blue-100); font-size: 14px; font-weight: 800; }
-        .faq { cursor: pointer; font-weight: 600; }
+        .muestra-ruta { display: flex; align-items: center; gap: var(--espacio-3); padding: 8px 0; color: var(--text-primary); }
+        .muestra-simbolo { width: 28px; height: 28px; border-radius: var(--radio-circulo); display: inline-flex; align-items: center; justify-content: center; background: var(--blue-100); font-size: var(--texto-md); font-weight: var(--peso-titulo); }
+        .faq { cursor: pointer; font-weight: var(--peso-medio); }
         .faq:hover { color: var(--brand-primary); }
-        .faq-resp { font-size: 13px; line-height: 20px; color: var(--text-secondary); padding: 4px 4px 14px; }
+        .faq-resp { font-size: var(--texto-base); line-height: 20px; color: var(--text-secondary); padding: 4px 4px 14px; }
         """;
 }

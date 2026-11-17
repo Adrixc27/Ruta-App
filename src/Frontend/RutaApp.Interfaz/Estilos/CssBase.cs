@@ -9,15 +9,15 @@ public static class CssBase
         html, body {
             height: 100%;
             margin: 0;
-            font-family: 'Source Sans 3', 'Source Sans Pro', 'Segoe UI', sans-serif;
-            font-size: 14px;
+            font-family: var(--fuente);
+            font-size: var(--texto-md);
             color: var(--text-primary);
             background: var(--bg-panel);
         }
 
         h1, h2, h3, h4, p { margin: 0; }
         h1:focus { outline: none; }
-        b { font-weight: 700; }
+        b { font-weight: var(--peso-fuerte); }
         a { color: inherit; text-decoration: none; }
         button { font: inherit; color: inherit; }
         ::selection { background: var(--brand-tint); }
@@ -28,8 +28,8 @@ public static class CssBase
         .icono { flex: none; display: block; }
         .azul { color: var(--brand-primary); }
         .vacio { text-align: center; color: var(--text-secondary); margin: 28px 0; }
-        .nota { color: var(--text-secondary); font-size: 12px; margin-top: 8px; }
-        .nota.exito { color: var(--success); font-weight: 700; }
+        .nota { color: var(--text-secondary); font-size: var(--texto-sm); margin-top: 8px; }
+        .nota.exito { color: var(--success); font-weight: var(--peso-fuerte); }
         .centrado-fila { display: flex; justify-content: center; margin: 4px 0 8px; }
 
         /* Contenedor de la app: ocupa toda la ventana y recibe las clases de accesibilidad */

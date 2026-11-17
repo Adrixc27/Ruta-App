@@ -10,7 +10,7 @@ public record Marcador(double Lat, double Lng, string Nombre, string Simbolo = n
 public record TramoMapa(bool EsBus, List<double[]> Puntos, string Color = null, string Patron = null);
 
 // Un problema reportado por la comunidad, marcado donde estaba el camión.
-public record ReporteMapa(double Lat, double Lng, string Titulo, string Detalle, string Cuando);
+public record ReporteMapa(int Id, double Lat, double Lng, string Titulo, string Cuando);
 
 // Un punto de referencia cargado de OpenStreetMap (parada, farmacia, hospital...).
 public record PuntoReferencia(double Lat, double Lng, string Nombre, string Tipo);
@@ -45,6 +45,7 @@ public sealed class MapaLeaflet : IAsyncDisposable
         public bool perm { get; set; }
         public string popup { get; set; }
         public int z { get; set; }
+        public int clave { get; set; }   // si se indica, al tocar la marca se avisa al componente con este número
     }
 
     private sealed class L
@@ -216,7 +217,8 @@ public sealed class MapaLeaflet : IAsyncDisposable
         {
             lat = r.Lat, lng = r.Lng, w = 32, h = 32, ax = 16, ay = 16, z = 800,
             html = "<div class=\"mk-reporte\">" + Svg("IcoAlert", 16) + "</div>",
-            popup = "<b>" + WebUtility.HtmlEncode(r.Titulo) + "</b><br>" + WebUtility.HtmlEncode(r.Detalle) + "<br><small>" + WebUtility.HtmlEncode(r.Cuando) + "</small>"
+            rotulo = WebUtility.HtmlEncode(r.Titulo) + " · " + WebUtility.HtmlEncode(r.Cuando), dir = "top", off = new double[] { 0, -16 },
+            clave = r.Id
         }).ToList();
         return Llamar("reportes", marcas).AsTask();
     }

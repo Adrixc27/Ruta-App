@@ -38,7 +38,10 @@
                 {
                     <p class="aviso-texto">@T[_aviso]</p>
                 }
-                <button type="button" class="btn btn-primario btn-ancho" disabled="@_ocupado" @onclick="IniciarSesion">@T["Iniciar sesión"]</button>
+                <button type="button" class="btn btn-primario btn-ancho @(_ocupado ? "cargando" : "")" disabled="@_ocupado" aria-busy="@(_ocupado ? "true" : "false")" @onclick="IniciarSesion">
+                    @if (_ocupado) { <Spinner /> }
+                    @(_ocupado ? T["Entrando…"] : T["Iniciar sesión"])
+                </button>
 
                 <div class="divisor"><span>@T["o continúa con"]</span></div>
                 <button type="button" class="btn btn-contorno btn-ancho" @onclick='() => Aviso("El acceso con Google todavía no está disponible en esta versión.")'>
@@ -86,7 +89,10 @@
                 {
                     <p class="aviso-texto">@T[_aviso]</p>
                 }
-                <button type="button" class="btn btn-primario btn-ancho" disabled="@_ocupado" @onclick="Registrar">@T["Crear cuenta"]</button>
+                <button type="button" class="btn btn-primario btn-ancho @(_ocupado ? "cargando" : "")" disabled="@_ocupado" aria-busy="@(_ocupado ? "true" : "false")" @onclick="Registrar">
+                    @if (_ocupado) { <Spinner /> }
+                    @(_ocupado ? T["Creando cuenta…"] : T["Crear cuenta"])
+                </button>
 
                 <div class="divisor"><span>@T["o regístrate con"]</span></div>
                 <button type="button" class="btn btn-contorno btn-ancho" @onclick='() => Aviso("El acceso con Google todavía no está disponible en esta versión.")'>

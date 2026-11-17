@@ -20,6 +20,7 @@ public static class Hoja
         CssErroresBlazor.Reglas,
         CssTonosAzul.Reglas,
         CssMejoras.Reglas,
+        CssEstados.Reglas,
         CssResponsivo.Reglas,
         CssAnimaciones.Reglas,
         CssAccesibilidad.Reglas);

@@ -34,7 +34,7 @@
 
     @if (!Visibles.Any())
     {
-        <p class="vacio">@T["No se encontró ningún ajuste con ese texto."]</p>
+        <EstadoVista Tipo="busqueda" Titulo="@(T["No se encontró ningún ajuste con ese texto."])" Texto="@(T["Prueba con otra palabra, por ejemplo «idioma» o «cuenta»."])" />
     }
 
     <div class="card pie-config">

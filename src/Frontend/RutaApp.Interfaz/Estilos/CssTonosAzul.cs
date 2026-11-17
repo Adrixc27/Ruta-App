@@ -19,18 +19,18 @@ public static class CssTonosAzul
         .nav-btn:hover { background: rgba(255, 255, 255, .55); }
         .nav-btn.activo { background: var(--grad-marca); box-shadow: var(--sombra-azul); }
         .marca-logo { background: var(--grad-marca); box-shadow: 0 4px 10px rgba(37, 99, 235, .30); }
-        .marca-logo-blanco, .marca-clara .marca-logo { background: #fff; box-shadow: 0 4px 10px rgba(27, 54, 93, .18); }
+        .marca-logo-blanco, .marca-clara .marca-logo { background: var(--bg-white); box-shadow: 0 4px 10px rgba(27, 54, 93, .18); }
         .sidebar-sesion { border-top-color: var(--blue-300); }
 
         /* Botones */
         .btn-primario { background: var(--grad-marca); box-shadow: var(--sombra-azul); }
-        .btn-primario:hover:not(:disabled) { opacity: 1; filter: brightness(1.07); box-shadow: 0 8px 20px rgba(37, 99, 235, .36); }
-        .btn-primario:active:not(:disabled) { opacity: 1; filter: brightness(.94); box-shadow: 0 3px 8px rgba(37, 99, 235, .30); }
+        .btn-primario:hover:not(:disabled) { opacity: 1; filter: brightness(1.07); box-shadow: var(--sombra-azul-hover); }
+        .btn-primario:active:not(:disabled) { opacity: 1; filter: brightness(.94); box-shadow: var(--sombra-azul-activa); }
         .btn-contorno { background: linear-gradient(180deg, #fff 0%, var(--blue-50) 100%); }
         .btn-contorno:hover:not(:disabled) { background: var(--blue-100); border-color: var(--blue-300); }
         .btn-suave { background: linear-gradient(180deg, var(--blue-50) 0%, var(--bg-panel) 100%); }
         .btn-suave:hover { background: var(--blue-100); }
-        .btn-sinborde { background: #fff; box-shadow: 0 2px 8px rgba(37, 99, 235, .12); }
+        .btn-sinborde { background: var(--bg-white); box-shadow: 0 2px 8px rgba(37, 99, 235, .12); }
         .btn-ghost:hover, .btn-ghost-oscuro:hover { background: var(--blue-100); }
         .btn-icono:hover { background: var(--blue-100); color: var(--brand-primary); }
         .btn-icono.suave { background: var(--blue-100); }
@@ -42,19 +42,19 @@ public static class CssTonosAzul
         .card { border-color: var(--blue-200); }
         .tarjeta-titulo { color: var(--text-primary); }
         .auth-tarjeta { background: linear-gradient(180deg, #fff 0%, var(--bg-card) 100%); border-color: var(--blue-200); }
-        .tarjeta-flotante { box-shadow: 0 14px 40px rgba(37, 99, 235, .18); }
+        .tarjeta-flotante { box-shadow: var(--sombra-modal); }
         .modal { background: linear-gradient(180deg, #fff 0%, var(--bg-card) 100%); border-color: var(--blue-200); }
 
         /* Campos */
         .campo { border-color: var(--blue-200); background: linear-gradient(180deg, #fff 0%, var(--blue-50) 100%); }
         .campo:hover { border-color: var(--blue-300); }
-        .campo.enfocado { border-color: var(--brand-primary); box-shadow: 0 0 0 3px rgba(96, 165, 250, .35); }
-        .textarea:focus { box-shadow: 0 0 0 3px rgba(96, 165, 250, .35); }
+        .campo.enfocado { border-color: var(--brand-primary); box-shadow: var(--anillo-foco); }
+        .textarea:focus { box-shadow: var(--anillo-foco); }
 
         /* Elementos seleccionados o resaltados: de azul muy claro a azul claro */
         .opcion-ruta, .ruta-item, .viaje-historial, .trayecto, .post, .categoria-ayuda, .ajuste-item { transition: background .15s, border-color .15s, box-shadow .15s, transform .15s; }
-        .opcion-ruta:hover, .ruta-item:hover, .trayecto:hover { border-color: var(--blue-300); box-shadow: 0 6px 16px rgba(37, 99, 235, .12); }
-        .opcion-ruta.sel, .ruta-item.sel { background: var(--grad-suave); border-color: var(--brand-primary); box-shadow: 0 6px 18px rgba(37, 99, 235, .18); }
+        .opcion-ruta:hover, .ruta-item:hover, .trayecto:hover { border-color: var(--blue-300); box-shadow: var(--sombra-elevada); }
+        .opcion-ruta.sel, .ruta-item.sel { background: var(--grad-suave); border-color: var(--brand-primary); box-shadow: var(--sombra-elevada); }
         .ruta-numero { background: linear-gradient(135deg, var(--blue-100) 0%, var(--blue-200) 100%); }
         .ruta-item.sel .ruta-numero { background: var(--grad-marca); }
         .viaje-historial:hover { background: var(--blue-100); }
@@ -78,7 +78,7 @@ public static class CssTonosAzul
         .contador { background: var(--blue-100); }
 
         /* Stepper */
-        .stepper .paso.activo .circulo { background: var(--grad-marca); box-shadow: 0 3px 8px rgba(37, 99, 235, .35); }
+        .stepper .paso.activo .circulo { background: var(--grad-marca); box-shadow: var(--sombra-azul-activa); }
         .stepper .conector { background: var(--blue-200); }
         .stepper .conector.hecho { background: linear-gradient(90deg, var(--blue-500), var(--blue-700)); }
 
@@ -90,12 +90,12 @@ public static class CssTonosAzul
         .mision { background: linear-gradient(140deg, var(--blue-500) 0%, var(--blue-600) 50%, var(--blue-800) 100%); box-shadow: 0 12px 28px rgba(37, 99, 235, .28); }
 
         /* Mapa: cristal azulado */
-        .glass { background: linear-gradient(180deg, rgba(239, 246, 255, .96) 0%, rgba(220, 234, 248, .94) 100%); border-color: var(--blue-200); box-shadow: 0 8px 22px rgba(37, 99, 235, .14); }
+        .glass { background: linear-gradient(180deg, rgba(239, 246, 255, .96) 0%, rgba(220, 234, 248, .94) 100%); border-color: var(--blue-200); box-shadow: var(--sombra-elevada); }
         .mapa-tarjeta { background: linear-gradient(180deg, rgba(255, 255, 255, .98) 0%, rgba(239, 246, 255, .97) 100%); }
         .tarjeta-numero { background: var(--grad-marca); }
         .tarjeta-boton { background: var(--grad-marca); box-shadow: var(--sombra-azul); }
         .tarjeta-guardar { background: var(--blue-100); }
-        .tarjeta-guardar.off { background: #fff; }
+        .tarjeta-guardar.off { background: var(--bg-white); }
 
         /* Pantallas de ajustes */
         .caja-icono { background: linear-gradient(135deg, var(--blue-100) 0%, var(--blue-200) 100%); }
@@ -116,7 +116,7 @@ public static class CssTonosAzul
 
         /* Barras de desplazamiento y selección */
         * { scrollbar-color: var(--blue-300) transparent; }
-        .sugerencias { background: linear-gradient(180deg, #fff 0%, var(--blue-50) 100%); border-color: var(--blue-200); box-shadow: 0 8px 24px rgba(37, 99, 235, .20); }
+        .sugerencias { background: linear-gradient(180deg, #fff 0%, var(--blue-50) 100%); border-color: var(--blue-200); box-shadow: var(--sombra-elevada); }
         .sugerencia:hover { background: var(--blue-100); }
 
         /* Responsivo básico */

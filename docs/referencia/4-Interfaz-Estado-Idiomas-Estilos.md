@@ -158,7 +158,7 @@ Cada archivo tiene una constante `Reglas` (texto CSS entre `"""`). Excepciones: 
 
 | Archivo | Miembro y contenido |
 |---|---|
-| **Tokens.cs** | `Variables`: lista de pares (nombre, valor) de las variables CSS (colores de marca, bordes, fondos, estados, sombras, escala de azules, acentos por sección). `Raiz()` las convierte en `:root { --nombre: valor; }`. |
+| **Tokens.cs** | `Variables`: lista de pares (nombre, valor) de las variables CSS (colores de marca, bordes, fondos, estados, escala de azules y acentos por sección; tipografía `--texto-xs…3xl`, `--peso-*`; espaciado `--espacio-1…10` en pasos de 4 px; radios `--radio-sm/md/lg/xl/pill`; sombras `--sombra-card/elevada/modal` y `--anillo-foco`; movimiento `--dur-*`). Un valor nuevo se agrega aquí antes de usarlo en una regla. `Raiz()` las convierte en `:root { --nombre: valor; }`. |
 | **Hoja.cs** | `Completa`: une `Tokens.Raiz()` y todas las `Reglas` en un orden fijo (importa por la cascada del CSS). |
 | **CssBase.cs** | Reinicio, tipografía (Source Sans 3, 14 px), scrollbar delgado y contenedor `.ruta-app`. |
 | **CssBotones.cs**, **CssCampos.cs**, **CssModales.cs**, **CssMarca.cs** | Botones, campos de texto, diálogos, logotipo. |
@@ -168,6 +168,7 @@ Cada archivo tiene una constante `Reglas` (texto CSS entre `"""`). Excepciones: 
 | **CssPaginasConEncabezado.cs**, **CssAjustes.cs** | Comunidad, Perfil, Configuración y bloques de ajustes. |
 | **CssErroresBlazor.cs** | Validación de formularios y la barra de error de Blazor. |
 | **CssTonosAzul.cs**, **CssMejoras.cs** | Degradados y sombras azuladas; acentos de color, carga, barra de ubicación, viaje en curso, perfil. |
+| **CssEstados.cs** | Estados iguales para todos los controles: interacción (hover, foco, activo, deshabilitado), carga (`.spinner`, `.esqueleto`, `.btn.cargando`) e interfaz (`.estado-vista` para vacío, sin resultados, error y éxito; `.mensaje` dentro de formularios). También las fotos de Comunidad y el bloque de ubicación de un reporte. |
 | **CssResponsivo.cs** | Adaptación a distintos anchos. |
 | **CssAnimaciones.cs** | Animaciones, pantallas bajas y toasts. |
 | **CssAccesibilidad.cs** | Foco visible, daltonismo, sin animaciones, guía visual. Se activa con las clases `a11y-dalton`, `a11y-guia` y `a11y-sin-anim` que pone `Routes.razor`. |
