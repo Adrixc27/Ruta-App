@@ -53,8 +53,15 @@
             {
                 <p class="error-texto">@T[_error]</p>
             }
-            <button type="button" class="btn btn-primario btn-ancho btn-buscar" disabled="@_buscando" @onclick="Buscar">
-                @T["Buscar y comparar rutas"] <Icon Nombre="IcoArrowRight" Tam="18" />
+            <button type="button" class="btn btn-primario btn-ancho btn-buscar @(_buscando ? "cargando" : "")" disabled="@_buscando" aria-busy="@(_buscando ? "true" : "false")" @onclick="Buscar">
+                @if (_buscando)
+                {
+                    <Spinner /> @T["Buscando rutas…"]
+                }
+                else
+                {
+                    @T["Buscar y comparar rutas"] <Icon Nombre="IcoArrowRight" Tam="18" />
+                }
             </button>
 
             @* Mis lugares (debajo del botón de buscar): casa, escuela y otros puntos para llenar los campos con un toque *@
@@ -117,7 +124,7 @@
                         <div class="paso-form"><span>2</span> @T["¿Dónde está?"]</div>
                         <div class="lugar-opciones">
                             <button type="button" class="btn btn-contorno btn-chico" disabled="@_buscandoUbicacion" @onclick="UsarMiUbicacionLugar">
-                                <Icon Nombre="IcoLocate" Tam="15" /> @(_buscandoUbicacion ? "Buscando…" : "Mi ubicación")
+                                @if (_buscandoUbicacion) { <Spinner /> } else { <Icon Nombre="IcoLocate" Tam="15" /> } @(_buscandoUbicacion ? T["Buscando…"] : T["Mi ubicación"])
                             </button>
                             <button type="button" class="btn btn-contorno btn-chico" @onclick='() => EmpezarElegir("lugar")'>
                                 <Icon Nombre="IcoPin" Tam="15" /> @T["Tocar en el mapa"]

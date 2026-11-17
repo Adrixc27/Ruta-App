@@ -1,5 +1,11 @@
-<button type="button" class="btn @(Relleno ? "btn-primario" : "btn-contorno") btn-ajuste" @onclick="() => OnClick.InvokeAsync()">
-    @if (Icono != null)
+@* Botón de las pantallas de ajustes. Con Cargando muestra el indicador y no deja pulsar de nuevo. *@
+<button type="button" class="btn @(Relleno ? "btn-primario" : "btn-contorno") btn-ajuste @(Cargando ? "cargando" : "")"
+        disabled="@(Cargando || Deshabilitado)" aria-busy="@(Cargando ? "true" : "false")" @onclick="() => OnClick.InvokeAsync()">
+    @if (Cargando)
+    {
+        <Spinner />
+    }
+    else if (Icono != null)
     {
         <Icon Nombre="@Icono" Tam="17" />
     }
@@ -10,5 +16,7 @@
     [Parameter] public string Texto { get; set; }
     [Parameter] public string Icono { get; set; }
     [Parameter] public bool Relleno { get; set; } = true;
+    [Parameter] public bool Cargando { get; set; }
+    [Parameter] public bool Deshabilitado { get; set; }
     [Parameter] public EventCallback OnClick { get; set; }
 }

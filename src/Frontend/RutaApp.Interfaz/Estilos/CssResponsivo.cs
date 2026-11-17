@@ -27,7 +27,7 @@ public static class CssResponsivo
             .split > .mapa-contenedor { order: -1; }
             .panel-lateral { border-right: 0; border-top: 1px solid var(--border-default); }
             .panel-scroll, .panel-comparar, .panel-rutas { padding: 16px; }
-            .mapa-banner { top: 8px; left: 8px; max-width: calc(100% - 64px); padding: 8px 12px; font-size: 12px; }
+            .mapa-banner { top: 8px; left: 8px; max-width: calc(100% - 64px); padding: 8px 12px; font-size: var(--texto-sm); }
             .banner-circ { width: 30px; height: 30px; }
             .mapa-tarjeta, .tarjeta-viaje { left: 8px; right: 8px; bottom: 8px; width: auto; max-width: none; max-height: 60%; padding: 12px; }
             .mapa-tarjeta .tarjeta-datos, .mapa-tarjeta .tarjeta-plano { display: none; }
@@ -52,20 +52,20 @@ public static class CssResponsivo
             .nav-badge, .sidebar.colapsado .nav-badge { position: absolute; top: 2px; left: 26px; }
             .barra-ubicacion { height: 42px; padding: 0 12px; }
             .miga-inicio span, .usuario-nombre { display: none; }
-            .migas { font-size: 12px; }
+            .migas { font-size: var(--texto-sm); }
 
             .landing-cabecera { padding: 16px; }
             .landing-contenido { padding: 16px 16px 32px; }
             .landing-texto h1 { font-size: 34px; line-height: 42px; }
-            .landing-texto p { font-size: 16px; }
+            .landing-texto p { font-size: var(--texto-lg); }
             .landing-botones { flex-wrap: wrap; margin-top: 28px; }
-            .landing-tarjeta { height: 440px; border-radius: 24px; }
-            .landing-tarjeta .slide-titular { font-size: 24px; line-height: 30px; }
+            .landing-tarjeta { height: 440px; border-radius: var(--radio-xl); }
+            .landing-tarjeta .slide-titular { font-size: var(--texto-3xl); line-height: 30px; }
             .landing-tarjeta .slide-marca-contenido { padding: 24px; }
             .btn-ghost-oscuro { margin-right: 4px; padding: 8px; }
-            .btn-grande { padding: 14px 20px; font-size: 15px; }
+            .btn-grande { padding: 14px 20px; font-size: var(--texto-lg); }
             .intro-nombre { font-size: 88px; }
-            .intro-lema { font-size: 15px; padding: 0 20px; }
+            .intro-lema { font-size: var(--texto-lg); padding: 0 20px; }
 
             .auth-panel { padding: 16px; align-items: flex-start; }
             .auth-tarjeta { padding: 24px; }
@@ -73,8 +73,8 @@ public static class CssResponsivo
             .sobre-cuerpo { padding: 20px 16px; }
 
             .pagina { padding: 18px 14px 20px; }
-            .pagina-cabecera { flex-wrap: wrap; gap: 12px; }
-            .pagina-cabecera h1 { font-size: 24px; }
+            .pagina-cabecera { flex-wrap: wrap; gap: var(--espacio-3); }
+            .pagina-cabecera h1 { font-size: var(--texto-3xl); }
             .busqueda-ancha { width: 100%; }
             .feed { grid-template-columns: 1fr; }
             .filtros { align-items: stretch; }
@@ -84,7 +84,7 @@ public static class CssResponsivo
             .perfil-datos { padding: 22px; }
             .pestanas-perfil { grid-template-columns: 1fr; }
             .marco-detalle { padding: 18px 14px 10px; }
-            .marco-titulo h1 { font-size: 24px; }
+            .marco-titulo h1 { font-size: var(--texto-3xl); }
             .dos-columnas { grid-template-columns: 1fr !important; }
             .tres-columnas, .dos-campos, .dos-columnas-iguales { grid-template-columns: 1fr; }
             .tipos, .reporte-tipos { grid-template-columns: repeat(2, 1fr); }
@@ -92,23 +92,23 @@ public static class CssResponsivo
             .modal-sesion { padding: 28px 20px; }
             .modal-fondo { padding: 12px; align-items: flex-start; }
             .toast-ajuste { right: 14px; bottom: 76px; }
-            .pie-config { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .pie-config { flex-direction: column; align-items: flex-start; gap: var(--espacio-2); }
         }
 
         @media (max-width: 480px) {
-            .landing-texto h1 { font-size: 28px; line-height: 36px; }
-            .landing-nav .btn-chico { padding: 8px 10px; font-size: 13px; }
+            .landing-texto h1 { font-size: var(--texto-3xl); line-height: 36px; }
+            .landing-nav .btn-chico { padding: 8px 10px; font-size: var(--texto-base); }
             .viaje-cifras { gap: 14px; }
             .reporte-tipos { grid-template-columns: repeat(2, 1fr); }
-            .nav-actual b { font-size: 16px; }
+            .nav-actual b { font-size: var(--texto-lg); }
             .carga-caja { width: 220px; }
         }
 
 
         /* Título grande de la sección (reemplaza al indicador 1-2-3) */
         .encabezado-seccion { margin-bottom: 24px; }
-        .titulo-seccion { font-size: 30px; line-height: 36px; font-weight: 900; color: var(--text-primary); }
-        .encabezado-seccion .sub-panel { font-size: 15px; margin-top: 8px; }
+        .titulo-seccion { font-size: 30px; line-height: 36px; font-weight: var(--peso-titulo); color: var(--text-primary); }
+        .encabezado-seccion .sub-panel { font-size: var(--texto-lg); margin-top: 8px; }
         .resumen-viaje { margin-top: 0; }
 
         /* El mapa se adapta a su propio ancho (no al de la ventana): tarjeta y leyenda no tapan la ruta */
@@ -117,9 +117,9 @@ public static class CssResponsivo
             .mapa-tarjeta, .tarjeta-viaje { left: 8px; right: 8px; bottom: 8px; width: auto; max-width: none; max-height: 42%; padding: 12px; }
             .mapa-tarjeta .tarjeta-datos, .mapa-tarjeta .tarjeta-plano { display: none; }
             .mapa-leyenda { right: 56px; bottom: auto; top: 56px; width: 190px; }
-            .mapa-banner { top: 8px; left: 8px; max-width: calc(100% - 64px); padding: 8px 12px; font-size: 12px; }
+            .mapa-banner { top: 8px; left: 8px; max-width: calc(100% - 64px); padding: 8px 12px; font-size: var(--texto-sm); }
             .mapa-controles { top: 86px; }
-            .tarjeta-boton { padding: 9px; font-size: 13px; }
+            .tarjeta-boton { padding: 9px; font-size: var(--texto-base); }
         }
 
         /* Ventanas medianas: el menú lateral queda solo con iconos para dejar más espacio al mapa */
@@ -138,10 +138,10 @@ public static class CssResponsivo
 
         /* Elegir un lugar tocando el mapa */
         .mapa-seleccion, .mapa-seleccion .leaflet-interactive, .mapa-seleccion .leaflet-grab { cursor: crosshair !important; }
-        .eligiendo-mapa { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 10px; border-radius: 12px; background: var(--grad-suave); border: 1px solid var(--brand-primary); font-size: 13px; font-weight: 700; }
+        .eligiendo-mapa { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 10px; border-radius: var(--radio-md); background: var(--grad-suave); border: 1px solid var(--brand-primary); font-size: var(--texto-base); font-weight: var(--peso-fuerte); }
         .eligiendo-mapa span { flex: 1; }
         .acciones-campos { display: flex; flex-wrap: wrap; gap: 4px 12px; }
-        .lugar-elegido { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .lugar-elegido { display: flex; align-items: center; gap: var(--espacio-2); font-size: var(--texto-base); }
         .chip-lugar-grupo { display: inline-flex; align-items: stretch; }
         .chip-lugar-grupo .chip-lugar { border-top-right-radius: 0; border-bottom-right-radius: 0; }
         .chip-lugar-mapa { display: inline-flex; align-items: center; justify-content: center; padding: 0 9px; border: 1px solid var(--blue-200); border-left: 0; border-radius: 0 999px 999px 0; background: var(--blue-50); color: var(--brand-primary); cursor: pointer; }
@@ -152,21 +152,21 @@ public static class CssResponsivo
         .banner-viaje { min-width: 0; }
         .banner-viaje b, .banner-viaje small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .mapa-banner span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ver-pasos { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; padding: 4px 6px; border: 0; background: transparent; color: var(--brand-primary); font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 8px; }
+        .ver-pasos { display: inline-flex; align-items: center; gap: var(--espacio-1); margin-top: 8px; padding: 4px 6px; border: 0; background: transparent; color: var(--brand-primary); font-size: var(--texto-sm); font-weight: var(--peso-fuerte); cursor: pointer; border-radius: var(--radio-sm); }
         .ver-pasos:hover { background: var(--blue-100); }
         .tarjeta-viaje .viaje-cabecera { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
-        .tarjeta-viaje .viaje-cifras { gap: 16px; }
-        .tarjeta-viaje .viaje-cifras b { font-size: 15px; }
+        .tarjeta-viaje .viaje-cifras { gap: var(--espacio-4); }
+        .tarjeta-viaje .viaje-cifras b { font-size: var(--texto-lg); }
         .tarjeta-viaje .pasos { margin-top: 6px; max-height: 38vh; overflow-y: auto; }
         @container mapa (max-width: 720px) {
             .mapa-tarjeta, .tarjeta-viaje { max-height: 38%; }
-            .tarjeta-viaje .chip-ruta { font-size: 10px; padding: 3px 7px; }
+            .tarjeta-viaje .chip-ruta { font-size: var(--texto-xs); padding: 3px 7px; }
             .mapa-leyenda { width: 170px; padding: 10px 12px; }
-            .leyenda-item { font-size: 12px; margin-bottom: 6px; }
+            .leyenda-item { font-size: var(--texto-sm); margin-bottom: 6px; }
         }
 
         /* Viaje en curso: título con el icono de compartir y botones que caben */
-        .nav-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .nav-cabecera { display: flex; align-items: center; justify-content: space-between; gap: var(--espacio-2); }
         .nav-cabecera .nav-titulo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .nav-cabecera .btn-icono { flex: none; }
         .nav-acciones { flex-wrap: wrap; }
@@ -176,22 +176,22 @@ public static class CssResponsivo
 
 
         /* Instrucciones para caminar y detalles de la ruta */
-        .instruccion { display: block; position: relative; margin-top: 4px; padding-left: 12px; font-size: 12px; color: var(--text-primary); line-height: 1.35; }
-        .instruccion::before { content: ""; position: absolute; left: 0; top: .55em; width: 5px; height: 5px; border-radius: 50%; background: var(--slate); }
-        .detalles-ruta { margin: 6px 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--blue-50); border: 1px solid var(--blue-200); display: grid; gap: 6px; max-height: 30vh; overflow-y: auto; }
-        .detalles-ruta div { display: grid; grid-template-columns: 96px 1fr; gap: 8px; font-size: 12px; }
-        .detalles-ruta dt { color: var(--text-secondary); font-weight: 700; }
-        .detalles-ruta dd { margin: 0; font-weight: 600; }
+        .instruccion { display: block; position: relative; margin-top: 4px; padding-left: 12px; font-size: var(--texto-sm); color: var(--text-primary); line-height: 1.35; }
+        .instruccion::before { content: ""; position: absolute; left: 0; top: .55em; width: 5px; height: 5px; border-radius: var(--radio-circulo); background: var(--slate); }
+        .detalles-ruta { margin: 6px 0 12px; padding: 10px 12px; border-radius: var(--radio-md); background: var(--blue-50); border: 1px solid var(--blue-200); display: grid; gap: 6px; max-height: 30vh; overflow-y: auto; }
+        .detalles-ruta div { display: grid; grid-template-columns: 96px 1fr; gap: var(--espacio-2); font-size: var(--texto-sm); }
+        .detalles-ruta dt { color: var(--text-secondary); font-weight: var(--peso-fuerte); }
+        .detalles-ruta dd { margin: 0; font-weight: var(--peso-medio); }
 
 
         /* Guardar un lugar: pasos claros */
-        .paso-form { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--text-primary); margin-top: 4px; }
-        .paso-form span { width: 20px; height: 20px; border-radius: 50%; background: var(--brand-primary); color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; }
-        .lugar-opciones { display: flex; flex-wrap: wrap; gap: 8px; }
+        .paso-form { display: flex; align-items: center; gap: var(--espacio-2); font-size: var(--texto-base); font-weight: var(--peso-titulo); color: var(--text-primary); margin-top: 4px; }
+        .paso-form span { width: 20px; height: 20px; border-radius: var(--radio-circulo); background: var(--brand-primary); color: var(--text-on-brand); font-size: var(--texto-xs); display: inline-flex; align-items: center; justify-content: center; }
+        .lugar-opciones { display: flex; flex-wrap: wrap; gap: var(--espacio-2); }
         .lugar-opciones .btn { flex: 1 1 120px; }
-        .lugar-elegido { padding: 8px 10px; border-radius: 10px; background: var(--bg-panel); }
+        .lugar-elegido { padding: 8px 10px; border-radius: var(--radio-md); background: var(--bg-panel); }
         .lugar-elegido.ok { background: var(--success-tint); }
-        .aviso-compartido { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--blue-100); font-size: 12px; font-weight: 600; }
+        .aviso-compartido { display: flex; align-items: center; gap: var(--espacio-2); margin-top: 10px; padding: 10px 12px; border-radius: var(--radio-md); background: var(--blue-100); font-size: var(--texto-sm); font-weight: var(--peso-medio); }
         .aviso-compartido span { flex: 1; }
         """;
 }

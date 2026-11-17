@@ -1,0 +1,100 @@
+@inject EstadoApp Estado
+@using System.Globalization
+
+@* Ubicación de quien reporta un incidente. Con Automatica (ponchadura, se quedó tirado, accidente…) se pide sola
+   al aparecer; en los demás avisos se ofrece como opción. Muestra si se está buscando, si quedó lista o si falló. *@
+<div class="ubicacion-reporte @Clase" role="status" aria-live="polite">
+    @if (_buscando)
+    {
+        <Spinner />
+        <div class="ubicacion-texto">
+            <b>@T["Obteniendo tu ubicación…"]</b>
+            <small>@T["Puede tardar unos segundos."]</small>
+        </div>
+    }
+    else if (Valor != null)
+    {
+        <Icon Nombre="IcoCheckCircle" Tam="20" />
+        <div class="ubicacion-texto">
+            <b>@T["Ubicación lista"]</b>
+            <small>@T.F("El aviso se marcará en el mapa donde estás ahora ({0}).", Coordenadas)</small>
+        </div>
+        <button type="button" class="btn-ghost" disabled="@Bloqueada" @onclick="Buscar"><Icon Nombre="IcoRefresh" Tam="14" /> @T["Actualizar"]</button>
+        @if (!Automatica)
+        {
+            <button type="button" class="btn-ghost" disabled="@Bloqueada" @onclick="Quitar">@T["Quitar"]</button>
+        }
+    }
+    else if (_fallo)
+    {
+        <Icon Nombre="IcoAlert" Tam="20" />
+        <div class="ubicacion-texto">
+            <b>@T["No pudimos obtener tu ubicación"]</b>
+            <small>@T["Activa la ubicación de Windows y vuelve a intentar. Si publicas así, el aviso no aparecerá marcado en el mapa."]</small>
+        </div>
+        <button type="button" class="btn-ghost" disabled="@Bloqueada" @onclick="Buscar"><Icon Nombre="IcoRefresh" Tam="14" /> @T["Reintentar"]</button>
+    }
+    else
+    {
+        <Icon Nombre="IcoLocate" Tam="20" />
+        <div class="ubicacion-texto">
+            <b>@T["Marcar dónde ocurrió"]</b>
+            <small>@T["Agrega tu ubicación actual para que el aviso aparezca en el mapa."]</small>
+        </div>
+        <button type="button" class="btn-ghost" disabled="@Bloqueada" @onclick="Buscar"><Icon Nombre="IcoLocate" Tam="14" /> @T["Usar mi ubicación"]</button>
+    }
+</div>
+
+@code {
+    // [lat, lng] obtenida, o null si no hay ubicación.
+    [Parameter] public double[] Valor { get; set; }
+    [Parameter] public EventCallback<double[]> ValorChanged { get; set; }
+    // true: el problema necesita ubicación y se pide sin que el usuario la solicite.
+    [Parameter] public bool Automatica { get; set; }
+    // Avisa cuando empieza o termina la búsqueda, para que el formulario espere antes de enviar.
+    [Parameter] public EventCallback<bool> BuscandoChanged { get; set; }
+    // true mientras el formulario se envía: los botones no responden.
+    [Parameter] public bool Bloqueada { get; set; }
+
+    private bool _buscando, _fallo, _eraAutomatica;
+
+    private string Clase => _buscando ? "buscando" : Valor != null ? "lista" : _fallo ? "fallo" : "";
+
+    private string Coordenadas => Valor == null ? "" :
+        Valor[0].ToString("0.0000", CultureInfo.InvariantCulture) + ", " + Valor[1].ToString("0.0000", CultureInfo.InvariantCulture);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        bool pedir = Automatica && !_eraAutomatica && Valor == null && !_buscando;
+        _eraAutomatica = Automatica;
+        if (pedir) await Buscar();
+    }
+
+    private async Task Buscar()
+    {
+        if (_buscando) return;
+        _buscando = true;
+        _fallo = false;
+        await BuscandoChanged.InvokeAsync(true);
+        StateHasChanged();
+        try
+        {
+            var pos = await Estado.UbicacionDeReporteAsync();
+            _fallo = pos == null;
+            Valor = pos;
+            await ValorChanged.InvokeAsync(pos);
+        }
+        finally
+        {
+            _buscando = false;
+            await BuscandoChanged.InvokeAsync(false);
+        }
+    }
+
+    private async Task Quitar()
+    {
+        Valor = null;
+        _fallo = false;
+        await ValorChanged.InvokeAsync(null);
+    }
+}

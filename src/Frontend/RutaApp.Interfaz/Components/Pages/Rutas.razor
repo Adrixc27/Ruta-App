@@ -79,7 +79,16 @@
                 }
                 else if (!Visibles.Any())
                 {
-                    <p class="vacio">@(_soloGuardadas ? "Aún no tienes rutas guardadas." : "No se encontraron rutas.")</p>
+                    @if (_soloGuardadas)
+                    {
+                        <EstadoVista Compacto="true" Icono="IcoBookmark" Titulo="@(T["Aún no tienes rutas guardadas."])" />
+                    }
+                    else
+                    {
+                        <EstadoVista Compacto="true" Tipo="busqueda" Titulo="@(T["No se encontraron rutas."])" Texto="@(T["Revisa cómo está escrito o busca por colonia o por parada."])">
+                            <button type="button" class="btn btn-contorno btn-chico" @onclick="@(() => AlBuscar(""))">@T["Borrar búsqueda"]</button>
+                        </EstadoVista>
+                    }
                 }
 
                 @if (_soloGuardadas && Estado.Rutas.Count > 0)
@@ -104,6 +113,7 @@
 
 @code {
     private Mapa _mapa;
+    private Publicacion _avisoPedido;
     private bool _soloGuardadas;
     private string _busqueda = "";
     private Ruta _seleccion;
@@ -132,7 +142,9 @@
     protected override void OnInitialized()
     {
         // Llegamos desde otra pantalla pidiendo ver una ruta concreta (por ejemplo Comunidad → "Ver en el mapa")
-        _pedida = Estado.TomarParametro<Ruta>();
+        // ...o un aviso con ubicación ("Ver dónde ocurrió"): se abre su ruta, si tiene, y el mapa se centra en el lugar
+        _avisoPedido = Estado.TomarParametro<Publicacion>();
+        _pedida = Estado.TomarParametro<Ruta>() ?? (_avisoPedido?.RutaNumero > 0 ? Estado.BuscarRuta(_avisoPedido.RutaNumero) : null);
         _seleccion = _pedida ?? Estado.RutaSeleccionada;   // no se dibuja nada hasta que se elige una ruta
         Estado.Cambio += Refrescar;
         _ = Estado.CargarPublicacionesAsync();               // avisos de la comunidad que salen como alertas en la ruta
@@ -144,10 +156,18 @@
         if (_seleccion == null)
         {
             _mapa.BannerTexto("Elige una ruta de la lista para verla en el mapa");
-            return;
         }
-        await Seleccionar(_seleccion);
-        StateHasChanged();   // para que la lista marque la ruta seleccionada
+        else
+        {
+            await Seleccionar(_seleccion);
+            StateHasChanged();   // para que la lista marque la ruta seleccionada
+        }
+        if (_avisoPedido?.TieneUbicacion == true)
+        {
+            if (_seleccion == null) _mapa.BannerTexto("Aviso: " + _avisoPedido.Titulo);
+            await _mapa.DestacarAvisoAsync(_avisoPedido);
+            await _mapa.CentrarEnAsync(_avisoPedido.Lat.Value, _avisoPedido.Lng.Value);
+        }
     }
 
     // Si la ruta que se ve en el mapa cambió de "guardada", se actualiza su tarjeta
@@ -186,16 +206,8 @@
     }
 
     // Botón "Planificar viaje con esta ruta" de la tarjeta del mapa
-    private void PlanificarConRuta()
-    {
-        if (_seleccion == null) return;
-        Estado.Origen = _seleccion.OrigenNombre;
-        Estado.Destino = _seleccion.DestinoNombre;
-        Estado.Escalas = new List<Sugerencia>();
-        Estado.OrigenLat = double.NaN;
-        Estado.DestinoLat = double.NaN;
-        Estado.Navegar("planificar");
-    }
+    // Solo abre Planificar: el origen y el destino que ya estaban escritos no se tocan
+    private void PlanificarConRuta() => Estado.Navegar("planificar");
 
     // Botón "Guardada" de la tarjeta del mapa
     private void GuardarSeleccion()

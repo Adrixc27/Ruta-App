@@ -111,7 +111,7 @@
             </div>
             @if (avisos.Count > 0)
             {
-                <a class="alerta-ruta" @onclick='() => Estado.Navegar("comunidad")'>
+                <a class="alerta-ruta" title="@(T["Ver la publicación del aviso"])" @onclick='() => Estado.Navegar("comunidad", avisos[0])'>
                     <Icon Nombre="IcoAlert" Tam="15" />
                     <span><b>@(avisos.Count == 1 ? "1 aviso reciente" : avisos.Count + " avisos recientes")</b> · @avisos[0].Titulo</span>
                 </a>
@@ -165,7 +165,10 @@
                     }
                 </dl>
             }
-            <a class="tarjeta-boton" @onclick="Planificar">@T["Planificar viaje con esta ruta →"]</a>
+            @if (OnPlanificar.HasDelegate)
+            {
+                <a class="tarjeta-boton" @onclick="Planificar">@T["Planificar un viaje →"]</a>
+            }
         </div>
     }
 
@@ -224,20 +227,24 @@
             <div class="etiqueta-form">@T["Detalles"] <small>@T["(opcional)"]</small></div>
             <textarea class="textarea" rows="3" placeholder="@(T["Por ejemplo: en Av. Universidad y Calle 20, hay mucho tráfico."])" @bind="_detalleReporte" @bind:event="oninput"></textarea>
 
-            @if (TipoReporte.Movilidad)
+            @* Dónde ocurrió: en problemas de movilidad se toma sola la ubicación de quien avisa *@
+            @if (!_reporteEnviado)
             {
-                <p class="nota-modal nota-ubicacion"><Icon Nombre="IcoLocate" Tam="14" /> @T["Este reporte incluye tu ubicación actual y se marcará en el mapa para que otras personas lo vean."]</p>
+                <UbicacionReporte @bind-Valor="_ubicacionReporte" Automatica="@TipoReporte.Movilidad" Bloqueada="@_enviandoReporte" BuscandoChanged="@((bool b) => _buscandoUbicacionReporte = b)" />
             }
 
             @if (_mensajeReporte != null)
             {
-                <p class="@(_reporteEnviado ? "aviso-texto" : "error-texto")">@T[_mensajeReporte]</p>
+                <div class="mensaje @(_reporteEnviado ? "exito" : "error")" role="@(_reporteEnviado ? "status" : "alert")"><Icon Nombre="@(_reporteEnviado ? "IcoCheckCircle" : "IcoAlert")" Tam="16" /> <span>@T[_mensajeReporte]</span></div>
             }
             <div class="modal-acciones">
-                <button type="button" class="btn btn-contorno" @onclick="() => _reporte = false">@(_reporteEnviado ? "Cerrar" : "Cancelar")</button>
+                <button type="button" class="btn btn-contorno" disabled="@_enviandoReporte" @onclick="() => _reporte = false">@(_reporteEnviado ? T["Cerrar"] : T["Cancelar"])</button>
                 @if (!_reporteEnviado)
                 {
-                    <button type="button" class="btn btn-primario" disabled="@_enviandoReporte" @onclick="EnviarReporte"><Icon Nombre="IcoSend" Tam="16" /> @T["Enviar reporte"]</button>
+                    <button type="button" class="btn btn-primario @(ReporteEnEspera ? "cargando" : "")" disabled="@ReporteEnEspera" @onclick="EnviarReporte">
+                        @if (ReporteEnEspera) { <Spinner /> } else { <Icon Nombre="IcoSend" Tam="16" /> }
+                        @(_enviandoReporte ? T["Enviando…"] : _buscandoUbicacionReporte ? T["Obteniendo ubicación…"] : T["Enviar reporte"])
+                    </button>
                 }
             </div>
         </div>
@@ -281,6 +288,9 @@
 
     // Reporte tipo Waze
     private bool _reporte, _enviandoReporte, _reporteEnviado;
+    private double[] _ubicacionReporte;
+    private bool _buscandoUbicacionReporte;
+    private bool ReporteEnEspera => _enviandoReporte || _buscandoUbicacionReporte;
     private string _tipoReporte = "trafico", _detalleReporte = "", _mensajeReporte;
     private int _rutaReporte;
     private EstadoApp.ProblemaComun TipoReporte => EstadoApp.ProblemasComunes.First(t => t.Clave == _tipoReporte);
@@ -289,6 +299,14 @@
 
     [JSInvokable]
     public Task AlHacerClic(double lat, double lng) => OnClicMapa.InvokeAsync(new[] { lat, lng });
+
+// Clic en la marca de un aviso: abre su publicación en Comunidad
+    [JSInvokable]
+    public void AlTocarMarca(int id)
+    {
+        var aviso = Estado.Publicaciones.FirstOrDefault(p => p.Id == id);
+        if (aviso != null) Estado.Navegar("comunidad", aviso);
+    }
 
     public Task ActivarSeleccionAsync(bool activo) => EnMapa(m => m.ActivarSeleccion(activo));
 
@@ -307,11 +325,13 @@
 
     private async Task ActualizarReportesAsync()
     {
-        var reportes = Estado.ReportesEnMapa();
+        // Solo se marcan los avisos de la ruta que se está viendo (y el que se pidió ver desde Comunidad)
+        int ruta = _tarjeta != null && !_tarjeta.EsViaje ? _tarjeta.Numero : 0;
+        var reportes = Estado.ReportesEnMapa().Where(r => (ruta > 0 && r.RutaNumero == ruta) || r.Id == _avisoDestacado).ToList();
         string firma = string.Join(",", reportes.Select(r => r.Id));
         if (firma == _firmaReportes) return;
         _firmaReportes = firma;
-        var marcas = reportes.Select(r => new ReporteMapa(r.Lat.Value, r.Lng.Value, r.Titulo, r.Cuerpo, r.Tiempo)).ToList();
+        var marcas = reportes.Select(r => new ReporteMapa(r.Id, r.Lat.Value, r.Lng.Value, r.Titulo, r.Tiempo)).ToList();
         await EnMapa(m => m.MostrarReportes(marcas));
     }
 
@@ -368,8 +388,16 @@
     public void OcultarBanner() { _banner = null; StateHasChanged(); }
 
     // Tarjeta inferior de la ruta o del viaje seleccionado
-    public void MostrarTarjeta(Ruta r) { _tarjeta = r; StateHasChanged(); }
-    public void OcultarTarjeta() { _tarjeta = null; StateHasChanged(); }
+    public void MostrarTarjeta(Ruta r) { _tarjeta = r; StateHasChanged(); _ = InvokeAsync(ActualizarReportesAsync); }
+    public void OcultarTarjeta() { _tarjeta = null; StateHasChanged(); _ = InvokeAsync(ActualizarReportesAsync); }
+
+    // Aviso que otra pantalla pidió ver ("Ver dónde ocurrió"): su marca se muestra aunque no haya ruta elegida
+    private int _avisoDestacado;
+    public Task DestacarAvisoAsync(Publicacion aviso)
+    {
+        _avisoDestacado = aviso?.Id ?? 0;
+        return ActualizarReportesAsync();
+    }
 
     private async Task CambiarVariante(int indice)
     {
@@ -613,11 +641,14 @@
         _detalleReporte = "";
         _mensajeReporte = null;
         _reporteEnviado = false;
+        _ubicacionReporte = null;
+        _buscandoUbicacionReporte = false;
         _reporte = true;
     }
 
     private async Task EnviarReporte()
     {
+        if (ReporteEnEspera) return;
         var tipo = TipoReporte;
         var ruta = _rutaReporte > 0 ? Estado.BuscarRuta(_rutaReporte) : null;
         string titulo = tipo.Texto + (ruta != null ? " en " + ruta.Nombre : "");
@@ -626,12 +657,12 @@
         _enviandoReporte = true;
         try
         {
-            double[] ubicacion = tipo.Movilidad ? await Estado.UbicacionDeReporteAsync() : null;
+            double[] ubicacion = _ubicacionReporte;
             var (ok, error) = await Estado.PublicarAvisoAsync(titulo, detalle, ruta, tipo.Dias, ubicacion);
             _reporteEnviado = ok;
             _mensajeReporte = !ok ? error
                 : tipo.Movilidad && ubicacion == null ? T["Tu reporte se envió, pero no pudimos tomar tu ubicación: no aparecerá marcado en el mapa."]
-                : tipo.Movilidad ? T["¡Gracias! Tu reporte quedó marcado en el mapa y se quitará solo cuando caduque."]
+                : ubicacion != null ? T["¡Gracias! Tu reporte quedó marcado en el mapa y se quitará solo cuando caduque."]
                 : T["¡Gracias! Tu reporte ya es visible para la comunidad y se quitará solo cuando caduque."];
         }
         finally

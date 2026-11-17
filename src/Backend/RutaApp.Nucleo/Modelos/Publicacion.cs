@@ -34,6 +34,9 @@ public class Publicacion
     public double? Lng { get; set; }
     public bool TieneUbicacion => Lat != null && Lng != null;
 
+    // Fotos adjuntas (cada una es una imagen en formato data URL).
+    public List<string> Fotos { get; set; } = new();
+
     public string VenceTexto
     {
         get

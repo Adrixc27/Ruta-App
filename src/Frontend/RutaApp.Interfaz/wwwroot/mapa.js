@@ -17,6 +17,10 @@ window.rutaMapa = (function () {
             mk.bindTooltip(m.rotulo, { permanent: fijo, direction: m.dir || 'top', offset: m.off || [0, 0], className: 'pill' });
         }
         if (m.popup) mk.bindPopup(m.popup);
+        // Marca con clave (un aviso): al tocarla se avisa al componente, que abre su publicación
+        if (m.clave && e && e.ref) {
+            mk.on('click', function () { e.ref.invokeMethodAsync('AlTocarMarca', m.clave); });
+        }
         return mk;
     }
 

@@ -8,10 +8,16 @@ public partial class EstadoApp
     private bool _publicacionesCargadas;
     public bool ErrorPublicaciones { get; private set; }
 
+    // true mientras se piden las publicaciones: la pantalla muestra un esqueleto en lugar de la lista.
+    public bool CargandoPublicaciones { get; private set; }
+
     // Carga las publicaciones reales (las ve cualquiera, también un invitado). Con forzar vuelve a pedirlas.
     public async Task CargarPublicacionesAsync(bool forzar = false)
     {
         if (_publicacionesCargadas && !forzar) return;
+        CargandoPublicaciones = true;
+        ErrorPublicaciones = false;
+        Notificar();
         try
         {
             var posts = await _comunidad.ObtenerPublicacionesAsync(ConCuenta ? Usuario.Id : 0);
@@ -30,6 +36,7 @@ public partial class EstadoApp
         {
             ErrorPublicaciones = true;
         }
+        CargandoPublicaciones = false;
         Notificar();
     }
 
@@ -93,17 +100,28 @@ public partial class EstadoApp
     public async Task<(bool Ok, string Error)> PublicarAvisoAsync(string titulo, string detalle, Ruta ruta, int dias, double[] ubicacion = null)
     {
         if (!RequiereCuenta("Inicia sesión para reportar problemas y ayudar a otras personas a viajar mejor.")) return (false, null);
+        var (ok, error) = await PublicarAsync("aviso", titulo, detalle, ruta, dias, ubicacion);
+        return (ok, error == "No se pudo publicar." ? "No se pudo enviar el reporte." : error);
+    }
+
+    // Guarda una publicación de cualquier tipo, con su caducidad y, si las lleva, la ubicación de quien avisa y sus fotos.
+    // Devuelve (true, null) o (false, error).
+    public async Task<(bool Ok, string Error)> PublicarAsync(string tipo, string titulo, string detalle, Ruta ruta, int dias,
+                                                             double[] ubicacion = null, List<string> fotos = null)
+    {
+        if (!ConCuenta) return (false, "Inicia sesión para publicar.");
         try
         {
-            int id = await _comunidad.CrearAsync(Usuario.Id, "aviso", titulo, AgregarCaducidad(AgregarUbicacion(detalle, ubicacion), dias), ruta?.Numero, null);
-            if (id == 0) return (false, "No se pudo enviar el reporte.");
+            int id = await _comunidad.CrearAsync(Usuario.Id, tipo, titulo, AgregarCaducidad(AgregarUbicacion(detalle, ubicacion), dias), ruta?.Numero, fotos);
+            if (id == 0) return (false, "No se pudo publicar.");
 
             var p = new Publicacion
             {
-                Id = id, IdAutor = Usuario.Id, Tipo = "aviso", Autor = Nombre, Tiempo = "ahora", Fecha = DateTime.Now,
+                Id = id, IdAutor = Usuario.Id, Tipo = tipo, Autor = Nombre, Tiempo = "ahora", Fecha = DateTime.Now,
                 Titulo = titulo, Cuerpo = detalle, RutaNumero = ruta?.Numero ?? 0,
                 Vence = dias > 0 ? DateTime.Now.AddDays(dias) : null,
                 Lat = ubicacion?[0], Lng = ubicacion?[1],
+                Fotos = fotos != null ? new List<string>(fotos) : new List<string>(),
                 Orden = Publicaciones.Count > 0 ? Publicaciones.Max(x => x.Orden) + 1 : 1
             };
             if (ruta != null) p.Etiquetas.Add(new Etiqueta { Texto = ruta.Nombre, EsRuta = true });
@@ -139,7 +157,8 @@ public partial class EstadoApp
             Likes = d.Likes,
             MeGusta = d.MeGusta > 0,
             Orden = orden,
-            RutaNumero = d.IdRuta ?? 0
+            RutaNumero = d.IdRuta ?? 0,
+            Fotos = d.Fotos ?? new List<string>()
         };
         // La fecha de caducidad viaja al final del texto: "[[vence:2026-11-20T18:00]]"
         var vence = RegexVence.Match(p.Cuerpo ?? "");
