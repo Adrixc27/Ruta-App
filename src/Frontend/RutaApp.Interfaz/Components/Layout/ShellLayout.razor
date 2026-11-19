@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject EstadoApp Estado
+@inject ModoMuestra Muestra
 
 @* Diseño de la app: sidebar que se contrae (barra inferior en pantallas chicas), barra de ubicación y zona de pantallas. Solo con sesión o como invitado. *@
 @if (Estado.HaIngresado)
@@ -17,12 +18,12 @@
                 <div class="sidebar-etiqueta">@T["MENÚ"]</div>
                 <a href="planificar" class="nav-btn @Activo("planificar")" title="@(T["Planificar viaje"])" aria-current="@AriaActual("planificar")">
                     <Icon Nombre="IcoMap" />
-                    <span>@T["Planificar viaje"]</span>
+                    <span>@(Muestra.Activo ? T["Planificar"] : T["Planificar viaje"])</span>
                 </a>
                 <a href="rutas" class="nav-btn @Activo("rutas")" title="@(T["Rutas"])" aria-current="@AriaActual("rutas")">
                     <Icon Nombre="IcoRoute" />
                     <span>@T["Rutas"]</span>
-                    @if (Estado.TotalGuardadas > 0)
+                    @if (Estado.TotalGuardadas > 0 && !Muestra.Activo)
                     {
                         <em class="nav-badge">@Estado.TotalGuardadas</em>
                     }
@@ -67,7 +68,11 @@
                     }
                 </nav>
                 <div class="barra-usuario">
-                    @if (Estado.Invitado)
+                    @if (Muestra.Activo)
+                    {
+                        <button type="button" class="chip-invitado chip-boton" title="@(T["Es una demostración: puede tener fallas y no están todas las rutas de la ciudad"])" @onclick="Estado.MostrarAvisoDemo">@T["Demo"]</button>
+                    }
+                    else if (Estado.Invitado)
                     {
                         <span class="chip-invitado" title="@(T["Estás explorando sin cuenta"])">@T["Modo invitado"]</span>
                         <a href="acceso" class="btn-ghost btn-mini">@T["Iniciar sesión"]</a>
@@ -83,7 +88,16 @@
                     }
                 </div>
             </div>
-            <div class="contenido-cuerpo" id="contenido-principal" tabindex="-1" @ref="_contenido">@Body</div>
+            <div class="contenido-cuerpo" id="contenido-principal" tabindex="-1" @ref="_contenido">
+                @if (EnProximamente is { } pronto)
+                {
+                    <Proximamente Titulo="@T[pronto.Titulo]" Icono="@pronto.Icono" Texto="@T[pronto.Texto]" />
+                }
+                else
+                {
+                    @Body
+                }
+            </div>
         </main>
     </div>
 
@@ -93,6 +107,8 @@
             <b>Estás en: @T[Migas.Count > 0 ? Migas.Last() : "Inicio"]</b><span> @T["· Tab: avanzar · Enter: elegir · Alt+1…5: secciones"]</span>
         </div>
     }
+
+    <AvisoDemo />
 
     @* Guardar rutas, viajes y lugares es solo con cuenta: este aviso invita a iniciar sesión *@
     @if (Estado.AvisoSesion != null)
@@ -124,13 +140,32 @@
     private ElementReference _contenido;
 
     // Invitado: el botón dice "Iniciar sesión" y lleva al login. Con cuenta: "Cerrar sesión" (con confirmación).
-    private string TextoSesion => Estado.Invitado ? "Iniciar sesión" : "Cerrar sesión";
+    // En la muestra web no hay sesión: el botón vuelve a la página de inicio.
+    private string TextoSesion => Muestra.Activo ? "Ir al inicio" : Estado.Invitado ? "Iniciar sesión" : "Cerrar sesión";
+
+    // En la muestra web, las secciones que necesitan cuenta o servidor dicen "Disponible próximamente" en lugar de abrirse.
+    private (string Titulo, string Icono, string Texto)? EnProximamente
+    {
+        get
+        {
+            if (!Muestra.Activo) return null;
+            string ruta = Ruta;
+            return ruta switch
+            {
+                "comunidad" => ("Comunidad", "IcoUsers", "Aquí vas a poder leer y publicar avisos, preguntas y propuestas de otras personas que viajan en camión."),
+                "perfil" => ("Mi perfil", "IcoUser", "Aquí vas a ver tu cuenta, tu historial completo, tus rutas guardadas y tus lugares."),
+                _ when ruta == "configuracion" || ruta.StartsWith("configuracion/") =>
+                    ("Configuración", "IcoSettings", "Aquí vas a poder cambiar el idioma, las unidades, la accesibilidad y otros ajustes."),
+                _ => null
+            };
+        }
+    }
 
     protected override void OnInitialized()
     {
         if (!Estado.HaIngresado)
         {
-            Nav.NavigateTo("/", replace: true);
+            Nav.NavigateTo("", replace: true);
             return;
         }
         Estado.Cambio += Refrescar;
@@ -146,7 +181,7 @@
         else if (e.Key == "0") await _contenido.FocusAsync();
     }
 
-    private string Ruta => new Uri(Nav.Uri).AbsolutePath.Trim('/');
+    private string Ruta => Nav.RutaActual();
 
     // Marca el botón de la pantalla actual (Comparar cuenta como Planificar; los detalles de ajustes, como Configuración)
     private string Activo(string clave) => EsActivo(clave) ? "activo" : "";
@@ -196,10 +231,15 @@
 
     private void BotonSesion()
     {
+        if (Muestra.Activo)
+        {
+            Estado.IrALanding();
+            return;
+        }
         if (Estado.Invitado)
         {
             // No hay sesión que cerrar: se va directo a la pantalla de inicio de sesión
-            Nav.NavigateTo("/acceso");
+            Nav.NavigateTo("acceso");
             return;
         }
         Estado.PedirCierreSesion();   // pide confirmación antes de cerrar

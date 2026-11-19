@@ -2,6 +2,7 @@
   <Folder Name="/Frontend/">
     <Project Path="src/Frontend/RutaApp.Escritorio/RutaApp.Escritorio.csproj" />
     <Project Path="src/Frontend/RutaApp.Interfaz/RutaApp.Interfaz.csproj" />
+    <Project Path="src/Frontend/RutaApp.Web/RutaApp.Web.csproj" />
   </Folder>
   <Folder Name="/Backend/">
     <Project Path="src/Backend/RutaApp.Motor/RutaApp.Motor.csproj" />
@@ -10,6 +11,9 @@
   <Folder Name="/Database/">
     <Project Path="src/Database/RutaApp.Datos/RutaApp.Datos.csproj" />
     <File Path="src/Database/Scripts/esquema.sql" />
+  </Folder>
+  <Folder Name="/Herramientas/">
+    <Project Path="tools/ExportarRutas/ExportarRutas.csproj" />
   </Folder>
   <Folder Name="/Pruebas/">
     <Project Path="tests/RutaApp.Pruebas/RutaApp.Pruebas.csproj" />

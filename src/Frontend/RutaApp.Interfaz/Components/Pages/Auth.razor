@@ -121,7 +121,7 @@
 
     protected override void OnInitialized()
     {
-        _registro = new Uri(Nav.Uri).AbsolutePath.TrimEnd('/') == "/registro";
+        _registro = Nav.RutaActual() == "registro";
     }
 
     // Entre login y registro solo se cambia el formulario (la dirección /registro sirve para abrir directo el registro)

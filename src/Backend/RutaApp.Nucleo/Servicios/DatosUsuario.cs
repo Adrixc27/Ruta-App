@@ -26,7 +26,7 @@ public class DatosUsuarioService
 
     private string Archivo(int idUsuario) => Path.Combine(_carpeta, idUsuario + ".json");
 
-    public async Task<DatosGuardados> CargarAsync(int idUsuario)
+    public virtual async Task<DatosGuardados> CargarAsync(int idUsuario)
     {
         await _cerrojo.WaitAsync();
         try
@@ -45,7 +45,7 @@ public class DatosUsuarioService
     }
 
     // Borra los datos guardados de un usuario en este equipo (al borrar su cuenta).
-    public async Task BorrarAsync(int idUsuario)
+    public virtual async Task BorrarAsync(int idUsuario)
     {
         await _cerrojo.WaitAsync();
         try
@@ -60,7 +60,7 @@ public class DatosUsuarioService
         finally { _cerrojo.Release(); }
     }
 
-    public async Task GuardarAsync(int idUsuario, DatosGuardados datos)
+    public virtual async Task GuardarAsync(int idUsuario, DatosGuardados datos)
     {
         await _cerrojo.WaitAsync();
         try

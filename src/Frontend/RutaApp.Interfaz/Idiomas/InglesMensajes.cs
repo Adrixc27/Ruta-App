@@ -67,7 +67,7 @@ internal static class InglesMensajes
         ("No encontramos ese destino. Prueba con más detalle (calle, colonia).", "We could not find that destination. Try adding more detail (street, neighbourhood)."),
         ("No hay una cuenta con sesión iniciada.", "No account is signed in."),
         ("No pudimos obtener tu ubicación. Revisa que el servicio de ubicación esté activo.", "We could not get your location. Check that the location service is on."),
-        ("No pudimos ubicar tu origen. Escribe una dirección o permite la ubicación de Windows.", "We could not locate your origin. Type an address or allow Windows location."),
+        ("No pudimos ubicar tu origen. Escribe una dirección o permite la ubicación de tu dispositivo.", "We could not locate your origin. Type an address or allow your device location."),
         ("No se pudo borrar la cuenta. Inténtalo de nuevo.", "The account could not be deleted. Try again."),
         ("No se pudo conectar con la base de datos para borrar la cuenta. Revisa tu conexión.", "Could not connect to the database to delete the account. Check your connection."),
         ("No se pudo conectar con la base de datos. Intenta de nuevo.", "Could not connect to the database. Try again."),

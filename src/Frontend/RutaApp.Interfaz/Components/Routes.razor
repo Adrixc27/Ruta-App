@@ -1,8 +1,9 @@
 @implements IDisposable
 @inject EstadoApp Estado
+@inject ModoMuestra Muestra
 
 <HojaEstilos />
-<div class="ruta-app @ClasesAccesibilidad" @key="T.EsIngles">
+<div class="ruta-app @ClasesApp" @key="T.EsIngles">
     <Router AppAssembly="typeof(Routes).Assembly" NotFoundPage="typeof(Pages.NotFound)">
         <Found Context="routeData">
             <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
@@ -15,6 +16,8 @@
 </div>
 
 @code {
+    private string ClasesApp => (Muestra.Activo ? "muestra " : "") + ClasesAccesibilidad;
+
     private string ClasesAccesibilidad
     {
         get

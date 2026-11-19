@@ -1,0 +1,78 @@
+@implements IDisposable
+@inject EstadoApp Estado
+
+@* Menú de hamburguesa de la versión móvil: botón flotante sobre el mapa que abre el historial de viajes. Solo se ve en la muestra web con pantalla angosta. *@
+@if (Estado.EsMuestra)
+{
+    <div class="menu-flotante">
+        <button type="button" class="flotante-boton menu-boton" aria-label="@T["Historial de viajes"]" aria-expanded="@_abierto" @onclick="Alternar">
+            <Icon Nombre="@(_abierto ? "IcoX" : "IcoMenu")" Tam="22" />
+        </button>
+
+        @if (_abierto)
+        {
+            <div class="menu-fondo" @onclick="Cerrar"></div>
+            <div class="menu-panel" role="dialog" aria-label="@T["Historial de viajes"]">
+                <header>
+                    <b>@T["Historial"]</b>
+                    @if (Estado.Historial.Count > 0)
+                    {
+                        <button type="button" class="btn-ghost btn-mini" @onclick="() => _confirmar = true"><Icon Nombre="IcoTrash" Tam="14" /> @T["Borrar"]</button>
+                    }
+                </header>
+
+                @if (Estado.Historial.Count == 0)
+                {
+                    <EstadoVista Compacto="true" Icono="IcoHistory" Titulo="@(T["Aún no tienes viajes"])" Texto="@(T["Aquí aparecen los viajes que comienzas."])" />
+                }
+                else
+                {
+                    <div class="menu-lista">
+                        @foreach (var viaje in Estado.Historial)
+                        {
+                            var v = viaje;
+                            <button type="button" class="menu-viaje" @onclick="() => Elegir(v)">
+                                <Icon Nombre="IcoHistory" Tam="18" />
+                                <span>
+                                    <b>@v.Titulo</b>
+                                    <small>@v.CamionesTexto · @v.Cuando</small>
+                                </span>
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+<Dialogo @bind-Visible="_confirmar" Mensaje="¿Borrar todo tu historial de viajes?" TextoAceptar="Sí, borrar" TextoCancelar="No" OnAceptar="Borrar" />
+
+@code {
+    // Qué hacer con el viaje elegido (la pantalla que muestra el menú decide: verlo en el mapa o ir a Planificar)
+    [Parameter] public EventCallback<ViajeHistorial> OnElegir { get; set; }
+
+    private bool _abierto, _confirmar;
+
+    protected override void OnInitialized() => Estado.Cambio += Refrescar;
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    private void Alternar() => _abierto = !_abierto;
+
+    private void Cerrar() => _abierto = false;
+
+    private async Task Elegir(ViajeHistorial v)
+    {
+        _abierto = false;
+        await OnElegir.InvokeAsync(v);
+    }
+
+    private void Borrar()
+    {
+        Estado.BorrarHistorial();
+        _abierto = false;
+    }
+
+    public void Dispose() => Estado.Cambio -= Refrescar;
+}

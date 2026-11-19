@@ -1,0 +1,20 @@
+@inject EstadoApp Estado
+
+@* Aviso de la muestra web: es una demostración, puede fallar y no trae todas las rutas de la ciudad. Sale una vez al entrar y se puede volver a abrir. *@
+@if (Estado.EsMuestra && Estado.AvisoDemoAbierto)
+{
+    <div class="modal-fondo" @onclick="Estado.CerrarAvisoDemo">
+        <div class="modal modal-dialogo aviso-demo" role="dialog" aria-modal="true" aria-labelledby="aviso-demo-titulo" @onclick:stopPropagation="true">
+            <div class="aviso-sesion-icono"><Icon Nombre="IcoInfo" Tam="26" Color="var(--brand-primary)" /></div>
+            <h2 id="aviso-demo-titulo">@T["Esto es una demostración"]</h2>
+            <p>@T["Estás probando una demostración de R.U.T.A. y puede tener fallas."]</p>
+            <ul>
+                <li>@T["Las rutas de camión son limitadas: no están todas las rutas de la ciudad."]</li>
+                <li>@T["Tus viajes y rutas guardadas se quedan solo en este navegador."]</li>
+            </ul>
+            <div class="modal-acciones">
+                <button type="button" class="btn btn-primario" @onclick="Estado.CerrarAvisoDemo">@T["Entendido"]</button>
+            </div>
+        </div>
+    </div>
+}

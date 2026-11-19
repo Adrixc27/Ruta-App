@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta name="theme-color" content="#2563EB" />
+    <meta name="description" content="Muestra web de R.U.T.A., el Recomendador Urbano de Transporte Accesible: rutas de camión, planificación de viajes e historial." />
+    <title>R.U.T.A. · Muestra web</title>
+    <base href="/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;900&display=swap" />
+    <link rel="stylesheet" href="lib/leaflet/leaflet.css" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preload" id="webassembly" />
+    <script type="importmap"></script>
+    <style>
+        /* Pantalla de arranque: la primera visita descarga unos 4 MB, así que se anima y muestra el avance */
+        .arranque { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: #E6F0FA; font-family: 'Source Sans 3', 'Segoe UI', sans-serif; color: #2563EB; }
+        .arranque-logo { width: 72px; height: 72px; border-radius: 20px; background: #2563EB; color: #fff; font-size: 38px; font-weight: 900; display: flex; align-items: center; justify-content: center; animation: arranque-latido 1.8s ease-in-out infinite; }
+        .arranque-marca { font-size: 26px; font-weight: 900; letter-spacing: .06em; }
+        .arranque-via { position: relative; width: 220px; height: 30px; }
+        .arranque-via::before { content: ""; position: absolute; left: 0; right: 0; bottom: 4px; height: 5px; border-radius: 3px; background: #C8DCEF; }
+        .arranque-avance { position: absolute; left: 0; bottom: 4px; height: 5px; width: var(--blazor-load-percentage, 0%); min-width: 8%; border-radius: 3px; background: #2563EB; transition: width .4s ease-out; }
+        .arranque-camion { position: absolute; left: 0; bottom: 6px; color: #1B365D; animation: arranque-recorre 2.2s cubic-bezier(.37, 0, .63, 1) infinite; }
+        .arranque-texto { font-size: 14px; font-weight: 600; color: #1B365D; }
+        .arranque-texto::after { content: " " var(--blazor-load-percentage-text, ""); font-variant-numeric: tabular-nums; }
+        .arranque-puntos::after { content: ""; animation: arranque-puntos 1.4s steps(4, end) infinite; }
+        @keyframes arranque-recorre { from { transform: translateX(-26px); } to { transform: translateX(220px); } }
+        @keyframes arranque-latido { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+        @keyframes arranque-puntos { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75%, 100% { content: "..."; } }
+        @media (prefers-reduced-motion: reduce) { .arranque-logo, .arranque-camion, .arranque-puntos::after { animation: none; } .arranque-camion { left: 97px; } }
+    </style>
+</head>
+
+<body style="margin: 0; height: 100%;">
+
+    <!-- Se ve mientras se descarga la app (la primera vez tarda unos segundos); los estilos de la app los pone el componente HojaEstilos -->
+    <div id="app" style="height: 100%;">
+        <div class="arranque" role="status" aria-live="polite">
+            <div class="arranque-logo">R</div>
+            <b class="arranque-marca">RUTA</b>
+            <!-- Un camión recorre la carretera mientras se descarga la app; el relleno azul sigue el avance real que informa Blazor -->
+            <div class="arranque-via" aria-hidden="true">
+                <i class="arranque-avance"></i>
+                <svg class="arranque-camion" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6 M15 6v6 M2 12h19.6 M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3 M5 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M14 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M9 18h5" /></svg>
+            </div>
+            <span class="arranque-texto">Cargando la muestra<span class="arranque-puntos"></span></span>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui" data-nosnippet>
+        Ocurrió un error inesperado.
+        <a href="." class="reload">Recargar</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <!-- Leaflet: la única librería de JavaScript de la app; mapa.js solo la llama desde C# -->
+    <script src="lib/leaflet/leaflet.js"></script>
+    <script src="_content/RutaApp.Interfaz/mapa.js"></script>
+    <script src="web.js"></script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+
+</body>
+
+</html>

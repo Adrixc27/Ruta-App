@@ -14,11 +14,13 @@ public partial class EstadoApp
     private readonly AjustesService _ajustes;
     private readonly UsuarioService _usuarios;
     private readonly IServicioUbicacion _ubicacion;
+    private readonly ModoMuestra _muestra;
 
     public EstadoApp(NavigationManager nav, RutaRepositorio repositorio, ServicioTrazos trazos, FavoritoService favoritos,
                      DatosUsuarioService datos, ComunidadService comunidad, AjustesService ajustes, UsuarioService usuarios,
-                     IServicioUbicacion ubicacion)
+                     IServicioUbicacion ubicacion, ModoMuestra muestra)
     {
+        _muestra = muestra;
         _ubicacion = ubicacion;
         _ajustes = ajustes;
         _usuarios = usuarios;
@@ -40,6 +42,9 @@ public partial class EstadoApp
 
     // Preferencias de este equipo (unidades, accesibilidad).
     public AjustesService Ajustes => _ajustes;
+
+    // true en la muestra web: sin cuentas, comunidad, perfil ni configuración (ver ModoMuestra).
+    public bool EsMuestra => _muestra.Activo;
 
     // Avisos breves ("Ruta guardada", "Lugar guardado"…)
     public string Aviso { get; private set; }

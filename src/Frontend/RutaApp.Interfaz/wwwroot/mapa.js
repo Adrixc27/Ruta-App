@@ -75,13 +75,44 @@ window.rutaMapa = (function () {
         else if (!mostrar && esta) mapa.removeLayer(capa);
     }
 
+    // En pantallas angostas las tarjetas de vidrio (panel, tarjeta de la ruta) flotan sobre el mapa: el encuadre deja libres las franjas
+    // que tapan, arriba o abajo. Devuelve null cuando el panel no está sobre el mapa (escritorio).
+    function franjas(e) {
+        var cont = e.mapa.getContainer().parentElement;
+        var split = cont && cont.parentElement;
+        var panel = split && split.querySelector(':scope > .panel-lateral');
+        if (!panel || getComputedStyle(panel).position !== 'absolute') return null;
+        var c = cont.getBoundingClientRect(), alto = c.height;
+        var f = { arriba: 72, abajo: 28, lado: 32 };
+        var visible = getComputedStyle(panel).visibility !== 'hidden' && !panel.classList.contains('cerrada');
+        if (visible) {
+            var r = panel.getBoundingClientRect();
+            if ((r.top + r.bottom) / 2 - c.top > alto / 2) f.abajo = c.bottom - r.top + 12;          // tarjeta abajo (Comparar)
+            else if (r.top - c.top < alto * 0.3) f.arriba = r.bottom - c.top + 12;                   // tarjeta arriba (Planificar)
+        }
+        var tarjeta = split.querySelector('.mapa-tarjeta');
+        if (tarjeta && getComputedStyle(tarjeta).display !== 'none') f.abajo = Math.max(f.abajo, c.bottom - tarjeta.getBoundingClientRect().top + 12);
+        else if (split.querySelector('.panel-rutas.cerrada')) f.abajo = Math.max(f.abajo, 110);   // la tarjeta de la ruta aún no se pintó
+        f.arriba = Math.min(f.arriba, alto * 0.4);
+        f.abajo = Math.min(f.abajo, alto * 0.6);
+        return f;
+    }
+
     function encuadrar(e, pts, relleno, zoomMax) {
         if (!pts || !pts.length) return;
         e.mapa.invalidateSize();
-        if (pts.length === 1) { e.mapa.setView(pts[0], zoomMax || 15); return; }
+        var f = franjas(e);
+        if (pts.length === 1) {
+            e.mapa.setView(pts[0], zoomMax || 15);
+            if (f) e.mapa.panBy([0, (f.abajo - f.arriba) / 2], { animate: false });
+            return;
+        }
         var r = relleno || 90;
         var abajo = e.mapa.getSize().y > 480 ? r + 90 : r;   // deja libre abajo la tarjeta de la ruta
-        e.mapa.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [r, r], paddingBottomRight: [r, abajo], maxZoom: zoomMax || 17, animate: true });
+        var opciones = { maxZoom: zoomMax || 17, animate: true };
+        if (f) { opciones.paddingTopLeft = [f.lado, f.arriba]; opciones.paddingBottomRight = [f.lado, f.abajo]; }
+        else { opciones.paddingTopLeft = [r, r]; opciones.paddingBottomRight = [r, abajo]; }
+        e.mapa.fitBounds(L.latLngBounds(pts), opciones);
     }
 
     function encuadrarUbicaciones(e) {

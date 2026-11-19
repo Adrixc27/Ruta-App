@@ -8,6 +8,11 @@
 <div class="split split-380">
     <div class="panel-lateral">
         <div class="panel-scroll">
+            @* Versión móvil: la misma pregunta de la pantalla y qué se puede hacer aquí, para no perderse mientras la tarjeta cambia de tamaño *@
+            <div class="ubicacion-tarjeta">
+                <h2><Icon Nombre="IcoMap" Tam="18" /> <span>@T["¿A dónde vas hoy?"]</span></h2>
+                <p>@T["En esta sección puedes planificar tus viajes seleccionando una ubicación al estilo Didi / Uber."]</p>
+            </div>
             <div class="encabezado-seccion">
                 <h1 class="titulo-seccion">@T["¿A dónde vas hoy?"]<Ayuda Titulo="@(T["Planificar viaje"])" Texto="@(T["Escribe de dónde sales y a dónde vas (o toca «Elegir en el mapa»). También puedes buscar por el nombre de una parada. Después pulsa «Buscar y comparar rutas»."])" /></h1>
                 <p class="sub-panel">@T["Planifica tu viaje en transporte público"]</p>
@@ -17,7 +22,7 @@
             <div class="bloque">
                 <div class="campo-wrap">
                     <CampoTexto Text="@_origen" TextChanged="@(t => AlEscribir("origen", t))" Punto="var(--accent-origin)" Fondo="var(--bg-card)"
-                                Hint="¿Desde dónde sales?" OnFocoPerdido="CerrarSugerencias" OnFoco='() => _campoActivo = "origen"' />
+                                Hint="¿Desde dónde sales?" OnFocoPerdido='() => CerrarSugerencias("origen")' OnFoco='() => _campoActivo = "origen"' />
                     @Sugerencias("origen")
                 </div>
 
@@ -26,7 +31,7 @@
                     var e = escala;
                     <div class="campo-wrap escala">
                         <CampoTexto Text="@e.Texto" TextChanged="@(t => AlEscribir(e.Id, t))" Punto="var(--text-secondary)" Fondo="var(--bg-card)"
-                                    Hint="Parada intermedia" OnFocoPerdido="CerrarSugerencias" OnFoco="() => _campoActivo = e.Id" />
+                                    Hint="Parada intermedia" OnFocoPerdido="() => CerrarSugerencias(e.Id)" OnFoco="() => _campoActivo = e.Id" />
                         <button type="button" class="btn-icono" title="@(T["Quitar esta parada"])" @onclick="() => QuitarParada(e.Id)">✕</button>
                         @Sugerencias(e.Id)
                     </div>
@@ -34,7 +39,7 @@
 
                 <div class="campo-wrap">
                     <CampoTexto Text="@_destino" TextChanged="@(t => AlEscribir("destino", t))" Punto="var(--brand-primary)" Fondo="var(--bg-card)"
-                                Hint="¿A dónde vas?" OnFocoPerdido="CerrarSugerencias" OnFoco='() => _campoActivo = "destino"' />
+                                Hint="¿A dónde vas?" OnFocoPerdido='() => CerrarSugerencias("destino")' OnFoco="AlEnfocarDestino" />
                     @Sugerencias("destino")
                 </div>
 
@@ -83,7 +88,14 @@
                 }
                 else if (Estado.Lugares.Count == 0)
                 {
+                    @if (Estado.EsMuestra)
+                {
+                    <p class="nota-panel">@T["Aún no tienes lugares. Guarda tu casa o tu escuela con el botón de abajo."]</p>
+                }
+                else
+                {
                     <p class="nota-panel">@T["Aún no tienes lugares. Guarda tu casa o tu escuela con el botón de abajo, o agrégalos en"] <a href="perfil" class="azul">@T["Mi perfil"]</a>.</p>
+                }
                 }
                 else
                 {
@@ -189,13 +201,16 @@
                     <div class="aviso-compartido anima-entra">
                         <Icon Nombre="IcoInfo" Tam="16" />
                         <span>@T["Estás viendo un viaje que te compartieron."]</span>
-                        <button type="button" class="btn-ghost btn-mini" @onclick="GuardarCompartido">@T["Guardar en mi perfil"]</button>
+                        @if (!Estado.EsMuestra)
+                        {
+                            <button type="button" class="btn-ghost btn-mini" @onclick="GuardarCompartido">@T["Guardar en mi perfil"]</button>
+                        }
                     </div>
                 }
             </div>
 
             @* Historial de viajes: las rutas en las que ya viajaste *@
-            <div class="label-upper">@T["HISTORIAL DE VIAJES"]<Ayuda Titulo="@(T["Historial"])" Texto="@(T["Los viajes que ya hiciste. Toca uno para verlo otra vez en el mapa, o guárdalo con el marcador."])" /></div>
+            <div class="label-upper">@T["HISTORIAL DE VIAJES"]<Ayuda Titulo="@(T["Historial"])" Texto="@(T[Estado.EsMuestra ? "Los viajes que ya hiciste. Toca uno para verlo otra vez en el mapa." : "Los viajes que ya hiciste. Toca uno para verlo otra vez en el mapa, o guárdalo con el marcador."])" /></div>
             @if (!Estado.ConCuenta)
             {
                 <p class="nota-panel">@T["Tu historial se guarda con tu cuenta."] <a href="acceso" class="azul">@T["Inicia sesión"]</a> @T["para ver los viajes que hagas."]</p>
@@ -206,8 +221,8 @@
             }
             else
             {
-                <p class="nota-panel">@T["Toca un viaje para verlo en el mapa. Con el marcador lo guardas en tu perfil."]</p>
-                @foreach (var viaje in Estado.Historial.Take(10))
+                <p class="nota-panel">@T[Estado.EsMuestra ? "Toca un viaje para verlo otra vez en el mapa." : "Toca un viaje para verlo en el mapa. Con el marcador lo guardas en tu perfil."]</p>
+                @foreach (var viaje in Estado.Historial.Take(Estado.EsMuestra ? 30 : 10))
                 {
                     var v = viaje;
                     <div class="viaje-historial @(_historialSel == v ? "sel" : "")" @onclick="() => VerHistorial(v)" tabindex="0" role="button" @onkeydown="@(async (KeyboardEventArgs e) => { if (Teclado.EsActivacion(e)) await VerHistorial(v); })">
@@ -217,12 +232,19 @@
                             <span class="azul">@v.CamionesTexto</span>
                             <small>@v.Detalle</small>
                         </div>
-                        <button type="button" class="btn-icono" title="@(v.EstaGuardado ? "Quitar de guardados" : "Guardar viaje")" @onclick="() => Estado.AlternarGuardadoHistorial(v)" @onclick:stopPropagation="true">
-                            <Icon Nombre="IcoBookmark" Tam="17" Color="@(v.EstaGuardado ? "var(--brand-primary)" : null)" Relleno="@(v.EstaGuardado ? "var(--brand-primary)" : null)" />
-                        </button>
+                        @if (!Estado.EsMuestra)   // guardar viajes se ve en el perfil, que la muestra web todavía no tiene
+                        {
+                            <button type="button" class="btn-icono" title="@(v.EstaGuardado ? "Quitar de guardados" : "Guardar viaje")" @onclick="() => Estado.AlternarGuardadoHistorial(v)" @onclick:stopPropagation="true">
+                                <Icon Nombre="IcoBookmark" Tam="17" Color="@(v.EstaGuardado ? "var(--brand-primary)" : null)" Relleno="@(v.EstaGuardado ? "var(--brand-primary)" : null)" />
+                            </button>
+                        }
                     </div>
                 }
-                @if (Estado.Historial.Count > 10)
+                @if (Estado.EsMuestra)
+                {
+                    <button type="button" class="btn-ghost" @onclick="() => _confirmarBorrarHistorial = true"><Icon Nombre="IcoTrash" Tam="15" /> @T["Borrar historial"]</button>
+                }
+                else if (Estado.Historial.Count > 10)
                 {
                     <button type="button" class="btn-ghost" @onclick='() => Estado.Navegar("perfil")'>@T["Ver todo el historial en mi perfil"] <Icon Nombre="IcoArrowRight" Tam="14" /></button>
                 }
@@ -230,8 +252,13 @@
         </div>
     </div>
 
+    <CargandoMapa Visible="_cargandoViaje" Texto="Cargando viaje…" />
+
     <Mapa @ref="_mapa" OnPlanificar="ReplanificarMostrado" OnClicMapa="AlClicMapa" />
 </div>
+
+<Dialogo @bind-Visible="_confirmarBorrarHistorial" Mensaje="¿Borrar todo tu historial de viajes?" TextoAceptar="Sí, borrar" TextoCancelar="No"
+         OnAceptar="Estado.BorrarHistorial" />
 
 @code {
     private const int MaxParadasIntermedias = 3;
@@ -259,6 +286,7 @@
     private string _error;
     private bool _buscando;
     private string _campoActivo = "destino";
+    private bool _recomendadas;   // las sugerencias abiertas son lugares recomendados (destino vacío), no resultados de búsqueda
 
     private string _tipoActivo = "";                       // a qué campo pertenecen las sugerencias abiertas
     private List<Sugerencia> _sugerencias = new();
@@ -276,7 +304,7 @@
     private CancellationTokenSource _esperaLugar;
     private bool _buscandoUbicacion;
 
-    private bool _pegarCodigo, _viajeCompartido;
+    private bool _pegarCodigo, _viajeCompartido, _confirmarBorrarHistorial, _cargandoViaje;
     private string _codigoTexto = "", _mensajeCodigo, _codigoAbierto = "";
 
     private string _nombreLugar = "", _tipoLugar = "casa", _errorLugar;
@@ -374,10 +402,21 @@
     private async Task MostrarViajeAsync(Ruta r, string subtitulo)
     {
         _viajeMostrado = r;
+        if (Estado.EsMuestra)
+        {
+            _cargandoViaje = true;
+            StateHasChanged();
+            await Task.Delay(90);
+        }
         await QuitarMarcasDeBusquedaAsync();
         _mapa.BannerViaje(r.Nombre, subtitulo);
         _mapa.MostrarTarjeta(r);
         await _mapa.DibujarRuta(r);
+        if (Estado.EsMuestra)
+        {
+            await Task.Delay(500);
+            _cargandoViaje = false;
+        }
         StateHasChanged();
     }
 
@@ -687,8 +726,23 @@
     }
 
     // Espera a que el usuario deje de escribir (450 ms) y entonces busca lugares parecidos
+    // Al tocar el destino vacío se recomiendan lugares conocidos a los que sí hay ruta (los más cercanos a la persona primero)
+    private void AlEnfocarDestino()
+    {
+        _campoActivo = "destino";
+        _recomendadas = false;
+        _sugerencias = new List<Sugerencia>();
+        if (!string.IsNullOrWhiteSpace(_destino) || _eligiendo != null) return;
+        var lugares = Estado.LugaresRecomendados();
+        if (lugares.Count == 0) return;
+        _tipoActivo = "destino";
+        _sugerencias = lugares;
+        _recomendadas = true;
+    }
+
     private async Task AlEscribir(string tipo, string texto)
     {
+        _recomendadas = false;
         await OcultarViajeMostradoAsync();
         PonerTexto(tipo, texto);
         _elegido.Remove(tipo);
@@ -748,11 +802,15 @@
         @if (_tipoActivo == tipo && _sugerencias.Count > 0)
         {
             <div class="sugerencias">
+                @if (_recomendadas)
+                {
+                    <div class="sugerencias-titulo">@T["Lugares a los que puedes ir"]</div>
+                }
                 @foreach (var sug in _sugerencias)
                 {
                     var s = sug;
                     <div class="sugerencia" @onmousedown="() => ElegirSugerencia(s)" @onmousedown:preventDefault="true" tabindex="0" role="button" @onkeydown="@(async (KeyboardEventArgs e) => { if (Teclado.EsActivacion(e)) await ElegirSugerencia(s); })">
-                        <span class="sug-num">@s.Numero</span>
+                        <span class="sug-num">@if (s.Numero == "LUGAR") { <Icon Nombre="IcoPin" Tam="14" /> } else { @s.Numero }</span>
                         <div><b>@s.Nombre</b><small>@s.Detalle</small></div>
                     </div>
                 }
@@ -763,6 +821,7 @@
     // El usuario elige una de las sugerencias: se escribe en el campo y se marca en el mapa
     private async Task ElegirSugerencia(Sugerencia s)
     {
+        _recomendadas = false;
         string tipo = _tipoActivo;
         if (_esperas.Remove(tipo, out var cts)) cts.Cancel();
         PonerTexto(tipo, s.Nombre);
@@ -772,9 +831,12 @@
         else { _elegido[tipo] = s; await _mapa.ElegirUbicacion(tipo, s.Nombre, s.Lat, s.Lng, EtiquetaMarcador(tipo)); }
     }
 
-    private async Task CerrarSugerencias()
+    private async Task CerrarSugerencias(string campo)
     {
         await Task.Delay(150);   // para que alcance a registrarse el clic en una sugerencia
+        // Si la persona pasó de un campo al destino, el aviso de "salió del origen" no debe borrar los lugares recomendados
+        if (_recomendadas && _campoActivo != campo) return;
+        _recomendadas = false;
         _sugerencias = new List<Sugerencia>();
         await InvokeAsync(StateHasChanged);
     }
@@ -795,7 +857,7 @@
             var o = await ResolverAsync("origen");
             if (o == null)
             {
-                _error = "No pudimos ubicar tu origen. Escribe una dirección o permite la ubicación de Windows.";
+                _error = "No pudimos ubicar tu origen. Escribe una dirección o permite la ubicación de tu dispositivo.";
                 return;
             }
 

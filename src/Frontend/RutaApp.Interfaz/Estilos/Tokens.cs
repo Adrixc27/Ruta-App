@@ -117,6 +117,12 @@ public static class Tokens
         ("anillo-foco", "0 0 0 3px rgba(96, 165, 250, .35)"),
         ("anillo-error", "0 0 0 3px rgba(220, 38, 38, .18)"),
 
+        // ── Vidrio flotante (tarjetas sobre el mapa): la receta de .glass
+        ("glass-fondo", "rgba(230, 240, 250, .94)"),
+        ("glass-desenfoque", "blur(10px)"),
+        ("sombra-flotante", "0 10px 30px rgba(27, 54, 93, .22)"),
+        ("margen-flotante", "12px"),
+
         // ── Movimiento
         ("dur-rapida", ".12s"),
         ("dur", ".18s"),

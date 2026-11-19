@@ -341,6 +341,13 @@ Si el proyecto evoluciona a una versión abierta, esta sección será utilizada 
 
 ---
 
+# 🌐 Muestra web
+
+La rama `RUTA-Muestra` publica una versión de prueba en **GitHub Pages** (rutas, planificar viaje e historial; Comunidad, perfil y
+configuración dicen *Disponible próximamente*). Cómo funciona y cómo publicarla: [`src/Frontend/RutaApp.Web/LEEME.md`](src/Frontend/RutaApp.Web/LEEME.md).
+
+---
+
 # 📄 Licencia
 
 Este proyecto fue desarrollado con fines académicos y educativos.

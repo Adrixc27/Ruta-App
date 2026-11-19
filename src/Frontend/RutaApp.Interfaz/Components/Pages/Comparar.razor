@@ -36,6 +36,10 @@
             </div>
 
             <div class="lista-opciones">
+                @if (_calculando)
+                {
+                    <CargandoOpciones />
+                }
                 @foreach (var opcion in _opciones)
                 {
                     var r = opcion;
@@ -49,10 +53,13 @@
                             <button type="button" class="btn-icono" title="@(T["Compartir este viaje"])" @onclick="() => Compartir(r)" @onclick:stopPropagation="true">
                                 <Icon Nombre="IcoShare" Tam="17" />
                             </button>
-                            <button type="button" class="btn-icono" title="@(r.Guardada ? "Quitar de guardados" : "Guardar este viaje")"
-                                    @onclick="() => Estado.AlternarFavoritoViaje(r)" @onclick:stopPropagation="true">
-                                <Icon Nombre="IcoBookmark" Tam="18" Color="@(r.Guardada ? "var(--brand-primary)" : null)" Relleno="@(r.Guardada ? "var(--brand-primary)" : null)" />
-                            </button>
+                            @if (!Estado.EsMuestra)   // los viajes guardados se ven en el perfil, que la muestra web todavía no tiene
+                            {
+                                <button type="button" class="btn-icono" title="@(r.Guardada ? "Quitar de guardados" : "Guardar este viaje")"
+                                        @onclick="() => Estado.AlternarFavoritoViaje(r)" @onclick:stopPropagation="true">
+                                    <Icon Nombre="IcoBookmark" Tam="18" Color="@(r.Guardada ? "var(--brand-primary)" : null)" Relleno="@(r.Guardada ? "var(--brand-primary)" : null)" />
+                                </button>
+                            }
                         </div>
                         <div class="opcion-datos">
                             <Icon Nombre="IcoClock" Tam="14" Color="var(--text-primary)" /><b>@r.MinutosTexto</b>
@@ -142,6 +149,8 @@
         }
     </div>
 
+    <CargandoMapa Visible="_cargandoRuta" Texto="Dibujando ruta…" />
+
     <Mapa @ref="_mapa" />
 </div>
 
@@ -158,6 +167,7 @@
     private string _conteo = "Calculando las mejores rutas…";
 
     private bool _enViaje, _llego, _confirmarFin;
+    private bool _calculando = true, _cargandoRuta;   // animaciones de carga: opciones calculándose y ruta dibujándose
     private List<PasoViaje> _pasos = new();
     private int _paso;
     private string _distanciaSiguiente;
@@ -203,15 +213,18 @@
 
         if (!Estado.HayCoordenadas)
         {
+            _calculando = false;
             _conteo = "Elige un origen y un destino en Planificar viaje para ver las rutas.";
             _mapa.BannerTexto("Todavía no hay un viaje que comparar");
             StateHasChanged();
             return;
         }
 
+        await Task.Delay(60);   // deja pintar el aviso de "buscando" antes de calcular (el cálculo ocupa el hilo)
         List<Ruta> opciones = await CalcularViajeAsync();
         if (version != _version) return;   // llegó otra búsqueda mientras se calculaba
         _opciones = opciones;
+        _calculando = false;
 
         _conteo = _opciones.Count == 0
             ? "No hay rutas de camión a menos de 1 km de tus puntos, o la distancia es demasiado grande"
@@ -300,9 +313,21 @@
         foreach (var x in _opciones) x.Seleccionada = (x == r);
         _seleccion = r;
 
+        if (Estado.EsMuestra)
+        {
+            _cargandoRuta = true;
+            StateHasChanged();
+            await Task.Delay(60);
+        }
         _mapa.BannerViaje(r.Nombre, r.MinutosTexto + " · " + r.TarifaTexto);
         _mapa.MostrarTarjeta(r);
         await _mapa.DibujarRuta(r);
+        if (Estado.EsMuestra)
+        {
+            await Task.Delay(350);
+            _cargandoRuta = false;
+            StateHasChanged();
+        }
     }
 
     private async Task Comenzar()

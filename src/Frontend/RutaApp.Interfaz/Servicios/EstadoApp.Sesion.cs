@@ -26,12 +26,26 @@ public partial class EstadoApp
 
     public void EntrarComoInvitado()
     {
+        if (_muestra.Activo)
+        {
+            // Muestra web: un usuario local, así el historial, los lugares y las rutas guardadas funcionan sin cuenta (quedan en el navegador)
+            IniciarSesion(_muestra.NuevoUsuarioLocal());
+            AvisoDemoAbierto = true;   // al entrar se avisa que es una demostración
+            return;
+        }
         Usuario = null;
         Nombre = "Invitado";
         Correo = "Sin cuenta";
         Invitado = true;
         HaIngresado = true;
     }
+
+    // Aviso de la muestra web ("esto es una demostración"): sale al entrar y se puede volver a abrir.
+    public bool AvisoDemoAbierto { get; private set; }
+
+    public void MostrarAvisoDemo() { AvisoDemoAbierto = true; Notificar(); }
+
+    public void CerrarAvisoDemo() { AvisoDemoAbierto = false; Notificar(); }
 
     // Se dispara cuando se pide ver otra vez la animación de entrada estando ya en la landing.
     public event Action IntroSolicitada;
@@ -44,7 +58,7 @@ public partial class EstadoApp
             IntroVista = false;
             IntroSolicitada?.Invoke();
         }
-        _nav.NavigateTo("/");
+        _nav.NavigateTo("");
     }
 
     // true cuando la animación de entrada (el camión que revela "RUTA") ya se vio en esta sesión.
@@ -149,7 +163,7 @@ public partial class EstadoApp
     {
         ConfirmandoCierre = false;
         CerrarSesion();
-        _nav.NavigateTo("/");
+        _nav.NavigateTo("");
     }
 
     // Borra la cuenta y todo lo suyo (base de datos y datos de este equipo). Devuelve el error, o null si salió bien.
@@ -168,7 +182,7 @@ public partial class EstadoApp
         await _datos.BorrarAsync(id);
         _publicacionesCargadas = false;
         CerrarSesion();
-        _nav.NavigateTo("/");
+        _nav.NavigateTo("");
         MostrarAviso("Tu cuenta se borró");
         return null;
     }
@@ -215,6 +229,6 @@ public partial class EstadoApp
     public void IrAIniciarSesion()
     {
         AvisoSesion = null;
-        _nav.NavigateTo("/acceso");
+        _nav.NavigateTo("acceso");
     }
 }

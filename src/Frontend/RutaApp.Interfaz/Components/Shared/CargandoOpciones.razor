@@ -1,0 +1,15 @@
+@* Mientras se calculan las opciones de viaje: el camión recorriendo la línea y esqueletos con la forma de las tarjetas que van a llegar. *@
+<div class="cargando-opciones" role="status" aria-live="polite" aria-busy="true">
+    <div class="cargando-titulo">
+        <span class="bus-pista" aria-hidden="true"><Icon Nombre="IcoBus" Tam="16" /></span>
+        <b>@T["Buscando las mejores rutas…"]</b>
+    </div>
+    @for (int i = 0; i < 2; i++)
+    {
+        <div class="opcion-esqueleto" aria-hidden="true">
+            <span class="esqueleto titulo"></span>
+            <span class="esqueleto linea media"></span>
+            <span class="esqueleto linea corta"></span>
+        </div>
+    }
+</div>

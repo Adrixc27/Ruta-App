@@ -6,9 +6,13 @@
 <PageTitle>@T["Rutas · R.U.T.A."]</PageTitle>
 
 <div class="split split-400">
-    <div class="panel-lateral panel-rutas">
+    <div class="panel-lateral panel-rutas @(_listaAbierta ? "" : "cerrada")">
         <div>
-            <h1 class="titulo-panel grande">@T["Rutas de la zona"]<Ayuda Titulo="@(T["Rutas de la zona"])" Texto="@(T["Aquí ves todas las rutas de camión. Toca una para verla en el mapa, con sus paradas y más detalles. Con el marcador la guardas en tu perfil (requiere sesión)."])" /></h1>
+            @if (Estado.EsMuestra)
+            {
+                <button type="button" class="btn-icono panel-cerrar" title="@(T["Cerrar"])" aria-label="@(T["Cerrar"])" @onclick="() => _listaAbierta = false"><Icon Nombre="IcoX" Tam="18" /></button>
+            }
+            <h1 class="titulo-panel grande">@T["Rutas de la zona"]<Ayuda Titulo="@(T["Rutas de la zona"])" Texto="@(T[Estado.EsMuestra ? "Aquí ves todas las rutas de camión. Toca una para verla en el mapa, con sus paradas y más detalles. Con el marcador la guardas en la pestaña Guardadas (se queda en este navegador)." : "Aquí ves todas las rutas de camión. Toca una para verla en el mapa, con sus paradas y más detalles. Con el marcador la guardas en tu perfil (requiere sesión)."])" /></h1>
             <p class="sub-panel">@(_soloGuardadas ? "Tus rutas guardadas, siempre a un toque" : "Toca una ruta para verla en el mapa")</p>
         </div>
 
@@ -106,7 +110,11 @@
         <p class="nota-pie">@(_soloGuardadas || Estado.Rutas.Count == 0 ? "" : "Mostrando " + Visibles.Count() + " de " + Estado.Rutas.Count + " rutas")</p>
     </div>
 
-    <Mapa @ref="_mapa" OnQuitar="QuitarSeleccion" OnPlanificar="PlanificarConRuta" OnGuardar="GuardarSeleccion" />
+    @* Versión móvil: con la lista cerrada, tocar la tarjeta de la ruta (abajo) la vuelve a abrir; el historial va en el menú de hamburguesa *@
+    <MenuHistorial OnElegir="VerViaje" />
+    <CargandoMapa Visible="_cargandoRuta" Texto="Dibujando ruta…" />
+
+    <Mapa @ref="_mapa" OnQuitar="QuitarSeleccion" OnPlanificar="PlanificarConRuta" OnGuardar="GuardarSeleccion" OnTocarTarjeta="AbrirLista" />
 </div>
 
 <CompartirDialogo @bind-Visible="_compartir" Titulo="@_tituloCompartir" Codigo="@_codigo" />
@@ -115,6 +123,7 @@
     private Mapa _mapa;
     private Publicacion _avisoPedido;
     private bool _soloGuardadas;
+    private bool _listaAbierta = true, _cargandoRuta;   // móvil: la lista flota en el centro y se cierra al elegir una ruta
     private string _busqueda = "";
     private Ruta _seleccion;
     private Ruta _pedida;   // ruta que otra pantalla quiere ver en el mapa
@@ -189,10 +198,29 @@
         foreach (var x in Estado.Rutas) x.Seleccionada = (x == r);
         _seleccion = r;
         Estado.RutaSeleccionada = r;
+        if (Estado.EsMuestra)
+        {
+            // La lista se cierra y un aviso muestra que la ruta se está dibujando (el breve respiro deja ver el cambio)
+            _listaAbierta = false;
+            _cargandoRuta = true;
+            StateHasChanged();
+            await Task.Delay(90);
+        }
         _mapa.BannerRuta("Mostrando " + r.Nombre, true);
         _mapa.MostrarTarjeta(r);
         await _mapa.DibujarRuta(r);
+        if (Estado.EsMuestra)
+        {
+            await Task.Delay(500);
+            _cargandoRuta = false;
+            StateHasChanged();
+        }
     }
+
+    private void AbrirLista() => _listaAbierta = true;
+
+    // Un viaje del menú de historial se ve en Planificar
+    private void VerViaje(ViajeHistorial v) => Estado.Navegar("planificar", Estado.RutaDeViaje(v));
 
     // Botón "Quitar" del banner del mapa
     private async Task QuitarSeleccion()
@@ -200,6 +228,7 @@
         foreach (var x in Estado.Rutas) x.Seleccionada = false;
         _seleccion = null;
         Estado.RutaSeleccionada = null;
+        _listaAbierta = true;
         await _mapa.LimpiarRuta();
         _mapa.OcultarTarjeta();
         _mapa.BannerTexto("Elige una ruta de la lista para verla en el mapa");

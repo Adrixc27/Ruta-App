@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using RutaApp.Interfaz.Idiomas;
 using RutaApp.Nucleo;
 
@@ -10,6 +11,7 @@ public static class RegistroServicios
     public static IServiceCollection AgregarServiciosRuta(this IServiceCollection servicios)
     {
         servicios.AgregarNucleo();
+        servicios.TryAddSingleton(new ModoMuestra());   // la muestra web registra el suyo, activo, antes de llamar aquí
         servicios.AddSingleton<Traductor>();
         servicios.AddScoped<EstadoApp>();
         return servicios;

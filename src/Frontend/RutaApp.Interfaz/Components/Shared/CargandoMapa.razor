@@ -1,0 +1,13 @@
+@* Aviso flotante sobre el mapa mientras se dibuja una ruta o un viaje: un camión recorre una línea y dice qué se está cargando. *@
+@if (Visible)
+{
+    <div class="glass cargando-mapa" role="status" aria-live="polite">
+        <span class="bus-pista" aria-hidden="true"><Icon Nombre="IcoBus" Tam="16" /></span>
+        <span>@T[Texto]</span>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public string Texto { get; set; } = "Cargando…";
+}

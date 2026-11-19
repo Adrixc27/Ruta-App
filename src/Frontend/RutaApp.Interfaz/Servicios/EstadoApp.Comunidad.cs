@@ -14,7 +14,7 @@ public partial class EstadoApp
     // Carga las publicaciones reales (las ve cualquiera, también un invitado). Con forzar vuelve a pedirlas.
     public async Task CargarPublicacionesAsync(bool forzar = false)
     {
-        if (_publicacionesCargadas && !forzar) return;
+        if (_muestra.Activo || (_publicacionesCargadas && !forzar)) return;   // la muestra web no tiene comunidad
         CargandoPublicaciones = true;
         ErrorPublicaciones = false;
         Notificar();

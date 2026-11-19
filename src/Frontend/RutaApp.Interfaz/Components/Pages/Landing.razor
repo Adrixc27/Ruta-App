@@ -1,6 +1,7 @@
 @page "/"
 @implements IDisposable
 @inject EstadoApp Estado
+@inject ModoMuestra Muestra
 
 <PageTitle>@T["R.U.T.A. · Transporte público"]</PageTitle>
 
@@ -26,18 +27,35 @@
             <h1>@T["Transporte público en la palma de tu mano"]</h1>
             <p>@T["Llegando a tu destino, rápido y directo."]</p>
             <div class="landing-botones">
-                @if (Estado.ConCuenta)
+                @if (Muestra.Activo)
                 {
-                    <button type="button" class="btn btn-primario btn-grande" @onclick="Estado.PedirCierreSesion"><Icon Nombre="IcoLogout" Tam="20" /> @T["Cerrar sesión"]</button>
+                    @* Muestra web: no hay cuentas, se entra directo a lo que sí funciona *@
+                    <button type="button" class="btn btn-primario btn-grande" @onclick="PlanificarViaje">
+                        <Icon Nombre="IcoNavigation" Tam="20" /> @T["Planificar viaje"]
+                    </button>
+                    <button type="button" class="btn btn-sinborde btn-grande" @onclick="VerRutas">
+                        <Icon Nombre="IcoRoute" Tam="20" /> @T["Ver rutas"]
+                    </button>
                 }
                 else
                 {
-                    <a href="acceso" class="btn btn-primario btn-grande">@T["Iniciar sesión"]</a>
+                    @if (Estado.ConCuenta)
+                    {
+                        <button type="button" class="btn btn-primario btn-grande" @onclick="Estado.PedirCierreSesion"><Icon Nombre="IcoLogout" Tam="20" /> @T["Cerrar sesión"]</button>
+                    }
+                    else
+                    {
+                        <a href="acceso" class="btn btn-primario btn-grande">@T["Iniciar sesión"]</a>
+                    }
+                    <button type="button" class="btn btn-sinborde btn-grande" @onclick="PlanificarViaje">
+                        <Icon Nombre="IcoNavigation" Tam="20" /> @T["Planificar viaje"]
+                    </button>
                 }
-                <button type="button" class="btn btn-sinborde btn-grande" @onclick="PlanificarViaje">
-                    <Icon Nombre="IcoNavigation" Tam="20" /> @T["Planificar viaje"]
-                </button>
             </div>
+            @if (Muestra.Activo)
+            {
+                <small class="landing-nota"><b>@T["Demostración."]</b> @T["Esta versión es solo una muestra de la aplicación: puede tener fallas y sus rutas de camión son limitadas, no están todas las rutas de la ciudad."]</small>
+            }
         </div>
 
         <div class="landing-tarjeta">
@@ -52,7 +70,7 @@
     {
         get
         {
-            if (!Estado.ConCuenta) return T["¡Bienvenido a R.U.T.A.!"];
+            if (!Estado.ConCuenta || Muestra.Activo) return T["¡Bienvenido a R.U.T.A.!"];
             string primero = Estado.Nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? Estado.Nombre;
             return T.F("¡Hola, {0}! Qué bueno verte de nuevo.", primero);
         }
@@ -102,6 +120,12 @@
     private async Task PlanificarViaje()
     {
         Estado.DestinoTrasIngreso = "planificar";
+        await Entrar();
+    }
+
+    private async Task VerRutas()
+    {
+        Estado.DestinoTrasIngreso = "rutas";
         await Entrar();
     }
 

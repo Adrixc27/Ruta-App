@@ -16,7 +16,7 @@ public partial class EstadoApp
             "ajuste" => "configuracion/ajuste?nombre=" + Uri.EscapeDataString(parametro as string ?? ""),
             _ => clave
         };
-        _nav.NavigateTo("/" + url);
+        _nav.NavigateTo(url);   // relativa a la base de la app: así funciona también cuando se publica en una subcarpeta (GitHub Pages)
     }
 
     public T TomarParametro<T>() where T : class

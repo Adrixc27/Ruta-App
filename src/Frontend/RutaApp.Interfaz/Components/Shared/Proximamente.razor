@@ -1,0 +1,17 @@
+@* Pantalla de una sección que todavía no está en la muestra web. Dice qué será y lleva a lo que sí funciona. *@
+<div class="proximamente" role="status">
+    <span class="estado-icono"><Icon Nombre="@Icono" Tam="30" /></span>
+    <h1>@Titulo</h1>
+    <span class="etiqueta-pronto">@T["Disponible próximamente"]</span>
+    <p>@Texto</p>
+    <div class="estado-accion">
+        <a href="planificar" class="btn btn-primario"><Icon Nombre="IcoNavigation" Tam="16" /> @T["Planificar viaje"]</a>
+        <a href="rutas" class="btn btn-contorno"><Icon Nombre="IcoRoute" Tam="16" /> @T["Ver rutas"]</a>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Titulo { get; set; }
+    [Parameter] public string Icono { get; set; } = "IcoInfo";
+    [Parameter] public string Texto { get; set; }
+}

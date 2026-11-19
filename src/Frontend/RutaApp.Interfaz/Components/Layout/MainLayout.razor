@@ -1,7 +1,18 @@
 @inherits LayoutComponentBase
+@inject ModoMuestra Muestra
 
 @* Diseño de las páginas públicas (landing, sobre nosotros, inicio de sesión) *@
-<div class="publico">@Body</div>
+<div class="publico">
+    @if (Muestra.Activo && (Nav.RutaActual() is "acceso" or "registro"))
+    {
+        @* Muestra web: iniciar sesión y crear cuenta todavía no están *@
+        <Proximamente Titulo="@T["Iniciar sesión"]" Icono="IcoLock" Texto="@T["Aquí vas a poder entrar con tu cuenta para guardar tus viajes y verlos desde cualquier dispositivo."]" />
+    }
+    else
+    {
+        @Body
+    }
+</div>
 
 <div id="blazor-error-ui" data-nosnippet>
     @T["Ocurrió un error inesperado."]

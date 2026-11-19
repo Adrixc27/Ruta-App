@@ -10,7 +10,7 @@ namespace RutaApp.Datos;
 public class RutaService
 {
     private List<RutaOficial>? _cache;
-    public async Task<List<RutaOficial>> ObtenerRutasAsync()
+    public virtual async Task<List<RutaOficial>> ObtenerRutasAsync()
     {
         if (_cache != null) return _cache;
 

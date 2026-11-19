@@ -38,13 +38,16 @@
     @* Controles a la derecha, como en las apps de navegación: centrar en mí, reportar y leyenda *@
     <div class="mapa-controles">
         <Ayuda Titulo="Controles del mapa" Derecha="true"
-               Texto="Mira el mapa: la cruz te lleva a tu ubicación, el megáfono reporta un problema (ponchadura, tráfico, se quedó tirado…) y las capas abren la leyenda con el significado de pines y líneas." />
+               Texto="@(Estado.EsMuestra ? "Mira el mapa: la cruz te lleva a tu ubicación y las capas abren la leyenda con el significado de pines y líneas." : "Mira el mapa: la cruz te lleva a tu ubicación, el megáfono reporta un problema (ponchadura, tráfico, se quedó tirado…) y las capas abren la leyenda con el significado de pines y líneas.")" />
         <button type="button" class="mapa-control" title="@(T["Centrar el mapa en mi ubicación"])" @onclick="CentrarEnMi">
             <Icon Nombre="IcoCrosshair" Tam="20" />
         </button>
-        <button type="button" class="mapa-control" title="@(T["Reportar un problema en la ruta"])" @onclick="AbrirReporte">
-            <Icon Nombre="IcoMegaphone" Tam="20" />
-        </button>
+        @if (!Estado.EsMuestra)
+        {
+            <button type="button" class="mapa-control" title="@(T["Reportar un problema en la ruta"])" @onclick="AbrirReporte">
+                <Icon Nombre="IcoMegaphone" Tam="20" />
+            </button>
+        }
         <button type="button" class="mapa-control @(_leyendaAbierta ? "activo" : "")" title="@(T["Leyenda del mapa"])" @onclick="() => _leyendaAbierta = !_leyendaAbierta">
             <Icon Nombre="IcoLayers" Tam="20" />
         </button>
@@ -102,10 +105,12 @@
     {
         var avisos = Estado.AvisosDe(_tarjeta);
         <div class="glass mapa-tarjeta">
-            <div class="tarjeta-cabecera">
+            <div class="tarjeta-cabecera @(OnTocarTarjeta.HasDelegate ? "tocable" : "")" @onclick="TocarTarjeta" tabindex="@(OnTocarTarjeta.HasDelegate ? 0 : -1)" role="@(OnTocarTarjeta.HasDelegate ? "button" : null)"
+                 title="@(OnTocarTarjeta.HasDelegate ? T["Ver las rutas disponibles"] : null)" @onkeydown="@(async (KeyboardEventArgs e) => { if (OnTocarTarjeta.HasDelegate && Teclado.EsActivacion(e)) await TocarTarjeta(); })">
                 <div class="tarjeta-numero" style="background:@_tarjeta.Color">@_tarjeta.NumeroTexto<span class="simbolo-ruta" aria-hidden="true">@_tarjeta.Simbolo</span></div>
                 <div class="tarjeta-titulo"><b>@_tarjeta.Nombre</b><small>@_tarjeta.Subtitulo</small></div>
-                <a class="tarjeta-guardar @(_tarjeta.Guardada ? "" : "off")" @onclick="Guardar">
+                <span class="tarjeta-lista" aria-hidden="true"><Icon Nombre="IcoList" Tam="18" /></span>
+                <a class="tarjeta-guardar @(_tarjeta.Guardada ? "" : "off")" @onclick="Guardar" @onclick:stopPropagation="true">
                     <Icon Nombre="IcoBookmark" Tam="13" Relleno="@(_tarjeta.Guardada ? "currentColor" : null)" /> @(_tarjeta.Guardada ? "Guardada" : "Guardar")
                 </a>
             </div>
@@ -255,6 +260,10 @@
     [Parameter] public EventCallback OnQuitar { get; set; }
     [Parameter] public EventCallback OnPlanificar { get; set; }
     [Parameter] public EventCallback OnGuardar { get; set; }
+
+    // Tocar la cabecera de la tarjeta de la ruta (en móvil abre la lista de rutas para cambiar de ruta).
+    [Parameter] public EventCallback OnTocarTarjeta { get; set; }
+    private Task TocarTarjeta() => OnTocarTarjeta.InvokeAsync();
     // Se llama con [lat, lng] cuando el usuario toca el mapa y la selección está activa.
     [Parameter] public EventCallback<double[]> OnClicMapa { get; set; }
 

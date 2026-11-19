@@ -22,6 +22,7 @@ public static class Hoja
         CssMejoras.Reglas,
         CssEstados.Reglas,
         CssResponsivo.Reglas,
+        CssMovil.Reglas,
         CssAnimaciones.Reglas,
         CssAccesibilidad.Reglas);
 }

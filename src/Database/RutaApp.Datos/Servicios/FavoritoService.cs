@@ -5,7 +5,7 @@ namespace RutaApp.Datos;
 
 public class FavoritoService
 {
-    public async Task<List<int>> ObtenerRutasAsync(int idUser)
+    public virtual async Task<List<int>> ObtenerRutasAsync(int idUser)
     {
         await using var db = new MySqlConnection(Connection.ConnectionString);
         var ids = await db.QueryAsync<int>(
@@ -13,14 +13,14 @@ public class FavoritoService
         return ids.ToList();
     }
 
-    public async Task AgregarAsync(int idUser, int idRoutes)
+    public virtual async Task AgregarAsync(int idUser, int idRoutes)
     {
         await using var db = new MySqlConnection(Connection.ConnectionString);
         await db.ExecuteAsync(
             "INSERT IGNORE INTO favorite_route (id_user, id_routes) VALUES (@idUser, @idRoutes)",
             new { idUser, idRoutes });
     }
-    public async Task QuitarAsync(int idUser, int idRoutes)
+    public virtual async Task QuitarAsync(int idUser, int idRoutes)
     {
         await using var db = new MySqlConnection(Connection.ConnectionString);
         await db.ExecuteAsync(

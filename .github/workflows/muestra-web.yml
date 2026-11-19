@@ -1,0 +1,58 @@
+# Publica la muestra web de R.U.T.A. (src/Frontend/RutaApp.Web) en GitHub Pages cada vez que se sube algo a la rama RUTA-Muestra.
+# Configuración única en GitHub: Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# Si el despliegue falla por la rama, agrega RUTA-Muestra en Settings → Environments → github-pages → Deployment branches.
+name: Muestra web (GitHub Pages)
+
+on:
+  push:
+    branches: [ "RUTA-Muestra" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Publicar la muestra
+      run: dotnet publish src/Frontend/RutaApp.Web -c Release -o salida
+
+    # La página vive en https://<usuario>.github.io/<repositorio>/, así que la app necesita saber su carpeta.
+    # 404.html es la misma página: si alguien recarga en /rutas, la app abre y lo lleva al inicio.
+    # .nojekyll evita que GitHub Pages ignore la carpeta _framework (empieza con guion bajo).
+    - name: Ajustar para GitHub Pages
+      run: |
+        sed -i 's|<base href="/" />|<base href="/${{ github.event.repository.name }}/" />|' salida/wwwroot/index.html
+        cp salida/wwwroot/index.html salida/wwwroot/404.html
+        touch salida/wwwroot/.nojekyll
+
+    - uses: actions/configure-pages@v5
+
+    - uses: actions/upload-pages-artifact@v3
+      with:
+        path: salida/wwwroot
+
+  desplegar:
+    needs: publicar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+    - id: despliegue
+      uses: actions/deploy-pages@v4

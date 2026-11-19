@@ -67,6 +67,11 @@ public partial class EstadoApp
         ErrorRutas = reales == null;
         if (reales == null)
         {
+            if (_muestra.Activo)
+            {
+                ErrorBaseDatos = "No se pudieron cargar las rutas de la muestra. Revisa tu conexión a internet e inténtalo de nuevo.";
+                return false;
+            }
             // Se explica qué falla (MySQL apagado, contraseña, falta la base de datos…)
             var (ok, mensaje) = await Connection.ProbarAsync();
             ErrorBaseDatos = ok ? "Hay conexión con MySQL, pero no se encontraron rutas con recorrido en la base de datos." : mensaje;

@@ -50,6 +50,21 @@ public static class CssEstados
         .btn.cargando:disabled { opacity: .85; }
         .estado-carga { display: flex; align-items: center; gap: var(--espacio-2); padding: var(--espacio-3) 0; font-size: var(--texto-base); font-weight: var(--peso-medio); color: var(--text-secondary); }
 
+        /* ── Carga de rutas: un camión recorre una línea punteada. Va con un texto que dice qué se carga */
+        .bus-pista { position: relative; display: inline-block; flex: none; width: 56px; height: 20px; color: var(--brand-primary); }
+        .bus-pista::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px dashed var(--border-default); }
+        .bus-pista > .icono { position: absolute; left: 0; top: 2px; padding: 0 2px; background: var(--bg-white); border-radius: var(--radio-sm); animation: bus-recorre 1.3s var(--curva) infinite; }
+        @keyframes bus-recorre { 0% { transform: translateX(-4px); opacity: 0; } 18% { opacity: 1; } 82% { opacity: 1; } 100% { transform: translateX(40px); opacity: 0; } }
+        .cargando-mapa { top: 40%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: var(--espacio-3); padding: 10px var(--espacio-4); border-radius: var(--radio-pill); font-size: var(--texto-md); font-weight: var(--peso-fuerte); white-space: nowrap; box-shadow: var(--sombra-elevada); animation: aparece-carga var(--dur-lenta) var(--curva); }
+        .cargando-mapa .bus-pista > .icono { background: transparent; }
+        @keyframes aparece-carga { from { opacity: 0; transform: translate(-50%, -40%) scale(.96); } to { opacity: 1; transform: translate(-50%, -50%); } }
+        .split-380 > .cargando-mapa { left: calc(380px + (100% - 380px) / 2); }
+        .split-400 > .cargando-mapa { left: calc(400px + (100% - 400px) / 2); }
+        .cargando-opciones { display: flex; flex-direction: column; gap: var(--espacio-3); padding: var(--espacio-1) 0; }
+        .cargando-titulo { display: flex; align-items: center; gap: var(--espacio-3); font-size: var(--texto-md); color: var(--text-primary); }
+        .opcion-esqueleto { padding: 14px; border: var(--borde-suave); border-radius: var(--radio-lg); background: var(--bg-white); }
+        .opcion-esqueleto .esqueleto.titulo { margin-top: 0; width: 50%; }
+
         /* ── Carga: esqueleto con la misma forma que el contenido que va a llegar */
         .esqueleto {
             display: block; border-radius: var(--radio-sm); background: linear-gradient(90deg, var(--blue-100) 25%, var(--blue-50) 37%, var(--blue-100) 63%);
@@ -74,6 +89,13 @@ public static class CssEstados
         .estado-vista.exito .estado-icono { background: var(--success-tint); color: var(--success); }
         .estado-vista b { font-size: var(--texto-lg); font-weight: var(--peso-fuerte); color: var(--text-primary); }
         .estado-vista p { max-width: 44ch; font-size: var(--texto-md); line-height: var(--linea-texto); margin: 0; }
+        /* Muestra web: sección que todavía no está ("Disponible próximamente") */
+        .proximamente { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: var(--espacio-3); min-height: 100%; padding: var(--espacio-8) var(--espacio-5); color: var(--text-secondary); }
+        .proximamente .estado-icono { width: 64px; height: 64px; margin-bottom: var(--espacio-2); }
+        .proximamente h1 { margin: 0; font-size: var(--texto-3xl); font-weight: var(--peso-titulo); line-height: var(--linea-compacta); color: var(--text-primary); }
+        .proximamente p { max-width: 46ch; margin: 0; font-size: var(--texto-md); line-height: var(--linea-texto); }
+        .etiqueta-pronto { display: inline-flex; align-items: center; padding: var(--espacio-1) var(--espacio-3); border-radius: var(--radio-pill); background: var(--blue-100); color: var(--brand-primary); font-size: var(--texto-base); font-weight: var(--peso-fuerte); }
+        .publico > .proximamente { min-height: 100vh; }
         .estado-accion { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--espacio-2); margin-top: var(--espacio-2); }
 
         /* Mensajes dentro de un formulario */
